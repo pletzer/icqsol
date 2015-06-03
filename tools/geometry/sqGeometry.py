@@ -15,6 +15,18 @@ class Geometry:
     self.bxHi = bxHi
     self.object = vtk.vtkImplicitBoolean()
 
+    self.sampleFunc = vtk.vtkSampleFunction()
+    self.sampleFunc.SetImplicitFunction(self.object)
+    self.sampleFunc.SetModelBounds(self.bxLo[0], self.bxHi[0], \
+                                   self.bxLo[1], self.bxHi[1], \
+                                   self.bxLo[2], self.bxHi[2])
+    self.sampleFunc.ComputeNormalsOff()
+
+    self.surface = vtk.vtkContourFilter()
+    self.surface.SetValue(0, 0.0)
+    self.surface.SetInput(self.sampleFunc.GetOutput())
+
+    self.surfPolyData = None
 
   def __iadd__(self, otherObj):
     """
@@ -43,7 +55,7 @@ class Geometry:
     self.object.AddFunction(otherObj)
     return self
 
-  def getBoundarySurface(self, nx, ny, nz):
+  def computeBoundarySurface(self, nx, ny, nz):
     """
     Discretize the boundary 
     @param nx number of cells in the x direction
@@ -52,33 +64,28 @@ class Geometry:
     @return {'points': array of points, 'cells': array of cells}
     """
 
-    sampleFunc = vtk.vtkSampleFunction()
-    sampleFunc.SetImplicitFunction(self.object)
-    sampleFunc.SetModelBounds(self.bxLo[0], self.bxHi[0], \
-                              self.bxLo[1], self.bxHi[1], \
-                              self.bxLo[2], self.bxHi[2])
-    sampleFunc.SetSampleDimensions(nx, ny, nz)
-    sampleFunc.ComputeNormalsOff()
+    self.sampleFunc.SetSampleDimensions(nx, ny, nz)
+    self.surface.Update()
+    self.surfPolyData = self.surface.GetOutput()
 
-    surface = vtk.vtkContourFilter()
-    surface.SetValue(0, 0.0)
-    surface.SetInput(sampleFunc.GetOutput())
-    surface.Update()
-
-    polydata = surface.GetOutput()
+  def getBoundarySurface(self):
+    """
+    Discretize the boundary 
+    @return {'points': array of points, 'cells': array of cells}
+    """
 
     # gather the boundary vertices
-    points = polydata.GetPoints()
+    points = self.surfPolyData.GetPoints()
     numPoints = points.GetNumberOfPoints()
     pointArr = numpy.zeros( (numPoints, 3), numpy.float32 )
     for i in range(numPoints):
       pointArr[i, :] = points.GetPoint(i)
 
     # gather the triangles
-    numCells = polydata.GetNumberOfCells()
+    numCells = self.surfPolyData.GetNumberOfCells()
     cellArr = numpy.zeros( (numCells, 3), numpy.int )
     for i in range(numCells):
-      cell = polydata.GetCell(i)
+      cell = self.surfPolyData.GetCell(i)
       ptIds = cell.GetPointIds()
       npts = ptIds.GetNumberOfIds()
       pInds = [0 for j in range(npts)]
@@ -98,8 +105,8 @@ def test():
   geom = Geometry(bxLo = (0., 0., 0.), bxHi = (1., 1., 1.))
   geom += Sphere(radius=0.4, origin=(0.1, 0.2, 0.3))
   geom += Sphere(radius=0.6, origin=(0.4, 0.3, 0.2))
-
-  print geom.getBoundarySurface(10, 10, 10)
+  geom.computeBoundarySurface(10, 10, 10)
+  print geom.getBoundarySurface()
 
 if __name__ == '__main__': test()
 
