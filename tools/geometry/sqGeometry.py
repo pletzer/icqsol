@@ -7,14 +7,16 @@ from sqBox import Box
 
 class Geometry:
 
+  EPS = 1.2345678e-10
+
   def __init__(self, bxLo, bxHi, full=True):
     """
     Constructor
     @param bxLo low corner of the box
     @param bxHi high corner of the box
     """
-    self.bxLo = bxLo
-    self.bxHi = bxHi
+    self.bxLo = numpy.array(bxLo)
+    self.bxHi = numpy.array(bxHi)
     self.object = vtk.vtkImplicitBoolean()
 
     self.sampleFunc = vtk.vtkSampleFunction()
@@ -34,7 +36,7 @@ class Geometry:
     self.surfPolyData = None
 
     if full:
-      self += Box(bxLo, bxHi)
+      self += Box(self.bxLo + self.EPS, self.bxHi - self.EPS)
 
   def __iadd__(self, otherObj):
     """

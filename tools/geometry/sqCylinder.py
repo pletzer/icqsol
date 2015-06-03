@@ -1,19 +1,21 @@
 #!/usr/bin/env python
 
 import vtk
-import numpy
 
 class Cylinder(vtk.vtkCylinder):
 
-  def __init__(self, radius, origin):
+  EPS = 1.2345678e-10
+
+  def __init__(self, radius, origin, length):
     """
     Constructor
     @param radius radius
     @param origin center of the cylinder
+    @param length length of the cylinder
     """
+
     self.SetRadius(radius)
     self.SetCenter(origin)
-
 
 
 
