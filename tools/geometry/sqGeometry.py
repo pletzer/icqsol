@@ -94,7 +94,40 @@ class Geometry:
       cellArr[i, :] = pInds
 
     return {'points': pointArr, 'cells': cellArr}
-   
+
+  def show(self, windowSizeX=600, windowSizeY=400):
+    """
+    Show the boundary surface
+    @param windowSizeX number of pixels in x
+    @param windowSizeY number of pixels in y
+    """
+    # create a rendering window and renderer
+    ren = vtk.vtkRenderer()
+    renWin = vtk.vtkRenderWindow()
+    renWin.AddRenderer(ren)
+    renWin.SetSize(windowSizeX, windowSizeY)
+ 
+    # create a renderwindowinteractor
+    iren = vtk.vtkRenderWindowInteractor()
+    iren.SetRenderWindow(renWin)
+ 
+    # mapper
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInput(self.surface.GetOutput())
+    mapper.ScalarVisibilityOff()
+ 
+    # actor
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(1,1,1)
+
+    # assign actor to the renderer
+    ren.AddActor(actor)
+ 
+    # enable user interface interactor
+    iren.Initialize()
+    renWin.Render()
+    iren.Start()
 
 ###############################################################################
 
@@ -103,10 +136,11 @@ def test():
   from sqSphere import Sphere
 
   geom = Geometry(bxLo = (0., 0., 0.), bxHi = (1., 1., 1.))
-  geom += Sphere(radius=0.4, origin=(0.1, 0.2, 0.3))
-  geom += Sphere(radius=0.6, origin=(0.4, 0.3, 0.2))
+  geom += Sphere(radius=0.6, origin=(0.1, 0.2, 0.3))
+  geom += Sphere(radius=0.5, origin=(0.8, 0.7, 0.6))
   geom.computeBoundarySurface(10, 10, 10)
   print geom.getBoundarySurface()
+  geom.show()
 
 if __name__ == '__main__': test()
 
