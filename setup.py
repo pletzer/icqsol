@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+"""
+Set up script for ICQSol
+pletzer@psu.edu
+"""
+
 from distutils.core import setup
 
 setup(name='ICQSol',
@@ -9,5 +14,6 @@ setup(name='ICQSol',
       author_email='pletzer@psu.edu',
       url='https://github.com/pletzer/icqsol/wiki',
       package_dir = {'icqsol': ''}, # the present working directory maps to icqsol below
-      packages=['icqsol.tools', 'icqsol.tools.geometry'],
+      packages=['icqsol', 'icqsol.tools', 'icqsol.tools.geometry'],
+      requires = ['numpy', 'vtk'],
      )
