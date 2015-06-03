@@ -5,8 +5,8 @@ import numpy
 
 class Geometry:
 
-	def __init__(self, bxLo, bxHi):
-		"""
+  def __init__(self, bxLo, bxHi):
+    """
     Constructor
     @param bxLo low corner of the box
     @param bxHi high corner of the box
@@ -18,29 +18,32 @@ class Geometry:
 
   def __iadd__(self, otherObj):
     """
-    Add object (create union)
+    += operator or union
     @param otherObj instances of type Shape
     """
     self.object.SetOperationTypeToUnion()
     self.object.AddFunction(otherObj)
+    return self
 
   def __isub__(self, otherObj):
     """
-    Remove object
+    -= operator or remove
     @param otherObj instances of type Shape
     """
     self.object.SetOperationTypeToDifference()
     self.object.AddFunction(otherObj)
+    return self
 
   def __imul__(self, otherObj):
     """
-    Intersect with other object
+    *= operator or intersect
     @param otherObj instances of type Shape
     """
     self.object.SetOperationTypeToIntersection()
     self.object.AddFunction(otherObj)
+    return self
 
-  def getBoundary(self, nx, ny, nz):
+  def getBoundarySurface(self, nx, ny, nz):
     """
     Discretize the boundary 
     @param nx number of cells in the x direction
@@ -59,10 +62,10 @@ class Geometry:
 
     surface = vtk.vtkContourFilter()
     surface.SetValue(0, 0.0)
-    surface.SetInput( sampleFunc.GetOutput() )
+    surface.SetInput(sampleFunc.GetOutput())
     surface.Update()
 
-    polydata = surfaceGetOutput()
+    polydata = surface.GetOutput()
 
     # gather the boundary vertices
     points = polydata.GetPoints()
@@ -90,9 +93,13 @@ class Geometry:
 
 def test():
 
-  geom = Geometry(bxLo = (0., 0.), bxHi = (1., 1.))
+  from sqSphere import Sphere
+
+  geom = Geometry(bxLo = (0., 0., 0.), bxHi = (1., 1., 1.))
   geom += Sphere(radius=0.4, origin=(0.1, 0.2, 0.3))
   geom += Sphere(radius=0.6, origin=(0.4, 0.3, 0.2))
+
+  print geom.getBoundarySurface(10, 10, 10)
 
 if __name__ == '__main__': test()
 
