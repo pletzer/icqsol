@@ -3,9 +3,11 @@
 import vtk
 import numpy
 
+from sqBox import Box
+
 class Geometry:
 
-  def __init__(self, bxLo, bxHi):
+  def __init__(self, bxLo, bxHi, full=True):
     """
     Constructor
     @param bxLo low corner of the box
@@ -31,10 +33,13 @@ class Geometry:
 
     self.surfPolyData = None
 
+    if full:
+      self += Box(bxLo, bxHi)
+
   def __iadd__(self, otherObj):
     """
     += operator or union
-    @param otherObj instances of type Shape
+    @param otherObj other shape
     """
     self.object.SetOperationTypeToUnion()
     self.object.AddFunction(otherObj)
@@ -43,7 +48,7 @@ class Geometry:
   def __isub__(self, otherObj):
     """
     -= operator or remove
-    @param otherObj instances of type Shape
+    @param otherObj other shape
     """
     self.object.SetOperationTypeToDifference()
     self.object.AddFunction(otherObj)
@@ -141,10 +146,14 @@ def test():
 
   from sqSphere import Sphere
 
-  geom = Geometry(bxLo = (0., 0., 0.), bxHi = (1., 1., 1.))
-  geom += Sphere(radius=0.6, origin=(0.1, 0.2, 0.3))
-  geom += Sphere(radius=0.5, origin=(0.8, 0.7, 0.6))
-  geom.computeBoundarySurface(10, 10, 10)
+
+  bxLo = (0., 0., 0.)
+  bxHi = (1., 1., 1.)
+  geom = Geometry(bxLo=bxLo, bxHi=bxHi, full=True)
+  geom -= Sphere(radius=0.6, origin=(0.1, 0.2, 0.3))
+  geom -= Sphere(radius=0.5, origin=(0.8, 0.7, 0.6))
+  geom -= Box(bxLo=(0., 0.7, 0.65), bxHi=(0.2, 1., 1.))
+  geom.computeBoundarySurface(100, 100, 100)
   print geom.getBoundarySurface()
   geom.show()
 
