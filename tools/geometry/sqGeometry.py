@@ -24,7 +24,10 @@ class Geometry:
 
     self.surface = vtk.vtkContourFilter()
     self.surface.SetValue(0, 0.0)
-    self.surface.SetInput(self.sampleFunc.GetOutput())
+    if vtk.VTK_MAJOR_VERSION >= 6:
+      self.surface.SetInputConnection(self.sampleFunc.GetOutputPort())
+    else:
+      self.surface.SetInput(self.sampleFunc.GetOutput())
 
     self.surfPolyData = None
 
@@ -113,7 +116,10 @@ class Geometry:
  
     # mapper
     mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInput(self.surface.GetOutput())
+    if vtk.VTK_MAJOR_VERSION >= 6:
+      mapper.SetInputConnection(self.surface.GetOutputPort())
+    else:
+      mapper.SetInput(self.surface.GetOutput())
     mapper.ScalarVisibilityOff()
  
     # actor
