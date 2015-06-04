@@ -2,6 +2,7 @@
 
 import vtk
 import numpy
+import re
 
 from sqBox import Box
 
@@ -37,6 +38,56 @@ class Geometry:
 
     if full:
       self += Box(self.bxLo + self.EPS, self.bxHi - self.EPS)
+
+  def applyPrefixExpression(self, prefixExpr, argNameVals):
+    """
+    Apply prefix expression 
+    @param prefixExpression, e.g. (* (+ s1 s2) s3)
+    @param argNameVals dictionary for argument name and corresponding values
+    """
+
+    # map betwen operator and union or intersection
+    opMap = {
+      '+': self.__iadd__,
+      '*': self.__imul__,
+      '-': self.__isub__,
+    }
+
+    expr = self.squeeze(prefixExpr)
+
+    # build the geometry recursively by reducing the expression until there are no 
+    # more parentheses, starting from the right most nested ()
+    while len(expr) > 0:
+
+      posBeg = prefixExpr.rfind( "(" )
+      posEnd = prefixExpr.find( ")", posBeg )
+
+      subExpr = expr[posBeg + 1: posEnd]
+      tokens = subExpr.split()
+
+      op = opMap[tokens[0]]
+      args = tokens[1:]
+
+      # apply the operation on all the arguments
+      for a in args:
+        argVal = argNameVals[a]
+        op.__call__(argVal)
+
+      # remove subExpr from expr
+      expr = self.squeeze(expr[:posBeg] + expr[posEnd + 1:])
+
+  def squeeze(self, expr):
+    """
+    Squeeze all the spaces out
+    @param expr expression
+    @return new expression
+    """
+    expr = re.sub(r'\s+', '', expr)
+    expr = re.sub(r'\(\s*', '(', expr)
+    expr = re.sub(r'\(\s*', '(', expr)
+    expr = re.sub(r'^\s*', '', expr)
+    expr = re.sub(r'\s*$', '', expr)
+    return expr
 
   def __iadd__(self, otherObj):
     """
