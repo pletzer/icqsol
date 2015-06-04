@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import vtk
-import numpy
 
 class Cylinder(vtk.vtkImplicitBoolean):
 
@@ -9,13 +8,16 @@ class Cylinder(vtk.vtkImplicitBoolean):
     """
     Constructor
     @param radius radius
-    @param origin center of the cylinder
-    @param length length of the cylinder
+    @param origin center of the cylinder in the x, y directions
+    @param length length of the cylinder in the z direction
     """
+
+    # infinite cylinder in the y direction
     self.cyl = vtk.vtkCylinder()
     self.cyl.SetRadius(radius)
     self.cyl.SetCenter(origin)
 
+    # rotate the cylinder so the axis is in z
     self.cylTransform = vtk.vtkGeneralTransform()
     self.cylTransform.RotateX(90.0)
     self.cyl.SetTransform(self.cylTransform)
@@ -24,7 +26,6 @@ class Cylinder(vtk.vtkImplicitBoolean):
     self.planeLo = vtk.vtkPlane()
     self.planeLo.SetOrigin(origin[0], origin[1], origin[2] - 0.5*length)
     self.planeLo.SetNormal(0., 0., -1.)
-
     self.planeHi = vtk.vtkPlane()
     self.planeHi.SetOrigin(origin[0], origin[1], origin[2] + 0.5*length)
     self.planeHi.SetNormal(0., 0., 1.)
