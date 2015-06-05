@@ -210,8 +210,8 @@ def test():
 
   geom = Geometry()
   geom += Sphere(radius=0.6, origin=(0.1, 0.2, 0.3))
-  geom -= Cylinder(radius=0.5, origin=(0.8, 0.7, 0.6), length=0.6)
-  geom -= Box(bxLo=(0.1, 0.2, 0.3), bxHi=(0.2, 1., 1.))
+  geom *= Box(bxLo=(0.1, 0.2, 0.3), bxHi=(1.0, 1.0, 1.0))
+  geom -= Cylinder(radius=0.5, origin=(0.3, 0.4, 0.5), length=0.6)
   geom.computeBoundarySurface(100, 100, 100)
   print geom.getBoundarySurface()
   geom.show()

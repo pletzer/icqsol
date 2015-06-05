@@ -18,7 +18,7 @@ class Cylinder(vtk.vtkImplicitBoolean):
     self.cyl.SetRadius(radius)
     self.cyl.SetCenter(origin)
 
-    # rotate the cylinder so the axis is in z
+    # rotate the cylinder so the axis is along z
     self.cylTransform = vtk.vtkGeneralTransform()
     self.cylTransform.RotateX(90.0)
     self.cyl.SetTransform(self.cylTransform)
