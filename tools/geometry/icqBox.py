@@ -15,6 +15,16 @@ class Box(vtk.vtkBox):
                    bxLo[1], bxHi[1], \
                    bxLo[2], bxHi[2])
 
+    self.loBounds = numpy.array(bxLo)
+    self.hiBounds = numpy.array(bxHi)
+
+  def getBounds(self): 
+    """
+    Get min/max bounds
+    @return low bound, hi bound
+    """
+    return self.loBounds, self.hiBounds
+
 
 
 

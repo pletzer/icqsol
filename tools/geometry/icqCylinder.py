@@ -36,3 +36,12 @@ class Cylinder(vtk.vtkImplicitBoolean):
     self.AddFunction(self.planeLo)
     self.AddFunction(self.planeHi)
 
+    self.loBounds = numpy.array([origin[0] - radius, origin[1] - radius, origin[2] - 0.5*length])
+    self.hiBounds = numpy.array([origin[0] + radius, origin[1] + radius, origin[2] + 0.5*length])
+
+  def getBounds(self): 
+    """
+    Get min/max bounds
+    @return low bound, hi bound
+    """
+    return self.loBounds, self.hiBounds

@@ -4,27 +4,18 @@ import vtk
 import numpy
 import re
 
-from sqBox import Box
+from icqBox import Box
 
 class Geometry:
 
-  EPS = 1.2345678e-10
-
-  def __init__(self, bxLo, bxHi, full=True):
+  def __init__(self):
     """
     Constructor
-    @param bxLo low corner of the box
-    @param bxHi high corner of the box
-    """
-    self.bxLo = numpy.array(bxLo)
-    self.bxHi = numpy.array(bxHi)
+   """
     self.object = vtk.vtkImplicitBoolean()
 
     self.sampleFunc = vtk.vtkSampleFunction()
     self.sampleFunc.SetImplicitFunction(self.object)
-    self.sampleFunc.SetModelBounds(self.bxLo[0], self.bxHi[0], \
-                                   self.bxLo[1], self.bxHi[1], \
-                                   self.bxLo[2], self.bxHi[2])
     self.sampleFunc.ComputeNormalsOff()
 
     self.surface = vtk.vtkContourFilter()
@@ -36,8 +27,7 @@ class Geometry:
 
     self.surfPolyData = None
 
-    if full:
-      self += Box(self.bxLo + self.EPS, self.bxHi - self.EPS)
+    self.objectList = []
 
   def applyPrefixExpression(self, prefixExpr, argNameVals):
     """
@@ -94,6 +84,7 @@ class Geometry:
     += operator or union
     @param otherObj other shape
     """
+    self.objectList.append(otherObj)
     self.object.SetOperationTypeToUnion()
     self.object.AddFunction(otherObj)
     return self
@@ -103,6 +94,7 @@ class Geometry:
     -= operator or remove
     @param otherObj other shape
     """
+    self.objectList.append(otherObj)
     self.object.SetOperationTypeToDifference()
     self.object.AddFunction(otherObj)
     return self
@@ -112,6 +104,7 @@ class Geometry:
     *= operator or intersect
     @param otherObj instances of type Shape
     """
+    self.objectList.append(otherObj)
     self.object.SetOperationTypeToIntersection()
     self.object.AddFunction(otherObj)
     return self
@@ -124,6 +117,19 @@ class Geometry:
     @param nz number of cells in the z direction
     @return {'points': array of points, 'cells': array of cells}
     """
+
+    lo = numpy.array([float('inf')] * 3)
+    hi = numpy.array([-float('inf')] * 3)
+    for o in self.objectList:
+      objLo, objHi = o.getBounds()
+      lo = numpy.minimum(lo, objLo)
+      hi = numpy.maximum(hi, objHi)
+
+    # set the bounds for th esampling function
+    self.sampleFunc.SetModelBounds(lo[0], hi[0], \
+                                   lo[1], hi[1], \
+                                   lo[2], hi[2])
+
 
     self.sampleFunc.SetSampleDimensions(nx, ny, nz)
     self.surface.Update()
@@ -197,12 +203,10 @@ class Geometry:
 
 def test():
 
-  from sqSphere import Sphere
+  from icqSphere import Sphere
 
 
-  bxLo = (0., 0., 0.)
-  bxHi = (1., 1., 1.)
-  geom = Geometry(bxLo=bxLo, bxHi=bxHi, full=True)
+  geom = Geometry()
   geom -= Sphere(radius=0.6, origin=(0.1, 0.2, 0.3))
   geom -= Sphere(radius=0.5, origin=(0.8, 0.7, 0.6))
   geom -= Box(bxLo=(0., 0.7, 0.65), bxHi=(0.2, 1., 1.))
