@@ -158,21 +158,30 @@ class Geometry:
     axesColrs = [(1., 0., 0.,), (0., 1., 0.,), (0., 0., 1.,)]
     axesTransf = [vtk.vtkTransform(), vtk.vtkTransform(), vtk.vtkTransform()]
 
+    for a in axes:
+      a.SetShaftRadius(0.01)
+      a.SetTipLength(0.2)
+      a.SetTipRadius(0.03)
+
+    for at in axesTransf:
+      at.PostMultiply()
     
+    # rotate the y and z arrows (initially along x)
+    axesTransf[1].RotateZ(90.0) 
+    axesTransf[2].RotateY(-90.0)
+
     if self.boundsSet:
       # scale
       for i in range(3):
         factor = self.hiBound[i] - self.loBound[i]
-        axesTransf[i].Scale(factor, factor, factor)
+        scale = [1., 1., 1.]
+        scale[i] = factor
+        axesTransf[i].Scale(scale)
 
       # translate to loBounds
       for at in axesTransf:
         at.Translate(self.loBound)
 
-    # rotate the y and z arrows (initially along x). Order of operations is
-    # last first (rotation before translation before scaling)
-    axesTransf[1].RotateZ(90.0) 
-    axesTransf[2].RotateY(-90.0)
 
     axesTPD = [vtk.vtkTransformPolyDataFilter(), vtk.vtkTransformPolyDataFilter(), vtk.vtkTransformPolyDataFilter()]
     axesMappers = [vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper()]
