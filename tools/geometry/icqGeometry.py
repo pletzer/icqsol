@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 
+# standard python modules
 import re
 
+# extensions
 import vtk
 import numpy
+
+# local includes
+from icqSphere import Sphere
+from icqCylinder import Cylinder
+from icqBox import Box
 
 class Geometry:
 
@@ -168,8 +175,8 @@ class Geometry:
     # more parentheses, starting from the right most nested ()
     while len(expr) > 0:
 
-      posBeg = prefixExpr.rfind( "(" )
-      posEnd = prefixExpr.find( ")", posBeg )
+      posBeg = expr.rfind("(")
+      posEnd = expr.find(")", posBeg)
 
       subExpr = expr[posBeg + 1: posEnd]
       tokens = subExpr.split()
@@ -191,7 +198,7 @@ class Geometry:
     @param expr expression
     @return new expression
     """
-    expr = re.sub(r'\s+', '', expr)
+    expr = re.sub(r'\s+', ' ', expr)
     expr = re.sub(r'\(\s*', '(', expr)
     expr = re.sub(r'\(\s*', '(', expr)
     expr = re.sub(r'^\s*', '', expr)
@@ -201,12 +208,7 @@ class Geometry:
 
 ###############################################################################
 
-def test():
-
-  from icqSphere import Sphere
-  from icqCylinder import Cylinder
-  from icqBox import Box
-
+def testConstructiveGeometry():
 
   geom = Geometry()
   geom += Sphere(radius=0.6, origin=(0.1, 0.2, 0.3))
@@ -216,8 +218,21 @@ def test():
   print geom.getBoundarySurface()
   geom.show()
 
+def testApplyPrefixExpression():
+
+  s = Sphere(radius=0.6, origin=(0.1, 0.2, 0.3))
+  b = Box(bxLo=(0.1, 0.2, 0.3), bxHi=(1.0, 1.0, 1.0))
+  c = Cylinder(radius=0.5, origin=(0.3, 0.4, 0.5), length=0.6)
+
+  geom = Geometry()
+  geom.applyPrefixExpression('(- (* (+ s) b) c)', 
+    {'s': s, 'b': b, 'c': c})
+  geom.computeBoundarySurface(100, 100, 100)
+  geom.show()
+
 if __name__ == '__main__': 
-  test()
+  #testConstructiveGeometry()
+  testApplyPrefixExpression()
 
 
 
