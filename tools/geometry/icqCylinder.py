@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import vtk
+import numpy
 
 class Cylinder(vtk.vtkImplicitBoolean):
 

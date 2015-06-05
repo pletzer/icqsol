@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-import vtk
-import numpy
 import re
 
-from icqBox import Box
+import vtk
+import numpy
 
 class Geometry:
 
@@ -28,56 +27,6 @@ class Geometry:
     self.surfPolyData = None
 
     self.objectList = []
-
-  def applyPrefixExpression(self, prefixExpr, argNameVals):
-    """
-    Apply prefix expression 
-    @param prefixExpression, e.g. (* (+ s1 s2) s3)
-    @param argNameVals dictionary for argument name and corresponding values
-    """
-
-    # map betwen operator and union or intersection
-    opMap = {
-      '+': self.__iadd__,
-      '*': self.__imul__,
-      '-': self.__isub__,
-    }
-
-    expr = self.squeeze(prefixExpr)
-
-    # build the geometry recursively by reducing the expression until there are no 
-    # more parentheses, starting from the right most nested ()
-    while len(expr) > 0:
-
-      posBeg = prefixExpr.rfind( "(" )
-      posEnd = prefixExpr.find( ")", posBeg )
-
-      subExpr = expr[posBeg + 1: posEnd]
-      tokens = subExpr.split()
-
-      op = opMap[tokens[0]]
-      args = tokens[1:]
-
-      # apply the operation on all the arguments
-      for a in args:
-        argVal = argNameVals[a]
-        op.__call__(argVal)
-
-      # remove subExpr from expr
-      expr = self.squeeze(expr[:posBeg] + expr[posEnd + 1:])
-
-  def squeeze(self, expr):
-    """
-    Squeeze all the spaces out
-    @param expr expression
-    @return new expression
-    """
-    expr = re.sub(r'\s+', '', expr)
-    expr = re.sub(r'\(\s*', '(', expr)
-    expr = re.sub(r'\(\s*', '(', expr)
-    expr = re.sub(r'^\s*', '', expr)
-    expr = re.sub(r'\s*$', '', expr)
-    return expr
 
   def __iadd__(self, otherObj):
     """
@@ -199,22 +148,76 @@ class Geometry:
     renWin.Render()
     iren.Start()
 
+  def applyPrefixExpression(self, prefixExpr, argNameVals):
+    """
+    Apply prefix expression 
+    @param prefixExpression, e.g. (* (+ s1 s2) s3)
+    @param argNameVals dictionary for argument name and corresponding values
+    """
+
+    # map betwen operator and union or intersection
+    opMap = {
+      '+': self.__iadd__,
+      '*': self.__imul__,
+      '-': self.__isub__,
+    }
+
+    expr = self.squeeze(prefixExpr)
+
+    # build the geometry recursively by reducing the expression until there are no 
+    # more parentheses, starting from the right most nested ()
+    while len(expr) > 0:
+
+      posBeg = prefixExpr.rfind( "(" )
+      posEnd = prefixExpr.find( ")", posBeg )
+
+      subExpr = expr[posBeg + 1: posEnd]
+      tokens = subExpr.split()
+
+      op = opMap[tokens[0]]
+      args = tokens[1:]
+
+      # apply the operation on all the arguments
+      for a in args:
+        argVal = argNameVals[a]
+        op.__call__(argVal)
+
+      # remove subExpr from expr
+      expr = self.squeeze(expr[:posBeg] + expr[posEnd + 1:])
+
+  def squeeze(self, expr):
+    """
+    Squeeze all the spaces out
+    @param expr expression
+    @return new expression
+    """
+    expr = re.sub(r'\s+', '', expr)
+    expr = re.sub(r'\(\s*', '(', expr)
+    expr = re.sub(r'\(\s*', '(', expr)
+    expr = re.sub(r'^\s*', '', expr)
+    expr = re.sub(r'\s*$', '', expr)
+    return expr
+
+
 ###############################################################################
 
 def test():
 
   from icqSphere import Sphere
+  from icqCylinder import Cylinder
+  from icqBox import Box
 
 
   geom = Geometry()
   geom += Sphere(radius=0.6, origin=(0.1, 0.2, 0.3))
-  geom -= Sphere(radius=0.5, origin=(0.8, 0.7, 0.6))
-  geom -= Box(bxLo=(0., 0.7, 0.65), bxHi=(0.2, 1., 1.))
+  geom -= Cylinder(radius=0.5, origin=(0.8, 0.7, 0.6), length=0.6)
+  geom -= Box(bxLo=(0.1, 0.2, 0.3), bxHi=(0.2, 1., 1.))
   geom.computeBoundarySurface(100, 100, 100)
   print geom.getBoundarySurface()
   geom.show()
 
-if __name__ == '__main__': test()
+if __name__ == '__main__': 
+  test()
 
 
 
