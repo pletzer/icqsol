@@ -12,7 +12,6 @@ class Cylinder(vtk.vtkImplicitBoolean):
     @param origin center of the cylinder in the x, y directions
     @param length length of the cylinder in the z direction
     """
-
     # infinite cylinder in the y direction
     self.cyl = vtk.vtkCylinder()
     self.cyl.SetRadius(radius)

@@ -28,5 +28,3 @@ class Box(vtk.vtkBox):
 
 
 
-
-

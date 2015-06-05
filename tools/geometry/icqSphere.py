@@ -17,12 +17,11 @@ class Sphere(vtk.vtkSphere):
     self.hiBounds = numpy.array(origin) + radius
 
   def getBounds(self): 
-  	"""
-  	Get min/max bounds
-  	@return low bound, hi bound
-  	"""
-  	return self.loBounds, self.hiBounds
-
+    """
+    Get min/max bounds
+    @return low bound, hi bound
+    """
+    return self.loBounds, self.hiBounds
 
 
 
