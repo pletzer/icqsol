@@ -34,6 +34,9 @@ class Geometry:
     self.surfPolyData = None
 
     self.objectList = []
+    self.loBound = numpy.array([float('inf')] * 3)
+    self.hiBound = numpy.array([-float('inf')] * 3)
+    self.boundsSet = False
 
   def __iadd__(self, otherObj):
     """
@@ -74,17 +77,17 @@ class Geometry:
     @return {'points': array of points, 'cells': array of cells}
     """
 
-    lo = numpy.array([float('inf')] * 3)
-    hi = numpy.array([-float('inf')] * 3)
     for o in self.objectList:
       objLo, objHi = o.getBounds()
-      lo = numpy.minimum(lo, objLo)
-      hi = numpy.maximum(hi, objHi)
+      self.loBound = numpy.minimum(self.loBound, objLo)
+      self.hiBound = numpy.maximum(self.hiBound, objHi)
+
+    self.boundsSet = True
 
     # set the bounds for th esampling function
-    self.sampleFunc.SetModelBounds(lo[0], hi[0], \
-                                   lo[1], hi[1], \
-                                   lo[2], hi[2])
+    self.sampleFunc.SetModelBounds(self.loBound[0], self.hiBound[0], \
+                                   self.loBound[1], self.hiBound[1], \
+                                   self.loBound[2], self.hiBound[2])
 
 
     self.sampleFunc.SetSampleDimensions(nx, ny, nz)
@@ -146,6 +149,41 @@ class Geometry:
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
     actor.GetProperty().SetColor(1,1,1)
+    
+    #
+    # add axes
+    #
+
+    axes = [vtk.vtkArrowSource(), vtk.vtkArrowSource(), vtk.vtkArrowSource()]
+    axesColrs = [(1., 0., 0.,), (0., 1., 0.,), (0., 0., 1.,)]
+    axesTransf = [vtk.vtkTransform(), vtk.vtkTransform(), vtk.vtkTransform()]
+
+    
+    if self.boundsSet:
+      # scale
+      for i in range(3):
+        factor = self.hiBound[i] - self.loBound[i]
+        axesTransf[i].Scale(factor, factor, factor)
+
+      # translate to loBounds
+      for at in axesTransf:
+        at.Translate(self.loBound)
+
+    # rotate the y and z arrows (initially along x). Order of operations is
+    # last first (rotation before translation before scaling)
+    axesTransf[1].RotateZ(90.0) 
+    axesTransf[2].RotateY(-90.0)
+
+    axesTPD = [vtk.vtkTransformPolyDataFilter(), vtk.vtkTransformPolyDataFilter(), vtk.vtkTransformPolyDataFilter()]
+    axesMappers = [vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper()]
+    axesActors = [vtk.vtkActor(), vtk.vtkActor(), vtk.vtkActor()]
+    for i in range(3):
+      axesTPD[i].SetInputConnection(axes[i].GetOutputPort())
+      axesTPD[i].SetTransform(axesTransf[i])
+      axesMappers[i].SetInputConnection(axesTPD[i].GetOutputPort())
+      axesActors[i].SetMapper(axesMappers[i])
+      axesActors[i].GetProperty().SetColor(axesColrs[i])
+      ren.AddActor(axesActors[i])
 
     # assign actor to the renderer
     ren.AddActor(actor)
