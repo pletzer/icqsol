@@ -33,5 +33,9 @@ for shapeExpr in args.createExprs:
 # TO DO 
 
 # assemble the shapes
-geom = eval(args.assembleExpr)
+geom = Geometry()
+geom.apply(assembleExpr)
+
+# save
+geom
 
