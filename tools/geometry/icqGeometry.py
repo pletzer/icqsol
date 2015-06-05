@@ -207,7 +207,7 @@ def test():
 
 
   geom = Geometry()
-  geom -= Sphere(radius=0.6, origin=(0.1, 0.2, 0.3))
+  geom += Sphere(radius=0.6, origin=(0.1, 0.2, 0.3))
   geom -= Sphere(radius=0.5, origin=(0.8, 0.7, 0.6))
   geom -= Box(bxLo=(0., 0.7, 0.65), bxHi=(0.2, 1., 1.))
   geom.computeBoundarySurface(100, 100, 100)
