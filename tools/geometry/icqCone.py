@@ -8,7 +8,7 @@ class Cone(vtk.vtkImplicitBoolean):
   def __init__(self, angle, origin, length):
     """
     Constructor
-    @param angle angle in degrees
+    @param angle half angle in degrees
     @param origin location of the cone vertex
     @param length length of the cone axis
     """
@@ -16,12 +16,14 @@ class Cone(vtk.vtkImplicitBoolean):
     self.cone = vtk.vtkCone()
     self.cone.SetAngle(angle)
 
-    # rotate the cylinder so the axis is along z
-    self.coneTransform = vtk.vtkGeneralTransform()
-    self.coneTransform.RotateY(-90.0)
+    self.coneTransform = vtk.vtkTransform()
+    self.coneTransform.PostMultiply()
 
     # move the code to the origin location
-    self.coneTransform.Translate(origin)
+    self.coneTransform.Translate(-numpy.array(origin))
+
+    # make rotation axis z
+    self.coneTransform.RotateY(-90.0)
 
     # apply the transform
     self.cone.SetTransform(self.coneTransform)
@@ -61,7 +63,7 @@ def test():
 
   from icqGeometry import Geometry
 
-  cone = Cone(angle=70.0, origin=(0., 0., 0.), length = 1.0)
+  cone = Cone(angle=70.0, origin=(0., 0., 0.2), length = 1.0)
   print cone.getBounds()
 
   geom = Geometry()
