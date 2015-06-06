@@ -40,7 +40,7 @@ class Cone(vtk.vtkImplicitBoolean):
     self.AddFunction(self.planeLo)
     self.AddFunction(self.planeHi)
 
-    maxRadius = length * numpy.arctan(0.5 * angle)
+    maxRadius = length * numpy.tan(numpy.pi*angle/180.)
     self.loBounds = numpy.array([origin[0] - maxRadius, 
                                  origin[1] - maxRadius, 
                                  origin[2]])
@@ -54,3 +54,20 @@ class Cone(vtk.vtkImplicitBoolean):
     @return low bound, hi bound
     """
     return self.loBounds, self.hiBounds
+
+####################################################################################################
+
+def test():
+
+  from icqGeometry import Geometry
+
+  cone = Cone(angle=70.0, origin=(0., 0., 0.), length = 1.0)
+  print cone.getBounds()
+
+  geom = Geometry()
+  geom += cone
+  geom.computeBoundarySurface(100, 100, 100)
+  geom.show()
+
+if __name__ == '__main__':
+  test()
