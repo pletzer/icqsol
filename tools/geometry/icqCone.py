@@ -19,13 +19,13 @@ class Cone(vtk.vtkImplicitBoolean):
     self.coneTransform = vtk.vtkTransform()
     self.coneTransform.PostMultiply()
 
-    # move the code to the origin location
+    # move the cone to the origin location
     self.coneTransform.Translate(-numpy.array(origin))
 
-    # make rotation axis z
+
+    # apply the transform    # make rotation axis z (initially along x)
     self.coneTransform.RotateY(-90.0)
 
-    # apply the transform
     self.cone.SetTransform(self.coneTransform)
 
     # cut the cone

@@ -15,12 +15,14 @@ class Cylinder(vtk.vtkImplicitBoolean):
     # infinite cylinder in the y direction
     self.cyl = vtk.vtkCylinder()
     self.cyl.SetRadius(radius)
-    self.cyl.SetCenter(origin)
 
-    # rotate the cylinder so the axis is along z
+    # rotate the cylinder so the axis is along z (initially along y)
     self.cylTransform = vtk.vtkGeneralTransform()
+    self.cylTransform.PostMultiply()
+    self.cylTransform.Translate(-numpy.array(origin))
     self.cylTransform.RotateX(90.0)
     self.cyl.SetTransform(self.cylTransform)
+
 
     # cut the cylinder
     self.planeLo = vtk.vtkPlane()
