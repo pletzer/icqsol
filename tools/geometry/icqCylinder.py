@@ -3,7 +3,9 @@
 import vtk
 import numpy
 
-class Cylinder(vtk.vtkImplicitBoolean):
+from icqCompositeShape import CompositeShape
+
+class Cylinder(CompositeShape):
 
   def __init__(self, radius, origin, length):
     """
@@ -12,6 +14,9 @@ class Cylinder(vtk.vtkImplicitBoolean):
     @param origin center of the cylinder in the x, y directions
     @param length length of the cylinder in the z direction
     """
+
+    CompositeShape.__init__(self)
+
     # infinite cylinder in the y direction
     self.cyl = vtk.vtkCylinder()
     self.cyl.SetRadius(radius)
@@ -33,17 +38,23 @@ class Cylinder(vtk.vtkImplicitBoolean):
     self.planeHi.SetNormal(0., 0., 1.)
 
     # combine
-    self.SetOperationTypeToIntersection()
-    self.AddFunction(self.cyl)
-    self.AddFunction(self.planeLo)
-    self.AddFunction(self.planeHi)
+    self.func = vtk.vtkImplicitBoolean()
+    self.func.SetOperationTypeToIntersection()
+    self.func.AddFunction(self.cyl)
+    self.func.AddFunction(self.planeLo)
+    self.func.AddFunction(self.planeHi)
 
-    self.loBounds = numpy.array([origin[0] - radius, origin[1] - radius, origin[2] - 0.5*length])
-    self.hiBounds = numpy.array([origin[0] + radius, origin[1] + radius, origin[2] + 0.5*length])
+    self.loBound = numpy.array([origin[0] - radius, origin[1] - radius, origin[2] - 0.5*length])
+    self.hiBound = numpy.array([origin[0] + radius, origin[1] + radius, origin[2] + 0.5*length])
 
-  def getBounds(self): 
-    """
-    Get min/max bounds
-    @return low bound, hi bound
-    """
-    return self.loBounds, self.hiBounds
+################################################################################
+def test():
+
+  cyl = Cylinder(radius=0.3, origin=(0., 0., 0.5), length=1.2)
+  print cyl.getBounds()
+  cyl.computeBoundarySurface(100, 100, 100)
+  cyl.show()
+
+if __name__ == '__main__':
+  test()
+

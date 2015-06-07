@@ -17,8 +17,9 @@ notch2 = Box(bxLo = (-0.1, -1., 4.4), bxHi = (0.1, 1., 5.0))
 
 geom = Geometry()
 geom += head
+geom -= notch1
+geom -= notch2
 geom += shaft
-geom += notch1
-geom += notch2
+
 geom.computeBoundarySurface(100, 100, 100)
 geom.show()

@@ -3,7 +3,9 @@
 import vtk
 import numpy
 
-class Cone(vtk.vtkImplicitBoolean):
+from icqShape import Shape
+
+class Cone(Shape):
 
   def __init__(self, angle, origin, length):
     """
@@ -12,7 +14,13 @@ class Cone(vtk.vtkImplicitBoolean):
     @param origin location of the cone vertex
     @param length length of the cone axis
     """
+
+    # call base class constructor
+    Shape.__init__(self)
+
     # infinite cone in the x direction
+    self.func = vtk.vtkImplicitBoolean()
+
     self.cone = vtk.vtkCone()
     self.cone.SetAngle(angle)
 
@@ -37,39 +45,27 @@ class Cone(vtk.vtkImplicitBoolean):
     self.planeHi.SetNormal(0., 0., 1.)
 
     # combine
-    self.SetOperationTypeToIntersection()
-    self.AddFunction(self.cone)
-    self.AddFunction(self.planeLo)
-    self.AddFunction(self.planeHi)
+    self.func.SetOperationTypeToIntersection()
+    self.func.AddFunction(self.cone)
+    self.func.AddFunction(self.planeLo)
+    self.func.AddFunction(self.planeHi)
 
     maxRadius = length * numpy.tan(numpy.pi*angle/180.)
-    self.loBounds = numpy.array([origin[0] - maxRadius, 
-                                 origin[1] - maxRadius, 
-                                 origin[2]])
-    self.hiBounds = numpy.array([origin[0] + maxRadius, 
-                                 origin[1] + maxRadius, \
-                                 origin[2] + length])
-
-  def getBounds(self): 
-    """
-    Get min/max bounds
-    @return low bound, hi bound
-    """
-    return self.loBounds, self.hiBounds
+    self.loBound = numpy.array([origin[0] - maxRadius, 
+                                origin[1] - maxRadius, 
+                                origin[2]])
+    self.hiBound = numpy.array([origin[0] + maxRadius, 
+                                origin[1] + maxRadius, \
+                                origin[2] + length])
 
 ####################################################################################################
 
 def test():
 
-  from icqGeometry import Geometry
-
   cone = Cone(angle=70.0, origin=(0., 0., 0.2), length = 1.0)
   print cone.getBounds()
-
-  geom = Geometry()
-  geom += cone
-  geom.computeBoundarySurface(100, 100, 100)
-  geom.show()
+  cone.computeBoundarySurface(100, 100, 100)
+  cone.show()
 
 if __name__ == '__main__':
   test()

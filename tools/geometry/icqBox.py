@@ -3,28 +3,39 @@
 import vtk
 import numpy
 
-class Box(vtk.vtkBox):
+from icqShape import Shape
 
-  def __init__(self, bxLo, bxHi):
+class Box(Shape):
+
+  def __init__(self, loBound, hiBound):
     """
     Constructor
-    @param bxLo low end of the box
-    @param bxHi high end of the box
+    @param loBound low end of the box
+    @param hiBound high end of the box
     """
-    self.SetBounds(bxLo[0], bxHi[0], \
-                   bxLo[1], bxHi[1], \
-                   bxLo[2], bxHi[2])
 
-    self.loBounds = numpy.array(bxLo)
-    self.hiBounds = numpy.array(bxHi)
+    # call the base class constructor
+    Shape.__init__(self)
 
-  def getBounds(self): 
-    """
-    Get min/max bounds
-    @return low bound, hi bound
-    """
-    return self.loBounds, self.hiBounds
+    # that's why it's a box
+    self.func = vtk.vtkBox()
+    self.func.SetBounds(loBound[0], hiBound[0], \
+                        loBound[1], hiBound[1], \
+                        loBound[2], hiBound[2])
 
+    self.loBound = numpy.array(loBound)
+    self.hiBound = numpy.array(hiBound)
+
+################################################################################
+def test():
+
+  box = Box(loBound=(0.1, 0.2, 0.3), hiBound=(0.9, 0.8, 0.7))
+  print box.getBounds()
+  box.computeBoundarySurface(100, 100, 100)
+  box.show()
+
+if __name__ == '__main__':
+  test()
 
 
 

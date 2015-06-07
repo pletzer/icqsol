@@ -3,7 +3,9 @@
 import vtk
 import numpy
 
-class Sphere(vtk.vtkSphere):
+from icqShape import Shape
+
+class Sphere(Shape):
 
   def __init__(self, radius, origin):
     """
@@ -11,20 +13,24 @@ class Sphere(vtk.vtkSphere):
     @param radius radius
     @param origin origin of the sphere
     """
-    self.SetRadius(radius)
-    self.SetCenter(numpy.array(origin))
-    self.loBounds = numpy.array(origin) - radius
-    self.hiBounds = numpy.array(origin) + radius
 
-  def getBounds(self): 
-    """
-    Get min/max bounds
-    @return low bound, hi bound
-    """
-    return self.loBounds, self.hiBounds
+    # call base class constructor
+    Shape.__init__(self)
 
+    self.func = vtk.vtkSphere()
+    self.func.SetRadius(radius)
+    self.func.SetCenter(numpy.array(origin))
+    self.loBound = numpy.array(origin) - radius
+    self.hiBound = numpy.array(origin) + radius
 
+################################################################################
+def test():
 
+  sphere = Sphere(radius=1.0, origin=(0., 0., 0.2))
+  print sphere.getBounds()
+  sphere.computeBoundarySurface(100, 100, 100)
+  sphere.show()
 
-
+if __name__ == '__main__':
+  test()
 
