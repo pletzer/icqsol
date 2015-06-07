@@ -3,9 +3,9 @@
 import vtk
 import numpy
 
-from icqCompositeShape import CompositeShape
+from icqShape import Shape
 
-class Cylinder(CompositeShape):
+class Cylinder(Shape):
 
   def __init__(self, radius, origin, length):
     """
@@ -15,7 +15,7 @@ class Cylinder(CompositeShape):
     @param length length of the cylinder in the z direction
     """
 
-    CompositeShape.__init__(self)
+    Shape.__init__(self)
 
     # infinite cylinder in the y direction
     self.cyl = vtk.vtkCylinder()
@@ -44,8 +44,10 @@ class Cylinder(CompositeShape):
     self.func.AddFunction(self.planeLo)
     self.func.AddFunction(self.planeHi)
 
-    self.loBound = numpy.array([origin[0] - radius, origin[1] - radius, origin[2] - 0.5*length])
-    self.hiBound = numpy.array([origin[0] + radius, origin[1] + radius, origin[2] + 0.5*length])
+    self.loBound = numpy.array([origin[0] - radius, 
+                                origin[1] - radius, origin[2] - 0.5*length])
+    self.hiBound = numpy.array([origin[0] + radius, 
+                                origin[1] + radius, origin[2] + 0.5*length])
 
 ################################################################################
 def test():

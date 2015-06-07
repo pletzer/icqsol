@@ -40,8 +40,8 @@ class Shape:
     @param loBound low corner 
     @param hiBound high corner 
     """
-    self.loBound = numpy.minimum(self.loBound, numpy.array(self.hiBound))
-    self.hiBound = numpy.minimum(self.loBound, numpy.array(self.hiBound))
+    self.loBound = numpy.minimum(self.loBound, numpy.array(loBound))
+    self.hiBound = numpy.maximum(self.hiBound, numpy.array(hiBound))
 
   def getBounds(self):
     """
@@ -50,10 +50,10 @@ class Shape:
     """
     return self.loBound, self.hiBound
 
-  def __add__(self, otherShapes):
+  def __add__(self, otherShape):
     """
     + operator or union
-    @param otherShapes other shapes
+    @param otherShape other shape
     @return composite shape
     """
     res = Shape()
@@ -62,31 +62,29 @@ class Shape:
     res.func = vtk.vtkImplicitBoolean()
     res.func.SetOperationTypeToUnion()
     res.func.AddFunction(self.func)
-    for o in otherShapes:
-      res.updateBounds(o.loBound, o.hiBound)
-      res.func.AddFunction(o.func)
+    res.updateBounds(otherShape.loBound, otherShape.hiBound)
+    res.func.AddFunction(otherShape.func)
 
     return res
 
-  def __mul__(self, otherShapes):
+  def __mul__(self, otherShape):
     """
     * operator or intersect
-    @param otherShapes other shapes
+    @param otherShape other shape
     @return composite shape
     """
     res = Shape()
     res.updateBounds(self.loBound, self.hiBound)
 
     res.func = vtk.vtkImplicitBoolean()
-    res.func.SetOperationTypeToIntersect()
+    res.func.SetOperationTypeToIntersection()
     res.func.AddFunction(self.func)
-    for o in otherShapes:
-      res.updateBounds(o.loBound, o.hiBound)
-      res.func.AddFunction(o.func)
+    res.updateBounds(otherShape.loBound, otherShape.hiBound)
+    res.func.AddFunction(otherShape.func)
 
     return res
 
-  def __sub__(self, otherShapes):
+  def __sub__(self, otherShape):
     """
     - operator or remove
     @param otherShapes other shapes
@@ -95,12 +93,10 @@ class Shape:
     res = Shape()
 
     res.func = vtk.vtkImplicitBoolean()
-    res.updateBounds(self.loBound, self.hiBound)
-    res.func.AddFunction(self.func)
     res.func.SetOperationTypeToDifference()
-    for o in otherShapes:
-      res.updateBounds(o.loBound, o.hiBound)
-      res.func.AddFunction(o.func)
+    res.func.AddFunction(self.func)
+    res.updateBounds(otherShape.loBound, otherShape.hiBound)
+    res.func.AddFunction(otherShape.func)
 
     return res
 
@@ -235,11 +231,17 @@ class Shape:
 
 def testConstructiveGeometry():
 
-  geom = (Sphere(radius=0.6, origin=(0.1, 0.2, 0.3)) * \
-         Box(bxLo=(0.1, 0.2, 0.3), bxHi=(1.0, 1.0, 1.0))) \
-        - Cylinder(radius=0.5, origin=(0.3, 0.4, 0.5), length=0.6)
+  from icqSphere import Sphere
+  from icqBox import Box
+  from icqCylinder import Cylinder
 
-  geom.show()
+  s = Sphere(radius=0.2, origin=(0.1, 0.2, 0.3))
+  b = Box(loBound=(0.1, 0.2, 0.3), hiBound=(1.0, 1.0, 1.0))
+  c = Cylinder(radius=0.5, origin=(0.3, 0.4, 0.5), length=0.6)
+
+  geom = s + c * b
+
+  geom.computeBoundarySurface(100, 100, 100)
   print geom.getBoundarySurface()
   geom.show()
 
