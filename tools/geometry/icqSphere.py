@@ -19,9 +19,9 @@ class Sphere(Shape):
 
     self.func = vtk.vtkSphere()
     self.func.SetRadius(radius)
-    self.func.SetCenter(numpy.array(origin))
-    self.loBound = numpy.array(origin) - radius
-    self.hiBound = numpy.array(origin) + radius
+    ori = numpy.array(origin)
+    self.func.SetCenter(ori)
+    self.updateBounds(ori - radius, ori + radius)
 
 ################################################################################
 def test():

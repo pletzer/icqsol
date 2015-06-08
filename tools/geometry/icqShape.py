@@ -57,12 +57,13 @@ class Shape:
     @return composite shape
     """
     res = Shape()
+
     res.updateBounds(self.loBound, self.hiBound)
+    res.updateBounds(otherShape.loBound, otherShape.hiBound)
 
     res.func = vtk.vtkImplicitBoolean()
     res.func.SetOperationTypeToUnion()
     res.func.AddFunction(self.func)
-    res.updateBounds(otherShape.loBound, otherShape.hiBound)
     res.func.AddFunction(otherShape.func)
 
     return res
@@ -74,12 +75,13 @@ class Shape:
     @return composite shape
     """
     res = Shape()
+
     res.updateBounds(self.loBound, self.hiBound)
+    res.updateBounds(otherShape.loBound, otherShape.hiBound)
 
     res.func = vtk.vtkImplicitBoolean()
     res.func.SetOperationTypeToIntersection()
     res.func.AddFunction(self.func)
-    res.updateBounds(otherShape.loBound, otherShape.hiBound)
     res.func.AddFunction(otherShape.func)
 
     return res
@@ -87,15 +89,17 @@ class Shape:
   def __sub__(self, otherShape):
     """
     - operator or remove
-    @param otherShapes other shapes
+    @param otherShape other shape
     @return composite shape
     """
     res = Shape()
 
+    res.updateBounds(self.loBound, self.hiBound)
+    res.updateBounds(otherShape.loBound, otherShape.hiBound)
+
     res.func = vtk.vtkImplicitBoolean()
     res.func.SetOperationTypeToDifference()
     res.func.AddFunction(self.func)
-    res.updateBounds(otherShape.loBound, otherShape.hiBound)
     res.func.AddFunction(otherShape.func)
 
     return res
@@ -235,11 +239,12 @@ def testConstructiveGeometry():
   from icqBox import Box
   from icqCylinder import Cylinder
 
+  s1 = Sphere(radius=0.7, origin=(0., 0., 0.))
   s = Sphere(radius=0.2, origin=(0.1, 0.2, 0.3))
   b = Box(loBound=(0.1, 0.2, 0.3), hiBound=(1.0, 1.0, 1.0))
   c = Cylinder(radius=0.5, origin=(0.3, 0.4, 0.5), length=0.6)
 
-  geom = s + c * b
+  geom = c*b - s - s1
 
   geom.computeBoundarySurface(100, 100, 100)
   print geom.getBoundarySurface()

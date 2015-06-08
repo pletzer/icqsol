@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Geometry of a screw
+Test creation of a screw shape
 @author pletzer@psu.edu
 """
 
@@ -15,7 +15,7 @@ shaft = Cylinder(radius=0.5, origin=(0., 0., 2.0), length = 4.0)
 notch1 = Box(loBound = (-1., -0.1, 4.4), hiBound = (1., 0.1, 5.0))
 notch2 = Box(loBound = (-0.1, -1., 4.4), hiBound = (0.1, 1., 5.0))
 
-geom = head + shaft + notch1 + notch2
+geom = head + shaft - notch1 - notch2
 
 geom.computeBoundarySurface(100, 100, 100)
 geom.show()
