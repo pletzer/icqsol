@@ -17,5 +17,7 @@ notch2 = Box(loBound = (-0.1, -1., 4.4), hiBound = (0.1, 1., 5.0))
 
 geom = head + shaft - notch1 - notch2
 
+geom.rotate(2, 45.0)
+
 geom.computeBoundarySurface(100, 100, 100)
 geom.show(filename='testScrew.png')

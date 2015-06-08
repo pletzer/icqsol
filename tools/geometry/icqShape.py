@@ -71,10 +71,13 @@ class Shape:
       return
 
     self.func.SetTransform(self.transf)
+
     if axis == 0:
       self.transf.RotateX(angleDeg)
+
     elif axis == 1:
       self.transf.RotateY(angleDeg)
+
     elif axis == 2:
       self.transf.RotateZ(angleDeg)
 
