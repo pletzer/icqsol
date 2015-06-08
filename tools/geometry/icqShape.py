@@ -17,7 +17,11 @@ class Shape:
     """
     Constructor
     """
+
+    # implicit function, either boolean or non-boolean
     self.func = None
+
+    # low/high corners of hte box containing the object. 
     self.loBound = numpy.array([float('inf')] * 3)
     self.hiBound = numpy.array([-float('inf')] * 3)
 
@@ -34,6 +38,11 @@ class Shape:
 
     self.surfPolyData = None
 
+    # store all the transformations 
+    self.transf = vtk.vtkTransform()
+    # I prefer to apply the rotations after creation of the object
+    self.transf.PostMultiply()
+
   def updateBounds(self, loBound, hiBound):
     """
     Update the domain bounds
@@ -49,6 +58,25 @@ class Shape:
     @return bounds
     """
     return self.loBound, self.hiBound
+
+  def rotate(self, axis, angleDeg):
+    """
+    Rotate object around axis
+    @param axis axis index (0 for x, 1 for y, and 2 for z)
+    @param angleDeg angle in degrees (counterclockwise is positive)
+    """
+    # must have created object
+    if self.func == None:
+      # a no-operation
+      return
+
+    self.func.SetTransform(self.transf)
+    if axis == 0:
+      self.transf.RotateX(angleDeg)
+    elif axis == 1:
+      self.transf.RotateY(angleDeg)
+    elif axis == 2:
+      self.transf.RotateZ(angleDeg)
 
   def __add__(self, otherShape):
     """
@@ -154,9 +182,11 @@ class Shape:
 
   def show(self, windowSizeX=600, windowSizeY=400, filename=''):
     """
-    Show the boundary surface
+    Show the boundary surface or write to file
     @param windowSizeX number of pixels in x
     @param windowSizeY number of pixels in y
+    @param filename write to a file if this keyword is present and a 
+                    non-empty string
     """
     # create a rendering window and renderer
     ren = vtk.vtkRenderer()
