@@ -17,7 +17,7 @@ if (NOT ERROR_VTK STREQUAL "")
 endif()
 
 # run python setup.py install
-execute_process(COMMAND "${PYTHON_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/setup.py install --user)
+execute_process(COMMAND "${PYTHON_EXECUTABLE}" setup.py install --user)
 
 # enable ctest
 enable_testing()

@@ -1,7 +1,8 @@
 ICQSol
 ======
 
-ICQSol is a collection of tools for constructing and solving partial differential equations on the web.
+ICQSol is a collection of tools for constructing and solving partial 
+differential equations on the web.
 
 How to build ICQSol
 -------------------
@@ -9,22 +10,26 @@ How to build ICQSol
 Prerequisites
 .............
 
-1. python. Version 2.7 will work
-2. numpy. Version 1.9.2 will work. 
-3. VTK with python wrapping enabled. Version 6.1.0 will work.
+* python. Version 2.7 will work
+* numpy. Version 1.9.2 will work
+* VTK with python wrapping enabled. Version 6.1.0 will work
+* CMake
 
 Installing ICQSol
 .................
 
-If you have sudo access, type 
+In the top directory type
 
-$ sudo python setup.py install
+$ cmake .
 
-Alternatively, type 
-
-$ python setup.py install --user
+This will install icqsol Python packages in your home directory under 
+~/.local/lib/python2.7/site-packages/
 
 How to test ICQSol
 ------------------
 
-TO DO
+In the top directory type
+
+$ ctest
+
+
