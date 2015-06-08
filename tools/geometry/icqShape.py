@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+"""
+@brief A base class for constructing shapes
+@author pletzer@psu.edu
+"""
+
 # standard python modules
 import re
 
@@ -42,6 +47,15 @@ class Shape:
     self.transf = vtk.vtkTransform()
     # I prefer to apply the rotations after creation of the object
     self.transf.PostMultiply()
+
+  def setBounds(self, loBound, hiBound):
+    """
+    Set the domain bounds
+    @param loBound low corner 
+    @param hiBound high corner     
+    """
+    self.loBound = loBound[:]
+    self.hiBound = hiBound[:]
 
   def updateBounds(self, loBound, hiBound):
     """
