@@ -152,7 +152,7 @@ class Shape:
 
     return {'points': pointArr, 'cells': cellArr}
 
-  def show(self, windowSizeX=600, windowSizeY=400):
+  def show(self, windowSizeX=600, windowSizeY=400, filename=''):
     """
     Show the boundary surface
     @param windowSizeX number of pixels in x
@@ -167,6 +167,15 @@ class Shape:
     # create a renderwindowinteractor
     iren = vtk.vtkRenderWindowInteractor()
     iren.SetRenderWindow(renWin)
+
+    # camera
+    camera = vtk.vtkCamera()
+    camera.SetFocalPoint(self.hiBound)
+    center = 0.5*(self.loBound + self.hiBound)
+    camera.SetPosition(center + self.hiBound - self.loBound)
+    camera.Zoom(1.0)
+    #camera.ParallelProjectionOn()
+    ren.SetActiveCamera(camera)
  
     # mapper
     mapper = vtk.vtkPolyDataMapper()
@@ -225,11 +234,29 @@ class Shape:
 
     # assign actor to the renderer
     ren.AddActor(actor)
- 
-    # enable user interface interactor
-    iren.Initialize()
-    renWin.Render()
-    iren.Start()
+
+    # write to file
+    writer = None
+    renderLarge = vtk.vtkRenderLargeImage()
+    if filename:
+      if filename.lower().find('.png') > 0:
+        writer = vtk.vtkPNGWriter()
+      elif filename.lower().find('.jp') > 0:
+        writer = vtk.vtkJPEGWriter()
+      elif filename.lower().find('.tiff') > 0:
+        writer = vtk.vtkTIFFWriter()
+      if writer:
+        renderLarge.SetInput(ren)
+        renderLarge.SetMagnification(1)
+        renderLarge.Update()
+        writer.SetFileName(filename)
+        writer.SetInputConnection(renderLarge.GetOutputPort())
+        writer.Write()
+    else:
+      # fire up interactor
+      iren.Initialize()
+      renWin.Render()
+      iren.Start()
 
 ###############################################################################
 

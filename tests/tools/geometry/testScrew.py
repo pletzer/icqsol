@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Test creation of a screw shape
+Test creation of a screw object
 @author pletzer@psu.edu
 """
 
@@ -18,4 +18,4 @@ notch2 = Box(loBound = (-0.1, -1., 4.4), hiBound = (0.1, 1., 5.0))
 geom = head + shaft - notch1 - notch2
 
 geom.computeBoundarySurface(100, 100, 100)
-geom.show()
+geom.show(filename='testScrew.png')

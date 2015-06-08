@@ -17,10 +17,17 @@ if (NOT ERROR_VTK STREQUAL "")
 endif()
 
 # run python setup.py install
-execute_process(COMMAND "${PYTHON_EXECUTABLE}" setup.py install --user)
+execute_process(COMMAND "${PYTHON_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/setup.py install --user)
 
 # enable ctest
 enable_testing()
+
+#
+# tests
+#
+set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests/tools")
+add_test(NAME testRing COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testRing.py")
+add_test(NAME testScrew COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testScrew.py")
 
 
 
