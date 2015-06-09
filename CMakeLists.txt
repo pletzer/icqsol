@@ -34,11 +34,22 @@ add_test(NAME testScrew COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/te
 # tool tests
 #
 
+# create a simple spherical object
 add_test(NAME testBuildGeometry1 COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/buildGeometry.py"
          --create "s = Sphere(radius=0.5, origin=(0.,0.,0.))"
          --assemble "s"
          --output testBuildGeometry1.ply
          )
+
+# a cube with a notch and a cylindrical hole
+add_test(NAME testBuildGeometry2 COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/buildGeometry.py"
+         --create "cube = Box(loBound=(0.,0.,0.), hiBound=(1.,1.,1.))"
+                  "sphere = Sphere(radius=0.2, origin=(1., 1., 1.))"
+                  "cyl = Cylinder(radius=0.1, origin=(0.1, 0.2, 0.3), length=1.1)"
+         --assemble "cube - sphere - cyl"
+         --output testBuildGeometry2.ply
+         )
+
 
 
 
