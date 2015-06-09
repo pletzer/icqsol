@@ -7,12 +7,27 @@
 
 import os
 import time
+import numpy
 
 class PLYWriter:
 
-	def __init__(self, filename):
+  dt2Type = {
+      numpy.dtype('float32'): 'float',
+      numpy.dtype('float64'): 'double',
+      numpy.dtype('int32'): 'int',
+      numpy.dtype('uint8'): 'uchar',
+  }
 
-		self.fileHandle = file(filename, 'w')
+  dt2Fmt = {
+      numpy.dtype('float32'): '%g',
+      numpy.dtype('float64'): '%g',
+      numpy.dtype('int32'): '%d',
+      numpy.dtype('uint8'): '%d',
+  }
+
+  def __init__(self, filename):
+
+    self.fileHandle = file(filename, 'w')
 
     self.vertices = []
     self.triangles = []
@@ -39,25 +54,18 @@ class PLYWriter:
     """
     self.triangles = triangs
 
-	def write(self):
+  def write(self):
     """
     Write data
     """
-		self._writeHeader()
+    self._writeHeader()
     self._writeVertices()
-    self._writeSurfaceTriangle()
+    self._writeTriangles()
 
   def _writeHeader(self):
     """
     Write header
     """
-
-    dt2Type = {
-      numpy.dtype('float32'): 'float',
-      numpy.dtype('float64'): 'double',
-      numpy.dtype('int32'): 'int',
-      numpy.dtype('uint8'): 'uchar',
-    }
 
     # global metadata
     print >> self.fileHandle, 'ply'
@@ -70,8 +78,8 @@ class PLYWriter:
     numVerts = len(self.vertices)
     print >> self.fileHandle, 'element vertex {0}'.format(numVerts)
     for fld in self.vertices.dtype.fields.items():
-      print >> self.fileHandle, 
-               'property {0} {1}'.format(fld[0], dt2Type[fld[1][0]])
+      name, typ = fld[0], self.dt2Type[fld[1][0]]
+      print >> self.fileHandle, 'property {0} {1}'.format(name, typ)
 
     # surface triangles
     numTriangs = len(self.triangles)
@@ -82,7 +90,7 @@ class PLYWriter:
       # skip since this is part of the above list
       if name == 'ia' or name == 'ib' or name == 'ic':
         continue
-      typ = dt2Type[fld[1][0]]
+      typ = self.dt2Type[fld[1][0]]
       print >> self.fileHandle, 'property {0} {1}'.format(name, typ)
 
     # close
@@ -90,11 +98,22 @@ class PLYWriter:
 
   def _writeVertices(self):
 
-    pass
+    fmt = ''
+    for fld in self.vertices.dtype.fields.items():
+      fmt += self.dt2Fmt[fld[1][0]] + ' '
+
+    for e in self.vertices:
+      print >> self.fileHandle, fmt % eval(str(e))
 
   def _writeTriangles(self):
 
-    pass
+    fmt = ''
+    for fld in self.triangles.dtype.fields.items():
+      fmt += self.dt2Fmt[fld[1][0]] + ' '
+
+    for e in self.triangles:
+      print >> self.fileHandle, fmt % eval(str(e))
+    
 
 ################################################################################
 
@@ -118,8 +137,8 @@ def test():
                                               ('b', 'uint8')
                                              ])
   triangs['ia'][0] = 0
-  triangs['ib'][1] = 1
-  triangs['ic'][2] = 2
+  triangs['ib'][0] = 1
+  triangs['ic'][0] = 2
 
   pw = PLYWriter('test.ply')
   pw.setVertices(verts)
