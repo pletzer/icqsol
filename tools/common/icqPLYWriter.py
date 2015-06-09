@@ -35,22 +35,14 @@ class PLYWriter:
   def setVertices(self, verts):
     """
     Set vertex data
-    @param verts array of x, y, z vertices and corresponding propeerties as a 
-                 1-d array of structs. Example:
-                 numpy.zeros((n,), dtype = [('x', 'f4'), 
-                                            ('y', 'f4'), 
-                                            ('z', 'f4'), 
-                                            ('color', '|S10')])
+    @param verts array of x, y, z vertices
     """
     self.vertices = verts
 
   def setTriangles(self, triangs):
     """
     Set triangle data
-    @param triangs vertex indices (triangles) and properties as a 1-d array 
-           of structs. Example: 
-           numpy.zeros((n,), dtype = [('ia', 'i4'), ('ib', 'i4'), ('ic', 'i4'), 
-                                      ('color', '|S10')])
+    @param triangs vertex indices (triangles)
     """
     self.triangles = triangs
 
@@ -59,8 +51,12 @@ class PLYWriter:
     Write data
     """
     self._writeHeader()
-    self._writeVertices()
-    self._writeTriangles()
+
+    # write vertices
+    numpy.savetxt(self.fileHandle, self.vertices, fmt='%g')
+
+    # write triangles
+    numpy.savetxt(self.fileHandle, self.triangles, fmt='%d')
 
   def _writeHeader(self):
     """
@@ -77,47 +73,16 @@ class PLYWriter:
     # vertices
     numVerts = len(self.vertices)
     print >> self.fileHandle, 'element vertex {0}'.format(numVerts)
-    for fld in self.vertices.dtype.fields.items():
-      name, typ = fld[0], self.dt2Type[fld[1][0]]
-      print >> self.fileHandle, 'property {0} {1}'.format(name, typ)
+    for p in 'x', 'y', 'z':
+      print >> self.fileHandle, 'property float {0}'.format(p)
 
-    # surface triangles
+    # triangles
     numTriangs = len(self.triangles)
     print >> self.fileHandle, 'element face {0}'.format(numTriangs)
     print >> self.fileHandle, 'property list uchar int vertex_index'
-    for fld in self.triangles.dtype.fields.items():
-      name = fld[0]
-      # skip since this is part of the above list
-      if name == 'ia' or name == 'ib' or name == 'ic':
-        continue
-      typ = self.dt2Type[fld[1][0]]
-      print >> self.fileHandle, 'property {0} {1}'.format(name, typ)
 
     # close
-    print >> self.fileHandle, 'end_header'
-
-  def _writeVertices(self):
-
-    fmt = ''
-    for fld in self.vertices.dtype.fields.items():
-      fmt += self.dt2Fmt[fld[1][0]] + ' '
-
-    for e in self.vertices:
-      # e is numpy.void object, this is the only way I can write a formatted
-      # record
-      print >> self.fileHandle, fmt % eval(str(e))
-
-  def _writeTriangles(self):
-
-    fmt = ''
-    for fld in self.triangles.dtype.fields.items():
-      fmt += self.dt2Fmt[fld[1][0]] + ' '
-
-    for e in self.triangles:
-      # e is numpy.void object, this is the only way I can write a formatted
-      # record
-      print >> self.fileHandle, fmt % eval(str(e))
-    
+    print >> self.fileHandle, 'end_header'    
 
 ################################################################################
 
