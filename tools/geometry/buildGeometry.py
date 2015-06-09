@@ -30,7 +30,7 @@ args = parser.parse_args()
 
 # instantiate the shapes
 for shapeExpr in args.createExprs:
-	exec(shapeExpr)
+  exec(shapeExpr)
 
 # apply transformations
 for transf in args.transforms:
@@ -46,7 +46,7 @@ if args.output:
   data = geom.getSurfaceBoundary()
 
   pw = PLYWriter(args.output)
-	pw.setVertices(data['points'])
+  pw.setVertices(data['points'])
   pw.setTriangles(data['cells'])
 
 
