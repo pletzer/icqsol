@@ -14,6 +14,7 @@ setup(name='ICQSol',
       author_email='pletzer@psu.edu',
       url='https://github.com/pletzer/icqsol/wiki',
       package_dir = {'icqsol': ''}, # the present working directory maps to icqsol below
-      packages=['icqsol', 'icqsol.tools', 'icqsol.tools.geometry'],
+      packages=['icqsol', 'icqsol.tools', 
+                'icqsol.tools.geometry', 'icqsol.tools.common'],
       requires = ['numpy', 'vtk'],
      )
