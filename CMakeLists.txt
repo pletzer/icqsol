@@ -23,14 +23,22 @@ execute_process(COMMAND "${PYTHON_EXECUTABLE}" setup.py install --user)
 enable_testing()
 
 #
-# tests
+# class tests
 #
+
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests/tools")
 add_test(NAME testRing COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testRing.py")
 add_test(NAME testScrew COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testScrew.py")
 
+#
+# tool tests
+#
 
-
+add_test(NAME testBuildGeometry1 COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/buildGeometry.py"
+         --create "s = Sphere(radius, origin=(0.,0.,0.))"
+         --assemble "s"
+         --output testBuildGeometry1.ply
+         )
 
 
 

@@ -84,6 +84,11 @@ class Shape:
       # a no-operation
       return
 
+    # Not clear at this point whether we should modify the 
+    # the bounds. Note that this is more omcplicated than just 
+    # applying rotations to self.loBound and self.hiBound since 
+    # in the case of a 180 deg rotation lo and hi get switched.
+
     self.func.SetTransform(self.transf)
 
     if axis == 0:

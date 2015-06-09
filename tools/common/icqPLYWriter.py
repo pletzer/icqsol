@@ -103,6 +103,8 @@ class PLYWriter:
       fmt += self.dt2Fmt[fld[1][0]] + ' '
 
     for e in self.vertices:
+      # e is numpy.void object, this is the only way I can write a formatted
+      # record
       print >> self.fileHandle, fmt % eval(str(e))
 
   def _writeTriangles(self):
@@ -112,6 +114,8 @@ class PLYWriter:
       fmt += self.dt2Fmt[fld[1][0]] + ' '
 
     for e in self.triangles:
+      # e is numpy.void object, this is the only way I can write a formatted
+      # record
       print >> self.fileHandle, fmt % eval(str(e))
     
 
