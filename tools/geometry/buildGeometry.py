@@ -10,7 +10,7 @@ from icqsol.tools.geometry.icqCylinder import Cylinder
 from icqsol.tools.common.icqPLYWriter import PLYWriter
 
 # time stamp
-tid = re.sub(r'\.', '', time.time())
+tid = re.sub(r'\.', '', str(time.time()))
 
 parser = argparse.ArgumentParser(description='Build geometry.')
 
@@ -20,7 +20,7 @@ parser.add_argument('--create', dest='createExprs', nargs='+',
 parser.add_argument('--transforms', dest='transforms', nargs='*', 
   help='Apply transformations to each object in sequence, e.g. c.rotateX(25.0)')
 
-parser.add_argument('--assemble', dest='assembleExpr', nargs=1,
+parser.add_argument('--assemble', dest='assembleExpr',
 	help='Assemble geometry, e.g. "(c1 + s2)*s3 - s4"')
 
 parser.add_argument('--output', dest='output', default='buildGeometry-{0}'.format(tid), 
@@ -33,8 +33,9 @@ for shapeExpr in args.createExprs:
   exec(shapeExpr)
 
 # apply transformations
-for transf in args.transforms:
-  exec(transf)
+if args.transforms:
+  for transf in args.transforms:
+    exec(transf)
 
 # assemble the shapes
 geom = eval(args.assembleExpr)
@@ -43,11 +44,12 @@ geom = eval(args.assembleExpr)
 if args.output:
 
   geom.computeBoundarySurface(100, 100, 100)
-  data = geom.getSurfaceBoundary()
+  data = geom.getBoundarySurface()
 
   pw = PLYWriter(args.output)
   pw.setVertices(data['points'])
   pw.setTriangles(data['cells'])
+  pw.write()
 
 
 
