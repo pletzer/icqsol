@@ -15,7 +15,7 @@ tid = re.sub(r'\.', '', str(time.time()))
 parser = argparse.ArgumentParser(description='Build geometry.')
 
 parser.add_argument('--create', dest='createExprs', nargs='+', 
-	help='Create shape, e.g. "c = Cylinder(radius=0.1, origin=[0., 0., 0.])"')
+	help='Create shape, e.g. "c = Cylinder(radius=0.1, origin=[0., 0., 0.], length=1.0)"')
 
 parser.add_argument('--transforms', dest='transforms', nargs='*', 
   help='Apply transformations to each object in sequence, e.g. c.rotateX(25.0)')
