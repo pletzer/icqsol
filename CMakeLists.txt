@@ -16,8 +16,22 @@ if (NOT ERROR_VTK STREQUAL "")
   message(FATAL_ERROR "You must have python-vtk installed!")
 endif()
 
+option(INSTALL_USER "Install in user directory" OFF)
+option(INSTALL_PREFIX "Install under CMAKE_INSTALL_PREFIX" OFF)
+
 # run python setup.py install
-execute_process(COMMAND "${PYTHON_EXECUTABLE}" setup.py install --user)
+if (NOT INSTALL_USER AND NOT INSTALL_PREFIX)
+  # let python choose where to install, may require sudo access
+  execute_process(COMMAND "${PYTHON_EXECUTABLE}" setup.py install)
+elseif (INSTALL_USER)
+  # install in user directory
+  execute_process(COMMAND "${PYTHON_EXECUTABLE}" setup.py install --user)
+else ()
+  # user specifies where to install, must set PYTHONPATH
+  message("\n\n*** Installing under ${CMAKE_INSTALL_PREFIX}. Be sure to set PYTHONPATH, e.g. ***")
+  message("export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib/python2.7/site-packages:$PYTHONPATH\n\n")
+  execute_process(COMMAND "${PYTHON_EXECUTABLE}" setup.py install --prefix=${CMAKE_INSTALL_PREFIX})
+endif()
 
 # enable ctest
 enable_testing()
