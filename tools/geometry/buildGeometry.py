@@ -26,6 +26,10 @@ parser.add_argument('--assemble', dest='assembleExpr',
 parser.add_argument('--output', dest='output', default='buildGeometry-{0}'.format(tid), 
 	help='Output file.')
 
+# non critical parameters (no need to expose those to the GUI)
+parser.add_argument('--sample', dest='sample', nargs='*', type=int, default=[100,100,100],
+        help='Number of sampling cells')
+
 args = parser.parse_args()
 
 # instantiate the shapes
@@ -43,7 +47,11 @@ geom = eval(args.assembleExpr)
 # save
 if args.output:
 
-  geom.computeBoundarySurface(100, 100, 100)
+  ns = len(args.sample)
+  if ns < 3:
+    args.sample += [100,]*(3 - ns)
+
+  geom.computeBoundarySurface(args.sample[0], args.sample[1], args.sample[2])
   data = geom.getBoundarySurface()
 
   pw = PLYWriter(args.output)

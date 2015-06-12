@@ -56,7 +56,9 @@ class PLYWriter:
     numpy.savetxt(self.fileHandle, self.vertices, fmt='%g')
 
     # write triangles
-    numpy.savetxt(self.fileHandle, self.triangles, fmt='%d')
+    for row in self.triangles:
+      print >> self.fileHandle, '3 {0} {1} {2}'.format(row[0], row[1], row[2])
+    #numpy.savetxt(self.fileHandle, self.triangles, fmt='%d')
 
   def _writeHeader(self):
     """
