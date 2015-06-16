@@ -18,17 +18,34 @@ Prerequisites
 Installing ICQSol
 .................
 
-In the top directory type
+a) Let python choose the installation directory, typically 
+   under /usr/lib/python<version>/site-packages. May require
+   sudo privilege
 
 $ cmake .
 
-This will install icqsol Python packages in your home directory under 
-~/.local/lib/python2.7/site-packages/
+b) Install under ~/.local/lib/python<version>/site-packages/
+
+$ cmake -DINSTALL_USER=ON .
+
+c) Install in a user specified directory. Will require the user
+to set PYTHONPATH
+
+$ cmake -DUSER_PREFIX=ON -DCMAKE_INSTALL_PREFIX=<myDirectory> .
 
 How to test ICQSol
 ------------------
 
-In the top directory type
+You should be able to import icqsol in the python interpreter
+
+$ python
+Python 2.7.5 (default, Feb 11 2014, 07:46:25) 
+[GCC 4.8.2 20140120 (Red Hat 4.8.2-13)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import icqsol
+>>> 
+
+More extensive tests can be run by typing
 
 $ ctest
 
