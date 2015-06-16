@@ -6,7 +6,6 @@
 """
 
 # standard python modules
-import re
 
 # extensions
 import vtk
@@ -45,6 +44,7 @@ class Shape:
 
     # store all the transformations 
     self.transf = vtk.vtkTransform()
+
     # I prefer to apply the rotations after creation of the object
     self.transf.PostMultiply()
 
@@ -160,7 +160,7 @@ class Shape:
 
     self.sampleFunc.SetImplicitFunction(self.func)
 
-    # set the bounds for th esampling function
+    # set the bounds for the sampling function
     self.sampleFunc.SetModelBounds(self.loBound[0], self.hiBound[0], \
                                    self.loBound[1], self.hiBound[1], \
                                    self.loBound[2], self.hiBound[2])
@@ -197,9 +197,33 @@ class Shape:
 
     return {'points': pointArr, 'cells': cellArr}
 
+  def save(self, plyFilename):
+    """
+    Save data in PLY file 
+    @param plyFilename PLY file
+    """
+    writer = vtk.vtkPLYWriter()
+    writer.SetFileName(plyFilename)
+    if vtk.VTK_MAJOR_VERSION >= 6:
+      writer.SetInputData(self.surfPolyData)
+    else:
+      writer.SetInput(self.surfPolyData)
+    writer.SetInput(self.surfPolyData)
+    writer.Write()
+
+  def load(self, plyFilename):
+    """
+    Load data from PLY file
+    @param plyFilename PLY file
+    """
+    reader = vtk.vtkPLYReader()
+    reader.SetFileName(plyFilename)
+    reader.Update()
+    self.surfPolyData = reader.GetOutput()
+
   def show(self, windowSizeX=600, windowSizeY=400, filename=''):
     """
-    Show the boundary surface or write to file
+    Show the boundary surface or write image to file
     @param windowSizeX number of pixels in x
     @param windowSizeY number of pixels in y
     @param filename write to a file if this keyword is present and a 
@@ -217,9 +241,12 @@ class Shape:
 
     # camera
     camera = vtk.vtkCamera()
-    camera.SetFocalPoint(self.hiBound)
-    center = 0.5*(self.loBound + self.hiBound)
-    camera.SetPosition(center + self.hiBound - self.loBound)
+    xmin, xmax, ymin, ymax, zmin, zmax = self.surfPolyData.GetBounds()
+    lo = numpy.array([xmin, ymin, zmin])
+    hi = numpy.array([xmax, ymax, zmax])
+    camera.SetFocalPoint(hi)
+    center = 0.5*(lo + hi)
+    camera.SetPosition(center + hi - lo)
     camera.Zoom(1.0)
     #camera.ParallelProjectionOn()
     ren.SetActiveCamera(camera)
@@ -227,9 +254,11 @@ class Shape:
     # mapper
     mapper = vtk.vtkPolyDataMapper()
     if vtk.VTK_MAJOR_VERSION >= 6:
-      mapper.SetInputConnection(self.surface.GetOutputPort())
+      #mapper.SetInputConnection(self.surface.GetOutputPort())
+      mapper.SetInputData(self.surfPolyData)
     else:
-      mapper.SetInput(self.surface.GetOutput())
+      #mapper.SetInput(self.surface.GetOutput())
+      mapper.SetInput(self.surfPolyData)
     mapper.ScalarVisibilityOff()
  
     # actor
@@ -259,14 +288,14 @@ class Shape:
 
     # scale
     for i in range(3):
-      factor = self.hiBound[i] - self.loBound[i]
+      factor = hi[i] - lo[i]
       scale = [1., 1., 1.]
       scale[i] = factor
       axesTransf[i].Scale(scale)
 
     # translate to loBounds
     for at in axesTransf:
-      at.Translate(self.loBound)
+      at.Translate(lo)
 
     axesTPD = [vtk.vtkTransformPolyDataFilter(), vtk.vtkTransformPolyDataFilter(), vtk.vtkTransformPolyDataFilter()]
     axesMappers = [vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper()]
@@ -321,8 +350,14 @@ def testConstructiveGeometry():
   geom = c*b - s - s1
 
   geom.computeBoundarySurface(100, 100, 100)
-  print geom.getBoundarySurface()
-  geom.show()
+
+  geom.save('geom.ply')
+
+  geom2 = Shape()
+  geom2.load('geom.ply')
+
+  print geom2.getBoundarySurface()
+  geom2.show()
 
 if __name__ == '__main__': 
   testConstructiveGeometry()
