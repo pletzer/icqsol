@@ -11,20 +11,6 @@ import numpy
 
 class PLYWriter:
 
-  dt2Type = {
-      numpy.dtype('float32'): 'float',
-      numpy.dtype('float64'): 'double',
-      numpy.dtype('int32'): 'int',
-      numpy.dtype('uint8'): 'uchar',
-  }
-
-  dt2Fmt = {
-      numpy.dtype('float32'): '%g',
-      numpy.dtype('float64'): '%g',
-      numpy.dtype('int32'): '%d',
-      numpy.dtype('uint8'): '%d',
-  }
-
   def __init__(self, filename):
 
     self.fileHandle = file(filename, 'w')
@@ -48,43 +34,24 @@ class PLYWriter:
 
   def write(self):
     """
-    Write data
-    """
-    self._writeHeader()
-
-    # write vertices
-    numpy.savetxt(self.fileHandle, self.vertices, fmt='%g')
-
-    # write triangles
-    for row in self.triangles:
-      print >> self.fileHandle, '3 {0} {1} {2}'.format(row[0], row[1], row[2])
-    #numpy.savetxt(self.fileHandle, self.triangles, fmt='%d')
-
-  def _writeHeader(self):
-    """
-    Write header
+    Write data to file
     """
 
-    # global metadata
-    print >> self.fileHandle, 'ply'
-    print >> self.fileHandle, 'format ascii 1.0'
-    userName = os.environ.get('USER', '')
-    print >> self.fileHandle, 'comment author: {0}'.format(userName)
-    print >> self.fileHandle, 'comment date: {0}'.format(time.asctime())
+    pointData = None
+    if self.vertices.dtype == numpy.float64:
+      pointData = vtk.vtkDoubleArray()
+    else:
+      pointData = vtk.vtkFloatArray()
+    numPoints, numDims = self.vertices.shape
+    pointData.SetNumberOfTuples(numPoints)
+    pointData.SetNumberOfComponents(numDims)
+    pointData.SetVoidArray(self.vertices, numPoints*numDims, 1)
 
-    # vertices
-    numVerts = len(self.vertices)
-    print >> self.fileHandle, 'element vertex {0}'.format(numVerts)
-    for p in 'x', 'y', 'z':
-      print >> self.fileHandle, 'property float {0}'.format(p)
+    points = vtk.vtkPoints()
+    points.SetData(pointData)
 
-    # triangles
-    numTriangs = len(self.triangles)
-    print >> self.fileHandle, 'element face {0}'.format(numTriangs)
-    print >> self.fileHandle, 'property list uchar int vertex_index'
+    pd = vtkPolyDataMapper()
 
-    # close
-    print >> self.fileHandle, 'end_header'    
 
 ################################################################################
 
