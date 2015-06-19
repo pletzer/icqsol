@@ -42,6 +42,7 @@ class PrimitiveShape(BaseShape):
     Compute the surface meshes
     @param maxTriArea maximum triangle area
     """
+
     points = []
     pointCount = 0
     self.surfaceMeshes = []
@@ -105,33 +106,80 @@ class PrimitiveShape(BaseShape):
       pointCount += numPoints
 
   def _getSurfacePointArrays(self, faceId, nu, nv):
+    """
+    Get the vertex arrays
+    @param faceId face face Id
+    @param nu number of u cells
+    @param nv number of v cells
+    @return xx, yy, zz coordinates
+    """
+
     du, dv = 1.0/float(nu), 1.0/float(nv)
-    uu = numpy.outer( numpy.arange(0., 1., du), numpy.ones((nv,), numpy.float64) )
-    vv = numpy.outer( numpy.ones((nu,), numpy.float64), numpy.arange(0., 1., dv) )
+    nu1, nv1 = nu + 1, nv + 1
+
+    # 1D arrays
+    u = numpy.array([du*i for i in range(nu1)])
+    v = numpy.array([dv*j for j in range(nv1)])
+
+    # 2D arrays
+    uu = numpy.outer(u, numpy.ones((nv1,), numpy.float64))
+    vv = numpy.outer(numpy.ones((nu1,), numpy.float64), v)
+
+    # compute the vertices
     xx = self.surfaceFuncs[faceId][0](uu, vv)
     yy = self.surfaceFuncs[faceId][1](uu, vv)
     zz = self.surfaceFuncs[faceId][2](uu, vv)
+
     return xx, yy, zz
 
   def _getSurfaceCellAreaVectors(self, xx, yy, zz):
-    dxu = xx[1:, :-1] - xx[:-1, :-1]
-    dxv = xx[:-1, 1:] - xx[:-1, :-1]
-    dyu = yy[1:, :-1] - yy[:-1, :-1]
-    dyv = yy[:-1, 1:] - yy[:-1, :-1]
-    dzu = zz[1:, :-1] - zz[:-1, :-1]
-    dzv = zz[:-1, 1:] - zz[:-1, :-1]
+    """
+    Get cell area vectors
+    @param xx x vertices (2D array)
+    @param yy y vertices (2D array)
+    @param zz z vertices (2D array)
+    @return the components of the cell areas for each cell
+    """
+
+    dxu = xx[1:, :-1]
+    dxv = xx[:-1, 1:]
+    dyu = yy[1:, :-1]
+    dyv = yy[:-1, 1:]
+    dzu = zz[1:, :-1]
+    dzv = zz[:-1, 1:]
+
+    dxu -= xx[:-1, :-1]
+    dxv -= xx[:-1, :-1]
+    dyu -= yy[:-1, :-1]
+    dyv -= yy[:-1, :-1]
+    dzu -= zz[:-1, :-1]
+    dzv -= zz[:-1, :-1]
+
     ax = dyu*dzv - dyv*dzu
     ay = dzu*dxv - dzv*dxu
     az = dxu*dyv - dxv*dyu
     return ax, ay, az
    
   def _getSurfaceNumberOfCells(self, faceId, maxTriArea):
+    """
+    Estimate the number of nu and nv cells from supplied maximum triangle area
+    @param faceId face Id
+    @param maxTriArea maximum triangle area
+    """
+
+    # should not need a lot of resolution to estimate
     n = 5
+    # assume same resolution in u and v
     nu, nv = n, n
+    # get the grid
     xx, yy, zz = self._getSurfacePointArrays(faceId, nu, nv)
+    # get the cell areas
     ax, ay, az = self._getSurfaceCellAreaVectors(xx, yy, zz)
+    # mac cell area
     maxHalfArea = 0.5*max( numpy.sqrt(ax*ax + ay*ay + az*az).flat )
+    # estimate the number of cells
     nOpt = int(numpy.sqrt(maxHalfArea/maxTriArea) * n + 0.5)
+
     return max(nOpt, 1)
 
 ################################################################################
