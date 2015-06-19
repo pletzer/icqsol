@@ -237,18 +237,15 @@ def test():
     return res
 
   s = PrimitiveShape()
-  #s.setSurfaceFunctions([(xCylSurf, yCylSurf, zCylSurf), 
-  #                       (xLoSurf, yLoSurf, zLoSurf),
-  #                       (xHiSurf, yHiSurf, zHiSurf)])
-  s.setSurfaceFunctions([(xCylSurf, yCylSurf, zCylSurf),])
-  
-  s.setEvaluateFunction(objectVolume)
+  s.setSurfaceFunctions([(xCylSurf, yCylSurf, zCylSurf), 
+                         (xLoSurf, yLoSurf, zLoSurf),
+                         (xHiSurf, yHiSurf, zHiSurf)])  
 
-  print 'number of cells for face 0: ', s._getSurfaceNumberOfCells(0, 0.5)
-  #print 'number of cells for face 1: ', s._getSurfaceNumberOfCells(1, 0.1)
-  #print 'number of cells for face 2: ', s._getSurfaceNumberOfCells(2, 0.1)
+  print 'number of cells for face 0: ', s._getSurfaceNumberOfCells(0, 0.1)
+  print 'number of cells for face 1: ', s._getSurfaceNumberOfCells(1, 0.1)
+  print 'number of cells for face 2: ', s._getSurfaceNumberOfCells(2, 0.1)
 
-  s.computeSurfaceMeshes(0.5)
+  s.computeSurfaceMeshes(0.1)
 
   s.save('testPrimitiveShape.vtk')
 
