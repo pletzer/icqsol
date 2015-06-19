@@ -86,7 +86,7 @@ class PrimitiveShape(BaseShape):
       connect += pointCount
 
       # store
-      self.surfaceMeshes[faceId] = connect
+      self.surfaceMeshes.append(connect)
 
       # update the number of points count
       pointCount += numPoints
@@ -196,6 +196,6 @@ def test():
 
   print s._getSurfaceNumberOfCells(0, 0.01)
 
-  s.computeSurfaceMeshes(0.01)
+  s.computeSurfaceMeshes(0.1)
 
 if __name__ == '__main__': test()
