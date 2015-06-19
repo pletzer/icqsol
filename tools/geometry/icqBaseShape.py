@@ -46,13 +46,13 @@ class BaseShape:
     """
     return self.points
 
-  def getSurfaceMesh(self, name):
+  def getSurfaceMesh(self, faceId):
     """
     Get surface mesh
-    @param name of the of the surface
+    @param faceId Id of the surface
     @return node connectivity array
     """
-    return self.surfaceMeshes
+    return self.surfaceMeshes[faceId]
 
   def save(self, plyFilename):
     """
