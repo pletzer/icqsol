@@ -42,17 +42,78 @@ class PrimitiveShape(BaseShape):
     Compute the surface meshes
     @param maxTriArea maximum triangle area
     """
-    pass
+    points = []
+    pointCount = 0
+    self.surfaceMeshes = []
 
-  def _getSurfaceNumberOfCells(self, faceId, maxTriArea):
-    n = 5
-    nu, nv = n, n
+    # iterate over the faces
+    for faceId in range(len(self.surfaceFuncs)):
+
+      # estimate for the u, v griod resolution
+      n = self._getSurfaceNumberOfCells(faceId, maxTriArea)
+      nu, nv = n, n
+      nu1, nv1 = nu + 1, nv + 1
+
+      # compute the nodes
+      xx, yy, zz = self._getSurfacePointArrays(faceId, nu, nv)
+      numPoints = len(xx.flat)
+      pts = numpy.zeros( (numPoints, 3), numpy.float64 )
+      pts[:, 0], pts[:, 1], pts[:, 2] = xx.flat, yy.flat, zz.flat
+
+      # store the vertices
+      points.append(pts)
+
+      numQuadCells = nu * nv
+      ii = numpy.outer( range(nu1), numpy.ones((nv1,), numpy.int) )
+      jj = numpy.outer( numpy.ones((nu1,), numpy.int), range(nv1) )
+
+      # big index
+      bigII = nv1*ii + jj
+
+      connect = numpy.zeros( (2*numQuadCells, 3), numpy.int )
+
+      # compute the connectivity for the lower triangles     
+      connect[:numQuadCells, 0] = numpy.ravel(bigII[:-1, :-1])
+      connect[:numQuadCells, 1] = numpy.ravel(bigII[:-1, 1:])
+      connect[:numQuadCells, 2] = numpy.ravel(bigII[1:, 1:])
+
+      # compute the connectivity for the upper triangles     
+      connect[numQuadCells:, 0] = numpy.ravel(bigII[:-1, :-1])
+      connect[numQuadCells:, 1] = numpy.ravel(bigII[1:, 1:])
+      connect[numQuadCells:, 2] = numpy.ravel(bigII[1:, :-1])
+
+      # increment vertex index with the number of points so far
+      connect += pointCount
+
+      # store
+      self.surfaceMeshes[faceId] = connect
+
+      # update the number of points count
+      pointCount += numPoints
+
+    # pointCount is the total number of points
+    self.points = numpy.zeros( (pointCount, 3), numpy.float64 )
+
+    # copy the points into a single array. Note that there will be 
+    # duplicate vertices
+    pointCount = 0
+    for faceId in range(len(self.surfaceFuncs)):
+      numPoints = points[faceId].shape[0]
+      iBeg = pointCount 
+      iEnd = iBeg + numPoints
+      self.points[iBeg:iEnd, :] = points[faceId]
+      pointCount += numPoints
+
+  def _getSurfacePointArrays(self, faceId, nu, nv):
     du, dv = 1.0/float(nu), 1.0/float(nv)
     uu = numpy.outer( numpy.arange(0., 1., du), numpy.ones((nv,), numpy.float64) )
     vv = numpy.outer( numpy.ones((nu,), numpy.float64), numpy.arange(0., 1., dv) )
     xx = self.surfaceFuncs[faceId][0](uu, vv)
     yy = self.surfaceFuncs[faceId][1](uu, vv)
     zz = self.surfaceFuncs[faceId][2](uu, vv)
+    return xx, yy, zz
+
+  def _getSurfaceCellAreaVectors(self, xx, yy, zz):
     dxu = xx[1:, :-1] - xx[:-1, :-1]
     dxv = xx[:-1, 1:] - xx[:-1, :-1]
     dyu = yy[1:, :-1] - yy[:-1, :-1]
@@ -62,11 +123,16 @@ class PrimitiveShape(BaseShape):
     ax = dyu*dzv - dyv*dzu
     ay = dzu*dxv - dzv*dxu
     az = dxu*dyv - dxv*dyu
+    return ax, ay, az
+   
+  def _getSurfaceNumberOfCells(self, faceId, maxTriArea):
+    n = 5
+    nu, nv = n, n
+    xx, yy, zz = self._getSurfacePointArrays(faceId, nu, nv)
+    ax, ay, az = self._getSurfaceCellAreaVectors(xx, yy, zz)
     maxHalfArea = 0.5*max( numpy.sqrt(ax*ax + ay*ay + az*az).flat )
-    print maxHalfArea
-    return int(numpy.sqrt(maxHalfArea/maxTriArea) * n + 0.5)
-
-
+    nOpt = int(numpy.sqrt(maxHalfArea/maxTriArea) * n + 0.5)
+    return max(nOpt, 1)
 
 ################################################################################
 def test():
@@ -130,6 +196,6 @@ def test():
 
   print s._getSurfaceNumberOfCells(0, 0.01)
 
-  
+  s.computeSurfaceMeshes(0.01)
 
 if __name__ == '__main__': test()
