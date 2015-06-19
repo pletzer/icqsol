@@ -104,7 +104,7 @@ class BaseShape:
       allCells[iBeg:iEnd, 1:] = sMesh[:, :]
       cellCount += nCells
 
-    cellIds.SetVoidArray(allCells, numCells, 1)
+    cellIds.SetVoidArray(allCells, cellCount*4, 1)
 
     # build the cell connectivity object
     cellArr.SetNumberOfCells(cellCount)
@@ -128,6 +128,7 @@ class BaseShape:
     else:
       writer.SetInput(polyData)
     writer.Write()
+    writer.Update()
 
 
 
