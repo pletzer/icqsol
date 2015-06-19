@@ -54,10 +54,10 @@ class BaseShape:
     """
     return self.surfaceMeshes[faceId]
 
-  def save(self, plyFilename):
+  def save(self, filename):
     """
-    Save data in PLY file 
-    @param plyFilename PLY file
+    Save data in file 
+    @param filename file name
     """
 
     # point array
@@ -95,28 +95,32 @@ class BaseShape:
     # copy all the surface meshes into a single connectivity array
     allCells = numpy.zeros( (numCells, 4), numpy.int )
     allCells[:, 0] = 4 # triangles
-    numFaces = len(self.suraceMeshes)
-    count = 0
+    numFaces = len(self.surfaceMeshes)
+    cellCount = 0
     for i in range(numFaces):
       sMesh = self.surfaceMeshes[i]
       nCells = sMesh.shape[0]
-      iBeg, iEnd = count, count + nCells
+      iBeg, iEnd = cellCount, cellCount + nCells
       allCells[iBeg:iEnd, 1:] = sMesh[:, :]
-      count += nCells
+      cellCount += nCells
 
     cellIds.SetVoidArray(allCells, numCells, 1)
 
     # build the cell connectivity object
-    cellArr.SetNumberOfCells(numCells)
-    cellArr.SetCells(cellIds)
+    cellArr.SetNumberOfCells(cellCount)
+    cellArr.SetCells(cellCount, cellIds)
 
     # build the polydata object
     polyData.SetPoints(points)
-    polyData.SetCells(cellArr)
+    polyData.SetPolys(cellArr)
 
     # write to file
-    writer = vtk.vtkPLYWriter()
-    writer.SetFileName(plyFilename)
+    writer = None
+    if filename.find('.ply') > 0:
+      writer = vtk.vtkPLYWriter()
+    else:
+      writer = vtk.vtkPolyDataWriter()
+    writer.SetFileName(filename)
     if vtk.VTK_MAJOR_VERSION >= 6:
       writer.SetInputData(polyData)
     else:

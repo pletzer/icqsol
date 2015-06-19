@@ -198,4 +198,6 @@ def test():
 
   s.computeSurfaceMeshes(0.1)
 
+  s.save('testPrimitiveShape.vtk')
+
 if __name__ == '__main__': test()
