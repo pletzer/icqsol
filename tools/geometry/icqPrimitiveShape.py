@@ -37,6 +37,37 @@ class PrimitiveShape(BaseShape):
     """
     return self.evalFunc(pts)
 
+  def computeSurfaceMeshes(self, maxTriArea):
+    """
+    Compute the surface meshes
+    @param maxTriArea maximum triangle area
+    """
+    pass
+
+  def _getSurfaceNumberOfCells(self, faceId, maxTriArea):
+    n = 5
+    nu, nv = n, n
+    du, dv = 1.0/float(nu), 1.0/float(nv)
+    uu = numpy.outer( numpy.arange(0., 1., du), numpy.ones((nv,), numpy.float64) )
+    vv = numpy.outer( numpy.ones((nu,), numpy.float64), numpy.arange(0., 1., dv) )
+    xx = self.surfaceFuncs[faceId][0](uu, vv)
+    yy = self.surfaceFuncs[faceId][1](uu, vv)
+    zz = self.surfaceFuncs[faceId][2](uu, vv)
+    dxu = xx[1:, :-1] - xx[:-1, :-1]
+    dxv = xx[:-1, 1:] - xx[:-1, :-1]
+    dyu = yy[1:, :-1] - yy[:-1, :-1]
+    dyv = yy[:-1, 1:] - yy[:-1, :-1]
+    dzu = zz[1:, :-1] - zz[:-1, :-1]
+    dzv = zz[:-1, 1:] - zz[:-1, :-1]
+    ax = dyu*dzv - dyv*dzu
+    ay = dzu*dxv - dzv*dxu
+    az = dxu*dyv - dxv*dyu
+    maxHalfArea = 0.5*max( numpy.sqrt(ax*ax + ay*ay + az*az).flat )
+    print maxHalfArea
+    return int(numpy.sqrt(maxHalfArea/maxTriArea) * n + 0.5)
+
+
+
 ################################################################################
 def test():
 
@@ -96,5 +127,9 @@ def test():
                          (xLoSurf, yLoSurf, zLoSurf),
                          (xHiSurf, yHiSurf, zHiSurf)])
   s.setEvaluateFunction(objectVolume)
+
+  print s._getSurfaceNumberOfCells(0, 0.01)
+
+  
 
 if __name__ == '__main__': test()
