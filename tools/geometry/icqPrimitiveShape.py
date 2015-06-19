@@ -194,7 +194,9 @@ def test():
                          (xHiSurf, yHiSurf, zHiSurf)])
   s.setEvaluateFunction(objectVolume)
 
-  print s._getSurfaceNumberOfCells(0, 0.01)
+  print 'number of cells for face 0: ', s._getSurfaceNumberOfCells(0, 0.1)
+  print 'number of cells for face 1: ', s._getSurfaceNumberOfCells(1, 0.1)
+  print 'number of cells for face 2: ', s._getSurfaceNumberOfCells(2, 0.1)
 
   s.computeSurfaceMeshes(0.1)
 

@@ -116,9 +116,11 @@ class BaseShape:
 
     # write to file
     writer = None
-    if filename.find('.ply') > 0:
+    if filename.lower().find('.ply') > 0:
+      # PLY format
       writer = vtk.vtkPLYWriter()
     else:
+      # will default to VTK
       writer = vtk.vtkPolyDataWriter()
     writer.SetFileName(filename)
     if vtk.VTK_MAJOR_VERSION >= 6:
