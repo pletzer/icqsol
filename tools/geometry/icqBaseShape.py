@@ -24,8 +24,7 @@ class BaseShape:
     """
 
     self.points = []
-    self.surfaceMesh = {}
-    self.volumeMesh = []
+    self.surfaceMeshes = []
 
   def evaluate(self, points):
     """
@@ -41,13 +40,6 @@ class BaseShape:
     """
     raise NotImplementedError
 
-  def computeVOlumeMesh(self, maxTetVol):
-    """
-    Compute the volume mesh 
-    @param maxTetVol maximum tetrahedron volume
-    """
-    raise NotImplementedError
-
   def getPoints(self):
     """
     Get the points
@@ -60,14 +52,7 @@ class BaseShape:
     @param name of the of the surface
     @return node connectivity array
     """
-    return self.surfaceMesh
-
-  def getVolumeMesh(self):
-    """
-    Get the volume mesh
-    @return node connectivity array
-    """
-    return self.volumeMesh
+    return self.surfaceMeshes
 
   def save(self, plyFilename):
     """
@@ -75,38 +60,67 @@ class BaseShape:
     @param plyFilename PLY file
     """
 
+    # point array
     xyzArr = vtk.vtkDoubleArray()
+
+    # cell connectivity array 
+    cellConnectivity = vtk.vtkIdTypeArray()
+
+    # vertices
     points = vtk.vtkPoints()
+
+    # array of cell Ids
+    cellIds = vtk.vtkIdTypeArray()
+
+    # cell connectivity
     cellArr = vtk.vtkCellArray()
-    surfPolyData = vtk.vtkPolyData()
+
+    # points and cell connectivity
+    polyData = vtk.vtkPolyData()
 
     numPoints = self.points.shape[0]
 
     xyzArr.SetNumberOfTuples(numPoints)
-    xyzArr.SetNumberOfComponents(3)
+    xyzArr.SetNumberOfComponents(3) # 3D
     xyzArr.SetVoidArray(self.points, numPoints*3, 1)
+
+    # set the vertices
     points.SetData(xyzArr)
 
-    numCells = self.surfaceMesh.shape[0]
+    # compute the total number of cells
+    numCells = 0
+    for face in self.surfaceMeshes:
+      numCells += face.shape[0]
 
-    cell = vtk.vtkTriangle()
-    cellArr.Allocate(numCells, 1)
-    for i in range(numCells):
-      cell.GetPointIds().SetId(0, self.surfaceMesh[i, 0])
-      cell.GetPointIds().SetId(1, self.surfaceMesh[i, 1])
-      cell.GetPointIds().SetId(2, self.surfaceMesh[i, 2])
-      cellArr.InsertNextCell(cell.GetCellType(), cell.GetPointIds())
+    # copy all the surface meshes into a single connectivity array
+    allCells = numpy.zeros( (numCells, 4), numpy.int )
+    allCells[:, 0] = 4 # triangles
+    numFaces = len(self.suraceMeshes)
+    count = 0
+    for i in range(numFaces):
+      sMesh = self.surfaceMeshes[i]
+      nCells = sMesh.shape[0]
+      iBeg, iEnd = count, count + nCells
+      allCells[iBeg:iEnd, 1:] = sMesh[:, :]
+      count += nCells
 
-    surfPolyData.SetPoints(points)
-    surfPolyData.SetPolys(cellArr)
+    cellIds.SetVoidArray(allCells, numCells, 1)
 
+    # build the cell connectivity object
+    cellArr.SetNumberOfCells(numCells)
+    cellArr.SetCells(cellIds)
+
+    # build the polydata object
+    polyData.SetPoints(points)
+    polyData.SetCells(cellArr)
+
+    # write to file
     writer = vtk.vtkPLYWriter()
     writer.SetFileName(plyFilename)
     if vtk.VTK_MAJOR_VERSION >= 6:
-      writer.SetInputData(surfPolyData)
+      writer.SetInputData(polyData)
     else:
-      writer.SetInput(surfPolyData)
-    writer.SetInput(surfPolyData)
+      writer.SetInput(polyData)
     writer.Write()
 
 
