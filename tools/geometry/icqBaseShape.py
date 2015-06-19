@@ -94,7 +94,7 @@ class BaseShape:
 
     # copy all the surface meshes into a single connectivity array
     allCells = numpy.zeros( (numCells, 4), numpy.int )
-    allCells[:, 0] = 4 # triangles
+    allCells[:, 0] = 3 # triangles
     numFaces = len(self.surfaceMeshes)
     cellCount = 0
     for i in range(numFaces):
