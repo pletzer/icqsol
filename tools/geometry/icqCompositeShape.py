@@ -28,8 +28,8 @@ class CompositeShape(BaseShape):
     self.argShapes = shapes
     # replace $1 by self.argShape[0]
     for i in range(len(self.argShapes)):
-      self.expression = re.sub('${0}'.format(i), 
-        'sys.argShapes[{0}].evaluate(pts)'.format(i), self.expression)
+      self.expression = re.sub('\${0}'.format(i), 
+        'self.argShapes[{0}].evaluate(pts)'.format(i), self.expression)
 
   def evaluate(self, pts):
     """
