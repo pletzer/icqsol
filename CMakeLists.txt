@@ -43,6 +43,7 @@ enable_testing()
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests/tools")
 add_test(NAME testRing COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testRing.py")
 add_test(NAME testScrew COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testScrew.py")
+
 add_test(NAME testPrimitiveSphere 
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
          --output testPrimitiveSphere.vtk --type "sphere" --options "radius=0.5" "origin=(0.5, 0.2, 0.3)")
@@ -61,26 +62,6 @@ add_test(NAME testPrimitiveBox
          --output testPrimitiveBox.vtk 
          --type "box" 
          --options "loBound=(0.5, 0.2, 0.3)" "hiBound=(0.7, 0.8, 0.9)")
-
-#
-# tool tests
-#
-
-# create a simple spherical object
-add_test(NAME testBuildGeometry1 COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/buildGeometry.py"
-         --create "s = Sphere(radius=0.5, origin=(0.,0.,0.))"
-         --assemble "s"
-         --output testBuildGeometry1.ply
-         )
-
-# a cube with a notch and a cylindrical hole
-add_test(NAME testBuildGeometry2 COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/buildGeometry.py"
-         --create "cube = Box(loBound=(0.,0.,0.), hiBound=(1.,1.,1.))"
-                  "sphere = Sphere(radius=0.2, origin=(1., 1., 1.))"
-                  "cyl = Cylinder(radius=0.1, origin=(0.1, 0.2, 0.3), length=1.1)"
-         --assemble "cube - sphere - cyl"
-         --output testBuildGeometry2.ply
-         )
 
 
 
