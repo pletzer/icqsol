@@ -43,6 +43,14 @@ enable_testing()
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests/tools")
 add_test(NAME testRing COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testRing.py")
 add_test(NAME testScrew COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testScrew.py")
+add_test(NAME testPrimitiveSphere 
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
+         --output testPrimitiveSphere.vtk --type "sphere" --options "radius=0.5" "origin=(0.5, 0.2, 0.3)")
+add_test(NAME testPrimitiveCylinder
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
+         --output testPrimitiveCylinder.vtk 
+         --type "cylinder" 
+         --options "radius=0.5" "origin=(0.5, 0.2, 0.3)" "length=0.35")
 
 #
 # tool tests
