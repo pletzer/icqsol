@@ -13,10 +13,10 @@ class PrimitiveShape(BaseShape):
     """
     Constructor
     """
+    BaseShape.__init__(self,)
+
     self.surfaceFuncs = []
     self.evalFunc = None
-
-    BaseShape.__init__(self,)
 
   def setSurfaceFunctions(self, funcs):
     """
