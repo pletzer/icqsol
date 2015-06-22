@@ -79,10 +79,10 @@ if args.type == 'sphere':
                        lambda u,v: radius*sin(pi*u)*sin(2*pi*v) + origin[1], 
                        lambda u,v: radius*cos(pi*u) + origin[2])]
   radiusSq = radius**2
-  def evalFunction(x, y, z):
-    xNorm = x - origin[0]
-    yNorm = y - origin[1]
-    zNorm = z - origin[2]
+  def evalFunction(pts):
+    xNorm = pts[:, 0] - origin[0]
+    yNorm = pts[:, 1] - origin[1]
+    zNorm = pts[:, 2] - origin[2]
     return radiusSq - xNorm**2 - yNorm**2 - zNorm**2 > 0
 
 elif args.type == 'cylinder':
@@ -101,9 +101,11 @@ elif args.type == 'cylinder':
                        lambda u,v: u*radius*sin(2*pi*v) + origin[1],
                        lambda u,v: (origin[2] + 0.5*length)*numpy.ones(u.shape))]
   radiusSq = radius**2
-  def evalFunction(x, y, z):
-    res = (radiusSq - (x-origin[0])**2 - (y-origin[1])**2) > 0
-    res &= (z - origin[2]) < 0.5*length
+  def evalFunction(pts):
+    res = (radiusSq - (pts[:,0]-origin[0])**2 - (pts[:,1]-origin[1])**2) > 0
+    zNorm = pts[:,2] - origin[2]
+    res &= zNorm > -0.5*length
+    res &= zNorm < 0.5*length
     return res
 
 elif args.type == 'cone':
@@ -120,10 +122,10 @@ elif args.type == 'cone':
                        lambda u,v: v*radius*sin(2*pi*u) + origin[1],
                        lambda u,v: (length + origin[2])*numpy.ones(u.shape))]
   radiusSq = radius**2
-  def evalFunction(x, y, z):
-    xNorm = x - origin[0]
-    yNorm = y - origin[1]
-    zNorm = z - origin[2]
+  def evalFunction(pts):
+    xNorm = pts[:, 0] - origin[0]
+    yNorm = pts[:, 1] - origin[1]
+    zNorm = pts[:, 2] - origin[2]
     res = zNorm > 0
     res &= zNorm < length
     u = zNorm/length
@@ -154,7 +156,8 @@ elif args.type == 'box':
                       (lambda u,v: loBound[0]+u*deltas[0], 
                        lambda u,v: loBound[1]+v*deltas[1], 
                        lambda u,v: hiBound[2]*numpy.ones(u.shape))]
-  def evalFunction(x, y, z):
+  def evalFunction(pts):
+    x, y, z = pts[:, 0], pts[:, 1], pts[:, 2]
     res = x > loBound[0]
     res &= x < hiBound[0]
     res &= y > loBound[1]

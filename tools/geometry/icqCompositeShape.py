@@ -134,10 +134,10 @@ def test():
   surfaceFunctions1 = [(lambda u,v: radius1*sin(pi*u)*cos(2*pi*v) + origin1[0], 
                        lambda u,v: radius1*sin(pi*u)*sin(2*pi*v) + origin1[1], 
                        lambda u,v: radius1*cos(pi*u) + origin1[2])]
-  def evalFunction1(x, y, z):
-    xNorm = x - origin1[0]
-    yNorm = y - origin1[1]
-    zNorm = z - origin1[2]
+  def evalFunction1(pts):
+    xNorm = pts[:, 0] - origin1[0]
+    yNorm = pts[:, 1] - origin1[1]
+    zNorm = pts[:, 2] - origin1[2]
     return radius1*radius1 - xNorm**2 - yNorm**2 - zNorm**2 > 0
 
   s1 = PrimitiveShape()
@@ -151,10 +151,10 @@ def test():
   surfaceFunctions2 = [(lambda u,v: radius2*sin(pi*u)*cos(2*pi*v) + origin2[0], 
                        lambda u,v: radius2*sin(pi*u)*sin(2*pi*v) + origin2[1], 
                        lambda u,v: radius2*cos(pi*u) + origin2[2])]
-  def evalFunction2(x, y, z):
-    xNorm = x - origin2[0]
-    yNorm = y - origin2[1]
-    zNorm = z - origin2[2]
+  def evalFunction2(pts):
+    xNorm = pts[:, 0] - origin2[0]
+    yNorm = pts[:, 1] - origin2[1]
+    zNorm = pts[:, 2] - origin2[2]
     return radius2*radius2 - xNorm**2 - yNorm**2 - zNorm**2 > 0
 
   # create another sphere
