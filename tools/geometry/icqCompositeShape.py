@@ -56,8 +56,8 @@ class CompositeShape(BaseShape):
     z = loBound[2] + (hiBound[2] - loBound[2])*numpy.array([i for k in range(nz1)])/nz
     xxx = numpy.outer(numpy.ones((nz1, ny1)), x)
     yyy = numpy.outer(numpy.outer(numpy.ones((nz1,)), y), numpy.ones((nx1,)))
-    zzz = numpy.outer(z, numpy.ones(ny1, nx1))
-    verts = numpy.zeros( (nz1*ny1*nx1,), numpy.float64 )
+    zzz = numpy.outer(z, numpy.ones((ny1, nx1)))
+    verts = numpy.zeros( (nz1*ny1*nx1, 3), numpy.float64 )
     verts[:, 0] = xxx.flat
     verts[:, 1] = yyy.flat
     verts[:, 2] = zzz.flat
@@ -99,12 +99,12 @@ class CompositeShape(BaseShape):
     hiBound = numpy.array([-float('inf')] * 3)
     for shp in self.argShapes:
       points = shp.getPoints()
-      loBound[0] = min(loBound[0], points[:, 0])
-      loBound[1] = min(loBound[1], points[:, 1])
-      loBound[2] = min(loBound[2], points[:, 2])
-      hiBound[0] = max(hiBound[0], points[:, 0])
-      hiBound[1] = max(hiBound[1], points[:, 1])
-      hiBound[2] = max(hiBound[2], points[:, 2])
+      loBound[0] = min(loBound[0], points[:, 0].min())
+      loBound[1] = min(loBound[1], points[:, 1].min())
+      loBound[2] = min(loBound[2], points[:, 2].min())
+      hiBound[0] = max(hiBound[0], points[:, 0].min())
+      hiBound[1] = max(hiBound[1], points[:, 1].min())
+      hiBound[2] = max(hiBound[2], points[:, 2].min())
     return loBound, hiBound
 
   def _getUniformGridResolution(self, loBound, hiBound, maxTriArea):
@@ -126,6 +126,7 @@ class CompositeShape(BaseShape):
 def test():
 
   from icqPrimitiveShape import PrimitiveShape
+  from numpy import sin, cos, pi
 
   # create first sphere
   radius1 = 0.5
@@ -142,9 +143,10 @@ def test():
   s1 = PrimitiveShape()
   s1.setSurfaceFunctions(surfaceFunctions1)
   s1.setEvaluateFunction(evalFunction1)
+  s1.computeSurfaceMeshes(maxTriArea=0.1)
 
-  # create sphere
-  radius1 = 0.5
+  # create second sphere
+  radius2 = 0.5
   origin2 = numpy.array([0.4, 0.5, 0.6])
   surfaceFunctions2 = [(lambda u,v: radius2*sin(pi*u)*cos(2*pi*v) + origin2[0], 
                        lambda u,v: radius2*sin(pi*u)*sin(2*pi*v) + origin2[1], 
@@ -159,6 +161,7 @@ def test():
   s2 = PrimitiveShape()
   s2.setSurfaceFunctions(surfaceFunctions2)
   s2.setEvaluateFunction(evalFunction2)
+  s2.computeSurfaceMeshes(maxTriArea=0.1)
 
   # assemble
   cs = CompositeShape()
