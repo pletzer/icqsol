@@ -45,7 +45,7 @@ class CompositeShape(BaseShape):
     """
 
     # get the bounds
-    loBound, hiBound = self._getBounds()
+    loBound, hiBound = self._getBounds(maxTriArea)
 
     # get the optimal number of cells in each direction
     nx, ny, nz = self._getUniformGridResolution(loBound, hiBound, maxTriArea)
@@ -76,6 +76,8 @@ class CompositeShape(BaseShape):
     xyz.SetNumberOfComponents(3)
     xyz.SetVoidArray(verts, numPoints*3, 1)
 
+    pts.SetData(xyz)
+
     data.SetNumberOfTuples(numPoints)
     data.SetNumberOfComponents(1)
     data.SetVoidArray(insideVals, numPoints*3, 1)
@@ -84,7 +86,6 @@ class CompositeShape(BaseShape):
     grd.SetPoints(pts)
     grd.GetPointData().SetScalars(data)
 
-    print dir(grd)
     if vtk.VTK_MAJOR_VERSION >= 6:
       cont.SetInputData(grd)
     else:
@@ -92,17 +93,44 @@ class CompositeShape(BaseShape):
     cont.SetValue(0, 0.0) # or should it be 0.5?
     cont.Update()
 
-    pdata = cont.GetOutput()
-    print pdata
+    surfPolyData = cont.GetOutput()
+    
+    # gather the boundary points
+    surfPoints = surfPolyData.GetPoints()
+    numSurfPoints = surfPoints.GetNumberOfPoints()
+    self.points = numpy.zeros( (numSurfPoints, 3), numpy.float64 )
+    for i in range(numSurfPoints):
+      self.points[i, :] = surfPoints.GetPoint(i)
 
-  def _getBounds(self,):
+    # gather the boundary triangles
+    numSurfCells = surfPolyData.GetNumberOfCells()
+    cellArr = numpy.zeros( (numSurfCells, 3), numpy.int )
+    for i in range(numSurfCells):
+      cell = surfPolyData.GetCell(i)
+      ptIds = cell.GetPointIds()
+      npts = ptIds.GetNumberOfIds()
+      pInds = [0 for j in range(npts)]
+      for j in range(npts):
+        pInds[j] = int(ptIds.GetId(j))
+      cellArr[i, :] = pInds
+
+    # single surface mesh in this case
+    self.surfaceMeshes = [cellArr]
+
+
+  def _getBounds(self, maxTriArea):
     """
     Compute the min/max corner points
+    @param maxTriArea may need to compute the individual shape surface meshes and use maxTriArea
+                      to do so
     """
     loBound = numpy.array([float('inf')] * 3)
     hiBound = numpy.array([-float('inf')] * 3)
     for shp in self.argShapes:
       points = shp.getPoints()
+      if len(points) == 0:
+        shp.computeSurfaceMeshes(maxTriArea=maxTriArea)
+        points = shp.getPoints()
       loBound[0] = min(loBound[0], points[:, 0].min())
       loBound[1] = min(loBound[1], points[:, 1].min())
       loBound[2] = min(loBound[2], points[:, 2].min())
