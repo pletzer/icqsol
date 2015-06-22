@@ -118,7 +118,7 @@ elif args.type == 'cone':
                        lambda u,v: u*length + origin[2]),
                       (lambda u,v: v*radius*cos(2*pi*u) + origin[0],
                        lambda u,v: v*radius*sin(2*pi*u) + origin[1],
-                       lambda u,v: length + origin[2])]
+                       lambda u,v: (length + origin[2])*numpy.ones(u.shape))]
   radiusSq = radius**2
   def evalFunction(x, y, z):
     xNorm = x - origin[0]
