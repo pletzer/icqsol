@@ -91,15 +91,15 @@ elif args.type == 'cylinder':
   length = optDic['length']
   # the cylindrical side followed by the two end disks
   # u x v normal should point out
-  surfaceFunctions = [(lambda u,v: radius*cos(2*pi*v) + origin[0], 
-                       lambda u,v: radius*sin(2*pi*v) + origin[1], 
-                       lambda u,v: length*(u-0.5) + origin[2]),
-                      (lambda u,v: u*radius*cos(2*pi*v) + origin[0],
-                       lambda u,v: u*radius*sin(2*pi*v) + origin[1],
-                       lambda u,v: origin[2] - 0.5*length),
+  surfaceFunctions = [(lambda u,v: radius*cos(2*pi*u) + origin[0], 
+                       lambda u,v: radius*sin(2*pi*u) + origin[1], 
+                       lambda u,v: length*(v-0.5) + origin[2]),
                       (lambda u,v: v*radius*cos(2*pi*u) + origin[0],
                        lambda u,v: v*radius*sin(2*pi*u) + origin[1],
-                       lambda u,v: origin[2] + 0.5*length)]
+                       lambda u,v: (origin[2] - 0.5*length)*numpy.ones(u.shape)),
+                      (lambda u,v: u*radius*cos(2*pi*v) + origin[0],
+                       lambda u,v: u*radius*sin(2*pi*v) + origin[1],
+                       lambda u,v: (origin[2] + 0.5*length)*numpy.ones(u.shape))]
   radiusSq = radius**2
   def evalFunction(x, y, z):
     res = (radiusSq - (x-origin[0])**2 - (y-origin[1])**2) > 0
