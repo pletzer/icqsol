@@ -84,7 +84,11 @@ class CompositeShape(BaseShape):
     grd.SetPoints(pts)
     grd.GetPointData().SetScalars(data)
 
-    cont.SetInputConnection(grd.GetOutputPort())
+    print dir(grd)
+    if vtk.VTK_MAJOR_VERSION >= 6:
+      cont.SetInputData(grd)
+    else:
+      cont.SetInput(grd)
     cont.SetValue(0, 0.0) # or should it be 0.5?
     cont.Update()
 
