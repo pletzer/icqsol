@@ -56,6 +56,11 @@ add_test(NAME testPrimitiveCone
          --output testPrimitiveCone.vtk 
          --type "cone" 
          --options "radius=0.5" "origin=(0.5, 0.2, 0.3)" "length=0.35")
+add_test(NAME testPrimitiveBox
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
+         --output testPrimitiveBox.vtk 
+         --type "box" 
+         --options "loBound=(0.5, 0.2, 0.3)" "hiBound=(0.7, 0.8, 0.9)")
 
 #
 # tool tests

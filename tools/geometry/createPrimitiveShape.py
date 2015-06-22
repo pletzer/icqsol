@@ -136,24 +136,24 @@ elif args.type == 'box':
   hiBound = numpy.array(optDic['hiBound'])
   deltas = hiBound - loBound
   # the six faces of the box
-  surfaceFunctions = [(lambda u,v: loBound[0], 
+  surfaceFunctions = [(lambda u,v: loBound[0]*numpy.ones(u.shape), 
                        lambda u,v: loBound[1]+v*deltas[1], 
-                       lambda u,v: loBound[2]+u*deltas[2])
-                      (lambda u,v: hiBound[0], 
+                       lambda u,v: loBound[2]+u*deltas[2]),
+                      (lambda u,v: hiBound[0]*numpy.ones(u.shape), 
                        lambda u,v: loBound[1]+u*deltas[1], 
                        lambda u,v: loBound[2]+v*deltas[2]), 
                       (lambda u,v: loBound[0]+u*deltas[0], 
-                       lambda u,v: loBound[1], lambda u,v: 
-                       loBound[2]+v*deltas[2]), 
+                       lambda u,v: loBound[1]*numpy.ones(u.shape),
+                       lambda u,v: loBound[2]+v*deltas[2]), 
                       (lambda u,v: loBound[0]+v*deltas[0], 
-                       lambda u,v: hiBound[1], 
+                       lambda u,v: hiBound[1]*numpy.ones(u.shape), 
                        lambda u,v: loBound[2]+u*deltas[2]), 
                       (lambda u,v: loBound[0]+v*deltas[0], 
                        lambda u,v: loBound[1]+u*deltas[1], 
-                       lambda u,v: loBound[2]), 
+                       lambda u,v: loBound[2]*numpy.ones(u.shape)), 
                       (lambda u,v: loBound[0]+u*deltas[0], 
                        lambda u,v: loBound[1]+v*deltas[1], 
-                       lambda u,v: hiBound[2])]
+                       lambda u,v: hiBound[2]*numpy.ones(u.shape))]
   def evalFunction(x, y, z):
     res = x > loBound[0]
     res &= x < hiBound[0]
