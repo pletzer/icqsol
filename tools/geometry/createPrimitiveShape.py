@@ -50,9 +50,10 @@ parser.add_argument('--options', dest='options', nargs='*', default=[],
   help='Options to be passed to the shape constructor.')
 
 parser.add_argument('--list', dest='list', 
-  help='List options to be passed to the shape constructor of a certain primitive type shape.')
+  help='List of options to be passed to the shape constructor of type shape.')
 
-parser.add_argument('--output', dest='output', default='createPrimitiveShape-{0}'.format(tid), 
+parser.add_argument('--output', dest='output', 
+  default='createPrimitiveShape-{0}'.format(tid), 
 	help='Output file.')
 
 args = parser.parse_args()
@@ -66,6 +67,7 @@ for optNameValue in args.options:
   optName, optValue = optNameValue.split('=')
   options[args.type][optName] = eval(optValue)
 
+# set the surface and volume function
 surfaceFunctions = []
 evalFunction = None
 optDic = options[args.type]
@@ -77,12 +79,18 @@ if args.type == 'sphere':
                        lambda u,v: radius*sin(pi*u)*sin(2*pi*v) + origin[1], 
                        lambda u,v: radius*cos(pi*u) + origin[2])]
   radiusSq = radius**2
-  evalFunction = lambda x, y, z: radiusSq - (x-origin[0])**2 - (y-origin[1])**2 - (z-origin[2])**2 > 0
+  def evalFunction(x, y, z):
+    xNorm = x - origin[0]
+    yNorm = y - origin[1]
+    zNorm = z - origin[2]
+    return radiusSq - xNorm**2 - yNorm**2 - zNorm**2 > 0
 
 elif args.type == 'cylinder':
   radius = optDic['radius']
   origin = optDic['origin']
   length = optDic['length']
+  # the cylindrical side followed by the two end disks
+  # u x v normal should point out
   surfaceFunctions = [(lambda u,v: radius*cos(2*pi*v) + origin[0], 
                        lambda u,v: radius*sin(2*pi*v) + origin[1], 
                        lambda u,v: length*(u-0.5) + origin[2]),
@@ -102,6 +110,9 @@ elif args.type == 'cone':
   radius = optDic['radius']
   origin = optDic['origin']
   length = optDic['length']
+  # origin is the focal point of the cone
+  # cone expands in the z direction
+  # surface of the cone followed by the end disk
   surfaceFunctions = [(lambda u,v: u*radius*cos(2*pi*v) + origin[0], 
                        lambda u,v: u*radius*sin(2*pi*v) + origin[1], 
                        lambda u,v: u*length + origin[2]),
@@ -124,12 +135,25 @@ elif args.type == 'box':
   loBound = numpy.array(optDic['loBound'])
   hiBound = numpy.array(optDic['hiBound'])
   deltas = hiBound - loBound
-  surfaceFunctions = [(lambda u,v: loBound[0], lambda u,v: loBound[1]+v*deltas[1], lambda u,v: loBound[2]+u*deltas[2])
-                      (lambda u,v: hiBound[0], lambda u,v: loBound[1]+u*deltas[1], lambda u,v: loBound[2]+v*deltas[2]), 
-                      (lambda u,v: loBound[0]+u*deltas[0], lambda u,v: loBound[1], lambda u,v: loBound[2]+v*deltas[2]), 
-                      (lambda u,v: loBound[0]+v*deltas[0], lambda u,v: hiBound[1], lambda u,v: loBound[2]+u*deltas[2]), 
-                      (lambda u,v: loBound[0]+v*deltas[0], lambda u,v: loBound[1]+u*deltas[1], lambda u,v: loBound[2]), 
-                      (lambda u,v: loBound[0]+u*deltas[0], lambda u,v: loBound[1]+v*deltas[1], lambda u,v: hiBound[2])]
+  # the six faces of the box
+  surfaceFunctions = [(lambda u,v: loBound[0], 
+                       lambda u,v: loBound[1]+v*deltas[1], 
+                       lambda u,v: loBound[2]+u*deltas[2])
+                      (lambda u,v: hiBound[0], 
+                       lambda u,v: loBound[1]+u*deltas[1], 
+                       lambda u,v: loBound[2]+v*deltas[2]), 
+                      (lambda u,v: loBound[0]+u*deltas[0], 
+                       lambda u,v: loBound[1], lambda u,v: 
+                       loBound[2]+v*deltas[2]), 
+                      (lambda u,v: loBound[0]+v*deltas[0], 
+                       lambda u,v: hiBound[1], 
+                       lambda u,v: loBound[2]+u*deltas[2]), 
+                      (lambda u,v: loBound[0]+v*deltas[0], 
+                       lambda u,v: loBound[1]+u*deltas[1], 
+                       lambda u,v: loBound[2]), 
+                      (lambda u,v: loBound[0]+u*deltas[0], 
+                       lambda u,v: loBound[1]+v*deltas[1], 
+                       lambda u,v: hiBound[2])]
   def evalFunction(x, y, z):
     res = x > loBound[0]
     res &= x < hiBound[0]
@@ -151,3 +175,4 @@ shp.computeSurfaceMeshes(args.maxArea)
 
 if args.output:
   shp.save(args.output)
+
