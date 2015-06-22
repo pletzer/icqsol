@@ -16,6 +16,8 @@ class PrimitiveShape(BaseShape):
     self.surfaceFuncs = []
     self.evalFunc = None
 
+    BaseShape.__init__(self,)
+
   def setSurfaceFunctions(self, funcs):
     """
     Set the surface functions

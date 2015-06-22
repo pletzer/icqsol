@@ -23,7 +23,7 @@ class BaseShape:
     Constructor
     """
 
-    self.points = []
+    self.points = numpy.array([])
     self.surfaceMeshes = []
 
   def evaluate(self, points):
