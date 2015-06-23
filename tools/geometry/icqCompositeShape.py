@@ -120,15 +120,38 @@ class CompositeShape(BaseShape):
     tri.triangulate()
 
     # apply filter to extract boundary cell faces
-    pdata = tri.delny.GetOutput()
+    ugrid = tri.delny.GetOutput()
+
+    print '*** ugrid = ', ugrid
+
     surf = vtk.vtkGeometryFilter()
     if vtk.VTK_MAJOR_VERSION >= 6:
-      surf.SetInputData(pdata)
+      surf.SetInputData(ugrid)
     else:
-      surf.SetInput(pdata)
+      surf.SetInput(ugrid)
     surf.Update()
 
     print '*** surf = ', surf
+
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(surf.GetOutputPort())
+
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+
+    ren = vtk.vtkRenderer()
+    win = vtk.vtkRenderWindow()
+    iren = vtk.vtkRenderWindowInteractor()
+
+    ren.AddActor()
+    win.AddRenderer()
+    iren.SetRenderWindow(win)
+    win.SetSize(500, 500)
+
+    iren.Initialize()
+    win.Render()
+    iren.Start()
+
 
     # get the boundary cells
     # copy all the surface meshes into a single connectivity array

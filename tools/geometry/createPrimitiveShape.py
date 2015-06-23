@@ -49,7 +49,7 @@ parser.add_argument('--type', dest='type',
 parser.add_argument('--options', dest='options', nargs='*', default=[],
   help='Options to be passed to the shape constructor.')
 
-parser.add_argument('--list', dest='list', 
+parser.add_argument('--list', dest='list', action='store_true',
   help='List of options to be passed to the shape constructor of type shape.')
 
 parser.add_argument('--output', dest='output', 
@@ -170,11 +170,15 @@ else:
   print 'ERROR: unknown shape'
   sys.exit(1)
 
+if args.list:
+  for optName, optVal in options[args.type].items():
+    print optName, ' --> ', optVal
+
 shp = PrimitiveShape()
 shp.setSurfaceFunctions(surfaceFunctions)
 shp.setEvaluateFunction(evalFunction)
-
 shp.computeSurfaceMeshes(args.maxArea)
+
 
 if args.output:
   shp.save(args.output)
