@@ -198,7 +198,8 @@ def test():
   # assemble
   cs = CompositeShape()
   cs.assemble('$0 + $1', (s1, s2))
-  cs.computeSurfaceMeshes(maxTriArea=0.01)
+  cs.computeSurfaceMeshes(maxTriArea=0.1)
+  cs.save('testCompositeShape.vtk')
 
 
 if __name__ == '__main__': test()

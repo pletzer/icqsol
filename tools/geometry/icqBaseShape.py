@@ -25,6 +25,7 @@ class BaseShape:
 
     self.points = numpy.array([])
     self.surfaceMeshes = []
+    self.surfaceNormals = []
 
   def evaluate(self, points):
     """
@@ -53,6 +54,38 @@ class BaseShape:
     @return node connectivity array
     """
     return self.surfaceMeshes[faceId]
+
+  def computeSurfaceNormals(self):
+    """
+    Compute the normals for each surface triangle
+    @note the vectors are NOT normalized, the magnitudes are the 
+    cell areas
+    """
+    self.surfaceNormals = []
+
+    for face in self.surfaceMeshes:
+
+      # rows as cells, next index refers a vertex, last index is 
+      # dimension axis. You've got to love numpy!
+      verts = self.points[face]
+
+      verts0 = verts[:, 0, :]
+      verts1 = verts[:, 1, :]
+      verts2 = verts[:, 2, :]
+
+      # verts1 and verts2 are now the vectors from the base to point 1 and 2 
+      # in the cell
+      verts1 -= verts0
+      verts2 -= verts0
+
+      # cross product
+      normals = numpy.zeros( (verts.shape[0], 3), numpy.float64 )
+      normals[:, 0] = verts1[:, 1]*verts2[:, 2] - verts1[:, 2]*verts2[:, 1]
+      normals[:, 1] = verts1[:, 2]*verts2[:, 0] - verts1[:, 0]*verts2[:, 2]
+      normals[:, 2] = verts1[:, 0]*verts2[:, 1] - verts1[:, 1]*verts2[:, 0]
+
+      self.surfaceNormals.append(normals)
+
 
   def save(self, filename):
     """

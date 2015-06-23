@@ -248,6 +248,7 @@ def test():
   print 'number of cells for face 2: ', s._getSurfaceNumberOfCells(2, 0.1)
 
   s.computeSurfaceMeshes(0.1)
+  s.computeSurfaceNormals()
 
   s.save('testPrimitiveShape.vtk')
 
