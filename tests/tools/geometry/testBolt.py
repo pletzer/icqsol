@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Test creation of a screw object
+Test creation of a bolt object
 @author pletzer@psu.edu
 """
 
@@ -20,4 +20,4 @@ geom = head + shaft - notch1 - notch2
 geom.rotate(2, 45.0)
 
 geom.computeBoundarySurface(100, 100, 100)
-geom.show(filename='testScrew.png')
+geom.show(filename='testBolt.png')
