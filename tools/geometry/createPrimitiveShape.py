@@ -52,6 +52,10 @@ parser.add_argument('--options', dest='options', nargs='*', default=[],
 parser.add_argument('--list', dest='list', action='store_true',
   help='List of options to be passed to the shape constructor of type shape.')
 
+parser.add_argument('--check', dest='check', action='store_true',
+  help='Check validity of supplied options, by default errors will ignored.')
+
+
 parser.add_argument('--output', dest='output', 
   default='createPrimitiveShape-{0}'.format(tid), 
 	help='Output file.')
@@ -65,6 +69,9 @@ if not args.type:
 # set the options
 for optNameValue in args.options:
   optName, optValue = optNameValue.split('=')
+  if args.check and optName not in options[args.type]:
+    print 'ERROR: invalid option named "{0}"'.format(optName)
+    sys.exit(3)
   options[args.type][optName] = eval(optValue)
 
 # set the surface and volume function
@@ -170,9 +177,10 @@ else:
   print 'ERROR: unknown shape'
   sys.exit(1)
 
+# display list of options (if asking for it)
 if args.list:
   for optName, optVal in options[args.type].items():
-    print optName, ' --> ', optVal
+    print '{:>10} --> {:>20}'.format(optName, optVal)
 
 shp = PrimitiveShape()
 shp.setSurfaceFunctions(surfaceFunctions)
