@@ -14,7 +14,10 @@ class Triangulation:
     self.delny = vtk.vtkDelaunay3D()
 
     self.polydata.SetPoints(self.points)
-    self.delny.SetInputData(self.polydata)
+    if vtk.VTK_MAJOR_VERSION >= 6:
+      self.delny.SetInputData(self.polydata)
+    else:
+      self.delny.SetInput(self.polydata)
 
   def setInputPoints(self, points,):
     """
