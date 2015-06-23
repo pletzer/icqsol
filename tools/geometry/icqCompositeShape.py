@@ -147,15 +147,18 @@ class CompositeShape(BaseShape):
     ugrid2.SetPoints(pts)
     numCells2 = int(validCells.sum())
     ugrid2.Allocate(numCells2, 1)
+    cells.InitTraversal()
     for i in range(numCells):
       if validCells[i]:
-        cell = cells.GetCell(i, ptIds)
-        ugrid2.InsertNextCell(vtk.VTK_TETRA, 4, volumeMesh[i, :])
+        cell = cells.GetNextCell(ptIds)
+        print '*** number of Ids = ', ptIds.GetNumberOfIds()
+        ugrid2.InsertNextCell(vtk.VTK_TETRA, ptIds)
 
     # apply filter to extract boundary cell faces
 
+    print '*** ugrid = ', ugrid
     print '*** ugrid2 = ', ugrid2
-
+    
     surf = vtk.vtkGeometryFilter()
     if vtk.VTK_MAJOR_VERSION >= 6:
       surf.SetInputData(ugrid2)
