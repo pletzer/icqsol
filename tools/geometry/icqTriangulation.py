@@ -16,14 +16,14 @@ class Triangulation:
     self.polydata.SetPoints(self.points)
     self.delny.SetInputData(self.polydata)
 
-  def setInputVertices(self, verts,):
+  def setInputPoints(self, points,):
     """
-    Set input vertices
-    @param verts vertices
+    Set input points
+    @param points points
     """
-    numPoints = verts.shape[0]
+    numPoints = points.shape[0]
     for i in range(numPoints):
-      self.points.InsertPoint(i, verts[i, 0], verts[i, 1], verts[i, 2])
+      self.points.InsertPoint(i, points[i, 0], points[i, 1], points[i, 2])
 
   def triangulate(self):
     """

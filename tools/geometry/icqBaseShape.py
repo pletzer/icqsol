@@ -61,7 +61,10 @@ class BaseShape:
     @note the vectors are NOT normalized, the magnitudes are the 
     cell areas
     """
-    self.surfaceNormals = []
+
+    if self.surfaceNormals:
+      # nothing to do
+      return 
 
     for face in self.surfaceMeshes:
 

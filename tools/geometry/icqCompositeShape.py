@@ -6,6 +6,8 @@ import vtk
 import numpy
 
 from icqBaseShape import BaseShape
+from icqUniformGrid import uniformGrid
+from icqTriangulation import Triangulation
 
 class CompositeShape(BaseShape):
 
@@ -54,36 +56,45 @@ class CompositeShape(BaseShape):
     # move point out by a small amount to avoid floating point comparision
     # issues
     eps = 1.e-6
+    ONE_THIRD = 1./3.
 
+    print '*** self.surfaceMeshes = ', self.surfaceMeshes
     numFaces = len(self.surfaceMeshes)
     insidePointList = []
     totalNumPoints = 0
     loBound = numpy.array([float('inf')] * 3)
     hiBound = numpy.array([-float('inf')] * 3)
-    for iFace in range(numFaces):
-      face = self.surfaceMeshes[iFace]
-      normals = self.surfaceNormals[iFace]
-      verts = self.points[face] 
-      displVerts = verts + eps*normals
-      inPts = verts[self.evaluate(displVerts) > 0]
-      totalNumPoints += inPts.shape[0]
-      insidePointList.append(inPts)
-      xs, ys, zs = inPts[:, 0], inPts[:, 1], inPts[:, 2]
-      loBound[0] = min(loBound[0], xs.min())
-      loBound[1] = min(loBound[1], ys.min())
-      loBound[2] = min(loBound[2], zs.min())
-      hiBound[0] = max(hiBound[0], xs.max())
-      hiBound[1] = max(hiBound[1], ys.max())
-      hiBound[2] = max(hiBound[2], zs.max())
+    for shp in self.argShapes:
+      numFaces = len(shp.surfaceMeshes)
+      for iFace in range(numFaces):
+        print '*** iFace = ', iFace
+        face = shp.surfaceMeshes[iFace]
+        shp.computeSurfaceNormals()
+        normals = shp.surfaceNormals[iFace]
+        print '*** normals = ', normals
+        print '*** face = ', face
+        print '*** points = ', shp.points
+        verts = shp.points[face] 
+        displVerts = verts.copy()
+        displVerts[:, 0, :] += eps*normals
+        displVerts[:, 1, :] += eps*normals
+        displVerts[:, 2, :] += eps*normals
+        inPts = verts[self.evaluate(displVerts) > 0]
+        totalNumPoints += inPts.shape[0]
+        insidePointList.append(inPts)
+        xs, ys, zs = inPts[:, 0], inPts[:, 1], inPts[:, 2]
+        print '*** xs, ys, zs = ', xs, ys, zs
+        loBound[0] = min(loBound[0], xs.min())
+        loBound[1] = min(loBound[1], ys.min())
+        loBound[2] = min(loBound[2], zs.min())
+        hiBound[0] = max(hiBound[0], xs.max())
+        hiBound[1] = max(hiBound[1], ys.max())
+        hiBound[2] = max(hiBound[2], zs.max())
 
     # add more points by sampling the volume containing the boundary surfaces
     cellLength = numpy.sqrt(2*maxTriArea)
     ns = numpy.array([ int( (hiBound[i] - loBound[i])/cellLength + 0.5) for i in range(3) ])
-    deltas = (hiBound - loBound)/ns
-    xs = numpy.array([loBound[0] + i*deltas[0] for i in range(ns[0])])
-    ys = numpy.array([loBound[1] + j*deltas[1] for j in range(ns[1])])
-    zs = numpy.array([loBound[2] + k*deltas[2] for k in range(ns[2])])
-    xx, yy, zz = RectilinearGrid(xs, ys, zs)
+    xx, yy, zz = uniformGrid(loBound, hiBound, ns)
     npts = len(xx.flat)
     gridPts = numpy.zeros( (npts, 3), numpy.float64 )
     gridPts[:, 0] = xx.flat
@@ -109,13 +120,15 @@ class CompositeShape(BaseShape):
     tri.triangulate()
 
     # apply filter to extract boundary cell faces
-    pdata = tri.delny
+    pdata = tri.delny.GetOutput()
     surf = vtk.vtkGeometryFilter()
     if vtk.VTK_MAJOR_VERSION >= 6:
       surf.SetInputData(pdata)
     else:
       surf.SetInput(pdata)
     surf.Update()
+
+    print '*** surf = ', surf
 
     # get the boundary cells
     # copy all the surface meshes into a single connectivity array
