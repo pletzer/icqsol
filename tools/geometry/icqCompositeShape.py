@@ -119,16 +119,48 @@ class CompositeShape(BaseShape):
     tri.setInputPoints(insidePoints)
     tri.triangulate()
 
-    # apply filter to extract boundary cell faces
     ugrid = tri.delny.GetOutput()
 
-    print '*** ugrid = ', ugrid
+    # remove the cells that are outside the closed object
+    pts = ugrid.GetPoints()
+    cells = ugrid.GetCells()
+    ptIds = vtk.vtkIdList()
+    print '*** cells = ', cells
+    numCells = cells.GetNumberOfCells()
+    volumeMesh = numpy.zeros( (numCells, 4), numpy.int )
+    centroidPoints = numpy.zeros( (numCells, 3,), numpy.float64 )
+    for i in range(numCells):
+      cell = cells.GetCell(i, ptIds)
+      i0, i1, i2, i3 = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2), ptIds.GetId(3)
+      p0, p1, p2, p3 = pts.GetPoint(i0), pts.GetPoint(i1), pts.GetPoint(i2), pts.GetPoint(i3)
+      centroidPoints[i, :] += numpy.array(p0)
+      centroidPoints[i, :] += numpy.array(p1)
+      centroidPoints[i, :] += numpy.array(p2)
+      centroidPoints[i, :] += numpy.array(p3)
+      centroidPoints[i, :] *= 0.25
+      volumeMesh[i, :] = i0, i1, i2, i3
+
+    validCells = self.evaluate(centroidPoints)
+    print '*** validCells = ', validCells
+
+    ugrid2 = vtk.vtkUnstructuredGrid()
+    ugrid2.SetPoints(pts)
+    numCells2 = int(validCells.sum())
+    ugrid2.Allocate(numCells2, 1)
+    for i in range(numCells):
+      if validCells[i]:
+        cell = cells.GetCell(i, ptIds)
+        ugrid2.InsertNextCell(vtk.VTK_TETRA, 4, volumeMesh[i, :])
+
+    # apply filter to extract boundary cell faces
+
+    print '*** ugrid2 = ', ugrid2
 
     surf = vtk.vtkGeometryFilter()
     if vtk.VTK_MAJOR_VERSION >= 6:
-      surf.SetInputData(ugrid)
+      surf.SetInputData(ugrid2)
     else:
-      surf.SetInput(ugrid)
+      surf.SetInput(ugrid2)
     surf.Update()
 
     print '*** surf = ', surf
@@ -143,8 +175,8 @@ class CompositeShape(BaseShape):
     win = vtk.vtkRenderWindow()
     iren = vtk.vtkRenderWindowInteractor()
 
-    ren.AddActor()
-    win.AddRenderer()
+    ren.AddActor(actor)
+    win.AddRenderer(ren)
     iren.SetRenderWindow(win)
     win.SetSize(500, 500)
 
@@ -310,7 +342,7 @@ def test():
 
   # create second sphere
   radius2 = 0.5
-  origin2 = numpy.array([0.4, 0.5, 0.6])
+  origin2 = numpy.array([0.9, 0.8, 0.6])
   surfaceFunctions2 = [(lambda u,v: radius2*sin(pi*u)*cos(2*pi*v) + origin2[0], 
                        lambda u,v: radius2*sin(pi*u)*sin(2*pi*v) + origin2[1], 
                        lambda u,v: radius2*cos(pi*u) + origin2[2])]
@@ -329,7 +361,7 @@ def test():
   # assemble
   cs = CompositeShape()
   cs.assemble('$0 + $1', (s1, s2))
-  cs.computeSurfaceMeshes(maxTriArea=0.1)
+  cs.computeSurfaceMeshes(maxTriArea=0.01)
   cs.save('testCompositeShape.vtk')
 
 
