@@ -145,12 +145,12 @@ class PrimitiveShape(BaseShape):
     @return the components of the cell areas for each cell
     """
 
-    dxu = xx[1:, :-1]
-    dxv = xx[:-1, 1:]
-    dyu = yy[1:, :-1]
-    dyv = yy[:-1, 1:]
-    dzu = zz[1:, :-1]
-    dzv = zz[:-1, 1:]
+    dxu = xx[1:, :-1].copy()
+    dxv = xx[:-1, 1:].copy()
+    dyu = yy[1:, :-1].copy()
+    dyv = yy[:-1, 1:].copy()
+    dzu = zz[1:, :-1].copy()
+    dzv = zz[:-1, 1:].copy()
 
     dxu -= xx[:-1, :-1]
     dxv -= xx[:-1, :-1]
@@ -162,6 +162,7 @@ class PrimitiveShape(BaseShape):
     ax = dyu*dzv - dyv*dzu
     ay = dzu*dxv - dzv*dxu
     az = dxu*dyv - dxv*dyu
+    
     return ax, ay, az
    
   def _getSurfaceNumberOfCells(self, faceId, maxTriArea):
@@ -182,6 +183,7 @@ class PrimitiveShape(BaseShape):
     # mac cell area
     maxHalfArea = 0.5*max( numpy.sqrt(ax*ax + ay*ay + az*az).flat )
     # estimate the number of cells
+    print '*** maxTriArea = {0} maxHalfArea = {1}'.format(maxTriArea, maxHalfArea)
     nOpt = int(numpy.sqrt(maxHalfArea/maxTriArea) * n + 0.5)
 
     return max(nOpt, 1)
