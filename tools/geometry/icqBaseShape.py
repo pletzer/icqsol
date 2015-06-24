@@ -55,6 +55,15 @@ class BaseShape:
     """
     return self.surfaceMeshes[faceId]
 
+  def getSurfaceNormals(self, faceId):
+    """
+    Get the surface normal vectors
+    @param faceId Id of the surface
+    @return array of cell area normals
+    @note the normals are not normalized
+    """
+    return self.surfaceNormals[faceId]
+
   def computeSurfaceNormals(self):
     """
     Compute the normals for each surface triangle

@@ -62,26 +62,17 @@ class CompositeShape(BaseShape):
     for shp in self.argShapes:
       shp.computeSurfaceMeshes(maxTriArea)
       shp.computeSurfaceNormals()
-      numFaces = len(shp.surfaceMeshes)
-      for iFace in range(numFaces):
-        face = shp.surfaceMeshes[iFace]
-        normals = shp.surfaceNormals[iFace]
-        verts = shp.points[face]
-        displVerts = verts.copy()
-        displVerts[:, 0, :] += eps*normals
-        displVerts[:, 1, :] += eps*normals
-        displVerts[:, 2, :] += eps*normals
-        inPts = verts[self.evaluate(displVerts) > 0]
-        totalNumPoints += inPts.shape[0]
-        insidePointList.append(inPts)
-        xs, ys, zs = inPts[:, 0], inPts[:, 1], inPts[:, 2]
-        print '*** xs, ys, zs = ', xs, ys, zs
-        loBound[0] = min(loBound[0], xs.min())
-        loBound[1] = min(loBound[1], ys.min())
-        loBound[2] = min(loBound[2], zs.min())
-        hiBound[0] = max(hiBound[0], xs.max())
-        hiBound[1] = max(hiBound[1], ys.max())
-        hiBound[2] = max(hiBound[2], zs.max())
+      verts = shp.getPoints()
+      inPts = verts[ self.evaluate(verts) > 0 ]
+      totalNumPoints += inPts.shape[0]
+      insidePointList.append(inPts)
+      xs, ys, zs = inPts[:, 0], inPts[:, 1], inPts[:, 2]
+      loBound[0] = min(loBound[0], xs.min())
+      loBound[1] = min(loBound[1], ys.min())
+      loBound[2] = min(loBound[2], zs.min())
+      hiBound[0] = max(hiBound[0], xs.max())
+      hiBound[1] = max(hiBound[1], ys.max())
+      hiBound[2] = max(hiBound[2], zs.max())
 
     # add more points by sampling the volume containing the boundary surfaces
     cellLength = numpy.sqrt(2*maxTriArea)
@@ -99,7 +90,7 @@ class CompositeShape(BaseShape):
     totalNumPoints += gridPts.shape[0]
     insidePointList.append(gridPts)
 
-    # create a single list of points
+    # create a single list out of all these points
     insidePoints = numpy.zeros( (totalNumPoints, 3), numpy.float64 )
     iBeg = 0
     for pts in insidePointList:
@@ -118,7 +109,6 @@ class CompositeShape(BaseShape):
     pts = ugrid.GetPoints()
     cells = ugrid.GetCells()
     ptIds = vtk.vtkIdList()
-    print '*** cells = ', cells
     numCells = cells.GetNumberOfCells()
     volumeMesh = numpy.zeros( (numCells, 4), numpy.int )
     centroidPoints = numpy.zeros( (numCells, 3,), numpy.float64 )
@@ -134,7 +124,6 @@ class CompositeShape(BaseShape):
       volumeMesh[i, :] = i0, i1, i2, i3
 
     validCells = self.evaluate(centroidPoints)
-    print '*** validCells = ', validCells
     
     vData = vtk.vtkDoubleArray()
     vData.SetVoidArray(numpy.array(validCells, numpy.float64), numCells, 1)
@@ -156,7 +145,6 @@ class CompositeShape(BaseShape):
     for i in range(numCells):
       if validCells[i]:
         cell = cells.GetNextCell(ptIds)
-        print '*** number of Ids = ', ptIds.GetNumberOfIds()
         ugrid2.InsertNextCell(vtk.VTK_TETRA, ptIds)
 
     writer2 = vtk.vtkUnstructuredGridWriter()
@@ -178,8 +166,6 @@ class CompositeShape(BaseShape):
     else:
       surf.SetInput(ugrid)
     surf.Update()
-
-    print '*** surf = ', surf
 
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(surf.GetOutputPort())
@@ -203,19 +189,8 @@ class CompositeShape(BaseShape):
 
     # get the boundary cells
     # copy all the surface meshes into a single connectivity array
-    numCells = surf.GetNumberOfCells()
-    cellArr = numpy.zeros( (numCells, 3), numpy.int )
-    for i in range(numCells):
-      cell = surf.GetCell(i)
-      ptIds = cell.GetPointIds()
-      npts = ptIds.GetNumberOfIds()
-      pInds = [0 for j in range(npts)]
-      for j in range(npts):
-        pInds[j] = int(ptIds.GetId(j))
-      cellArr[i, :] = pInds
-
     # single surface in the case of a composite object
-    self.surfaceMeshes = [cellArr]
+    #self.surfaceMeshes = [cellArr]
 
   def computeSurfaceMeshes2(self, maxTriArea):
     """
@@ -346,10 +321,11 @@ def test():
                        lambda u,v: radius1*sin(pi*u)*sin(2*pi*v) + origin1[1], 
                        lambda u,v: radius1*cos(pi*u) + origin1[2])]
   def evalFunction1(pts):
+    eps = 1.e-6
     xNorm = pts[:, 0] - origin1[0]
     yNorm = pts[:, 1] - origin1[1]
     zNorm = pts[:, 2] - origin1[2]
-    return radius1**2 - xNorm**2 - yNorm**2 - zNorm**2 > 0
+    return radius1**2 + eps - xNorm**2 - yNorm**2 - zNorm**2 > 0
 
   s1 = PrimitiveShape()
   s1.setSurfaceFunctions(surfaceFunctions1)
@@ -358,15 +334,16 @@ def test():
 
   # create second sphere
   radius2 = 1.0
-  origin2 = numpy.array([1.0, 0.0, 0.0])
+  origin2 = numpy.array([2.0, 0.0, 0.0])
   surfaceFunctions2 = [(lambda u,v: radius2*sin(pi*u)*cos(2*pi*v) + origin2[0], 
                         lambda u,v: radius2*sin(pi*u)*sin(2*pi*v) + origin2[1],
                         lambda u,v: radius2*cos(pi*u) + origin2[2])]
   def evalFunction2(pts):
+    eps = 1.e-6
     xNorm = pts[:, 0] - origin2[0]
     yNorm = pts[:, 1] - origin2[1]
     zNorm = pts[:, 2] - origin2[2]
-    return radius2**2 - xNorm**2 - yNorm**2 - zNorm**2 > 0
+    return radius2**2 + eps - xNorm**2 - yNorm**2 - zNorm**2 > 0
 
   s2 = PrimitiveShape()
   s2.setSurfaceFunctions(surfaceFunctions2)
@@ -377,7 +354,7 @@ def test():
   # assemble
   cs = CompositeShape()
   #cs.assemble('$0 + $1', (s1, s2))
-  cs.assemble('$0', (s2,))
+  cs.assemble('$0 + $1', (s1, s2,))
   cs.computeSurfaceMeshes(maxTriArea=0.1)
   cs.save('testCompositeShape.vtk')
 
