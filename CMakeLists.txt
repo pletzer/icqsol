@@ -67,6 +67,16 @@ add_test(NAME testCompositeUnion
          --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
          --compose "$0 + $1"
          --output testCompositeUnion.vtk)
+add_test(NAME testCompositeIntersection
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createCompositeShape.py" 
+         --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
+         --compose "$0 * $1"
+         --output testCompositeIntersection.vtk)
+add_test(NAME testCompositeRemoval
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createCompositeShape.py" 
+         --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
+         --compose "$0 - $1"
+         --output testCompositeRemoval.vtk)
 
 
 
