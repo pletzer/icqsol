@@ -123,18 +123,8 @@ class CompositeShape(BaseShape):
 
     validCells = self.evaluate(centroidPoints)
 
-    vData = vtk.vtkDoubleArray()
-    vData.SetVoidArray(numpy.array(validCells, numpy.float64), numCells, 1)
-    ugrid.GetCellData().SetScalars(vData)
-    
-    writer = vtk.vtkUnstructuredGridWriter()
-    if vtk.VTK_MAJOR_VERSION >= 6:
-      writer.SetInputData(ugrid)
-    else:
-      writer.SetInput(ugrid)
-    writer.SetFileName('ugrid.vtk')
-    writer.Update()
-
+    # construct unstructured grid with cells that are fully
+    # contained within the composite object
     ugrid2 = vtk.vtkUnstructuredGrid()
     ugrid2.SetPoints(pts)
     numCells2 = int(validCells.sum())
@@ -145,6 +135,7 @@ class CompositeShape(BaseShape):
       if validCells[i]:
         ugrid2.InsertNextCell(vtk.VTK_TETRA, ptIds)
 
+    # DEBUG
     writer2 = vtk.vtkUnstructuredGridWriter()
     if vtk.VTK_MAJOR_VERSION >= 6:
       writer2.SetInputData(ugrid2)
@@ -154,10 +145,6 @@ class CompositeShape(BaseShape):
     writer2.Update()
 
     # apply filter to extract boundary cell faces
-
-    #print '*** ugrid = ', ugrid
-    #print '*** ugrid2 = ', ugrid2
-    
     surf = vtk.vtkGeometryFilter()
     if vtk.VTK_MAJOR_VERSION >= 6:
       surf.SetInputData(ugrid2)
@@ -165,21 +152,18 @@ class CompositeShape(BaseShape):
       surf.SetInput(ugrid2)
     surf.Update()
 
+    # DEBUG
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(surf.GetOutputPort())
-
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
-
     ren = vtk.vtkRenderer()
     win = vtk.vtkRenderWindow()
     iren = vtk.vtkRenderWindowInteractor()
-
     ren.AddActor(actor)
     win.AddRenderer(ren)
     iren.SetRenderWindow(win)
     win.SetSize(500, 500)
-
     iren.Initialize()
     win.Render()
     iren.Start()
