@@ -20,7 +20,7 @@ class CompositeShape(BaseShape):
     self.expression = ''
     self.argShapes = []
 
-  def assemble(self, expression, shapes):
+  def compose(self, expression, shapes):
     """
     Assemble shapes into a composite object
     @param expression expression of the shape objects, $0 for shape 0, $1 for shape 1, etc. 
@@ -245,10 +245,9 @@ def test():
   s2.computeSurfaceMeshes(maxTriArea=0.1)
   s2.save('s2.vtk')
 
-  # assemble
+  # compose
   cs = CompositeShape()
-  #cs.assemble('$0 + $1', (s1, s2))
-  cs.assemble('$0 + $1', (s1, s2,))
+  cs.compose('$0 + $1', (s1, s2,))
   cs.computeSurfaceMeshes(maxTriArea=0.05)
   cs.save('testCompositeShape.vtk')
 
