@@ -135,6 +135,12 @@ class CompositeShape(BaseShape):
       if validCells[i]:
         ugrid2.InsertNextCell(vtk.VTK_TETRA, ptIds)
 
+    surf2 = vtk.vtkUnstructuredGridGeometryFilter()
+    surf2.SetInputData(ugrid2)
+    ugrid3 = surf2.GetOutput()
+    print '*** ugrid3 = ', ugrid3
+    print '*** surf2 = ', surf2
+
     # DEBUG
     writer2 = vtk.vtkUnstructuredGridWriter()
     if vtk.VTK_MAJOR_VERSION >= 6:
@@ -151,6 +157,9 @@ class CompositeShape(BaseShape):
     else:
       surf.SetInput(ugrid2)
     surf.Update()
+    print '*** surf = ', surf
+
+    print '*** surf.GetOutput() = ', surf.GetOutput()
 
     # DEBUG
     mapper = vtk.vtkPolyDataMapper()
@@ -172,87 +181,24 @@ class CompositeShape(BaseShape):
     # get the boundary cells
     # copy all the surface meshes into a single connectivity array
     # single surface in the case of a composite object
-    #self.surfaceMeshes = [cellArr]
-
-  def computeSurfaceMeshes2(self, maxTriArea):
-    """
-    Compute the surface meshes
-    @param maxTriArea maximum triangle area
-    """
-
-    # get the bounds
-    loBound, hiBound = self._getBounds(maxTriArea)
-
-    # get the optimal number of cells in each direction
-    nx, ny, nz = self._getUniformGridResolution(loBound, hiBound, maxTriArea)
-    nx1, ny1, nz1 = nx + 1, ny + 1, nz + 1
-
-    x = loBound[0] + (hiBound[0] - loBound[0])*numpy.array([i for i in range(nx1)])/nx
-    y = loBound[1] + (hiBound[1] - loBound[1])*numpy.array([j for j in range(ny1)])/ny
-    z = loBound[2] + (hiBound[2] - loBound[2])*numpy.array([i for k in range(nz1)])/nz
-    xxx = numpy.outer(numpy.ones((nz1, ny1)), x)
-    yyy = numpy.outer(numpy.outer(numpy.ones((nz1,)), y), numpy.ones((nx1,)))
-    zzz = numpy.outer(z, numpy.ones((ny1, nx1)))
-    verts = numpy.zeros( (nz1*ny1*nx1, 3), numpy.float64 )
-    verts[:, 0] = xxx.flat
-    verts[:, 1] = yyy.flat
-    verts[:, 2] = zzz.flat
-
-    insideVals = self.evaluate(verts)
-
-    # build the VTK contour pipeline
-    xyz = vtk.vtkDoubleArray()
-    pts = vtk.vtkPoints()
-    data = vtk.vtkDoubleArray()
-    grd = vtk.vtkStructuredGrid()
-    cont = vtk.vtkContourFilter()
-
-    numPoints = nx1*ny1*nz1
-    xyz.SetNumberOfTuples(numPoints)
-    xyz.SetNumberOfComponents(3)
-    xyz.SetVoidArray(verts, numPoints*3, 1)
-
-    pts.SetData(xyz)
-
-    data.SetNumberOfTuples(numPoints)
-    data.SetNumberOfComponents(1)
-    data.SetVoidArray(insideVals, numPoints*3, 1)
-
-    grd.SetDimensions(nz1, ny1, nx1)
-    grd.SetPoints(pts)
-    grd.GetPointData().SetScalars(data)
-
-    if vtk.VTK_MAJOR_VERSION >= 6:
-      cont.SetInputData(grd)
-    else:
-      cont.SetInput(grd)
-    cont.SetValue(0, 0.0) # or should it be 0.5?
-    cont.Update()
-
-    surfPolyData = cont.GetOutput()
-    
-    # gather the boundary points
-    surfPoints = surfPolyData.GetPoints()
-    numSurfPoints = surfPoints.GetNumberOfPoints()
-    self.points = numpy.zeros( (numSurfPoints, 3), numpy.float64 )
-    for i in range(numSurfPoints):
-      self.points[i, :] = surfPoints.GetPoint(i)
-
-    # gather the boundary triangles
-    numSurfCells = surfPolyData.GetNumberOfCells()
-    cellArr = numpy.zeros( (numSurfCells, 3), numpy.int )
-    for i in range(numSurfCells):
-      cell = surfPolyData.GetCell(i)
-      ptIds = cell.GetPointIds()
+    pdata = surf.GetOutput()
+    numCells = pdata.GetNumberOfPolys()
+    cells = pdata.GetPolys()
+    cells.InitTraversal()
+    cellArr = numpy.zeros( (numCells, 3), numpy.int )
+    for i in range(numCells):
+      cell = cells.GetNextCell(ptIds)
       npts = ptIds.GetNumberOfIds()
-      pInds = [0 for j in range(npts)]
-      for j in range(npts):
-        pInds[j] = int(ptIds.GetId(j))
-      cellArr[i, :] = pInds
+      assert(npts == 3)
+      cellArr[i, :] = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
 
-    # single surface mesh in this case
+    # set the points
+    numPoints = pts.GetNumberOfPoints()
+    self.points = numpy.zeros( (numPoints, 3), numpy.float64 )
+    for i in range(numPoints):
+      self.points[i, :] = pts.GetPoint(i)
+
     self.surfaceMeshes = [cellArr]
-
 
   def _getBounds(self, maxTriArea):
     """
