@@ -190,8 +190,10 @@ class BaseShape:
       reader = vtk.vtkPolyDataReader()
 
     reader.SetFileName(filename)
+    reader.Update()
 
     pdata = reader.GetOutput()
+
     pts = pdata.GetPoints()
     cells = pdata.GetPolys()
 
