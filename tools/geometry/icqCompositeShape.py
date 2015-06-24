@@ -102,18 +102,17 @@ class CompositeShape(BaseShape):
     tri = Triangulation()
     tri.setInputPoints(insidePoints)
     tri.triangulate()
-
     ugrid = tri.delny.GetOutput()
 
-    # remove the cells that are outside the closed object
+    # remove the cells that are outside of the closed object
     pts = ugrid.GetPoints()
     cells = ugrid.GetCells()
     ptIds = vtk.vtkIdList()
     numCells = cells.GetNumberOfCells()
-    volumeMesh = numpy.zeros( (numCells, 4), numpy.int )
     centroidPoints = numpy.zeros( (numCells, 3,), numpy.float64 )
+    cells.InitTraversal()
     for i in range(numCells):
-      cell = cells.GetCell(i, ptIds)
+      cell = cells.GetNextCell(ptIds)
       i0, i1, i2, i3 = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2), ptIds.GetId(3)
       p0, p1, p2, p3 = pts.GetPoint(i0), pts.GetPoint(i1), pts.GetPoint(i2), pts.GetPoint(i3)
       centroidPoints[i, :] += numpy.array(p0)
@@ -121,10 +120,9 @@ class CompositeShape(BaseShape):
       centroidPoints[i, :] += numpy.array(p2)
       centroidPoints[i, :] += numpy.array(p3)
       centroidPoints[i, :] *= 0.25
-      volumeMesh[i, :] = i0, i1, i2, i3
 
     validCells = self.evaluate(centroidPoints)
-    
+
     vData = vtk.vtkDoubleArray()
     vData.SetVoidArray(numpy.array(validCells, numpy.float64), numCells, 1)
     ugrid.GetCellData().SetScalars(vData)
@@ -143,8 +141,8 @@ class CompositeShape(BaseShape):
     ugrid2.Allocate(numCells2, 1)
     cells.InitTraversal()
     for i in range(numCells):
+      cell = cells.GetNextCell(ptIds)
       if validCells[i]:
-        cell = cells.GetNextCell(ptIds)
         ugrid2.InsertNextCell(vtk.VTK_TETRA, ptIds)
 
     writer2 = vtk.vtkUnstructuredGridWriter()
@@ -162,9 +160,9 @@ class CompositeShape(BaseShape):
     
     surf = vtk.vtkGeometryFilter()
     if vtk.VTK_MAJOR_VERSION >= 6:
-      surf.SetInputData(ugrid)
+      surf.SetInputData(ugrid2)
     else:
-      surf.SetInput(ugrid)
+      surf.SetInput(ugrid2)
     surf.Update()
 
     mapper = vtk.vtkPolyDataMapper()
