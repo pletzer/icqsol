@@ -44,6 +44,9 @@ class PrimitiveShape(BaseShape):
     Compute the surface meshes
     @param maxTriArea maximum triangle area
     """
+    
+    if self.surfaceMeshes:
+      return
 
     points = []
     pointCount = 0
@@ -67,11 +70,11 @@ class PrimitiveShape(BaseShape):
       points.append(pts)
 
       numQuadCells = nu * nv
-      ii = numpy.outer( range(nu1), numpy.ones((nv1,), numpy.int) )
-      jj = numpy.outer( numpy.ones((nu1,), numpy.int), range(nv1) )
+      jj = numpy.outer( range(nv1), numpy.ones((nu1,), numpy.int) )
+      ii = numpy.outer( numpy.ones((nv1,), numpy.int), range(nu1) )
 
       # big index
-      bigII = nv1*ii + jj
+      bigII = nu1*jj + ii
 
       connect = numpy.zeros( (2*numQuadCells, 3), numpy.int )
 
@@ -91,7 +94,7 @@ class PrimitiveShape(BaseShape):
       # store
       self.surfaceMeshes.append(connect)
 
-      # update the number of points count
+      # update the number of points
       pointCount += numPoints
 
     # pointCount is the total number of points
@@ -99,13 +102,12 @@ class PrimitiveShape(BaseShape):
 
     # copy the points into a single array. Note that there will be 
     # duplicate vertices
-    pointCount = 0
+    iBeg = 0
     for faceId in range(len(self.surfaceFuncs)):
       numPoints = points[faceId].shape[0]
-      iBeg = pointCount 
       iEnd = iBeg + numPoints
       self.points[iBeg:iEnd, :] = points[faceId]
-      pointCount += numPoints
+      iBeg += numPoints
 
   def _getSurfacePointArrays(self, faceId, nu, nv):
     """

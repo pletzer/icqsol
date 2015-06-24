@@ -45,18 +45,14 @@ class CompositeShape(BaseShape):
     Compute the surface meshes
     @param maxTriArea maximum triangle area
     """
-  
-    # compute cell normals
-    self.computeSurfaceNormals()
-
     #
     # find all the points inside the volume
     #
 
-    # move point out by a small amount to avoid floating point comparision
-    # issues
+    # move point outwards by a small amount to avoid floating
+    # point comparison issues when determining whether a point is
+    # in or out
     eps = 1.e-6
-    ONE_THIRD = 1./3.
 
     print '*** self.surfaceMeshes = ', self.surfaceMeshes
     numFaces = len(self.surfaceMeshes)
@@ -65,17 +61,22 @@ class CompositeShape(BaseShape):
     loBound = numpy.array([float('inf')] * 3)
     hiBound = numpy.array([-float('inf')] * 3)
     for shp in self.argShapes:
+      shp.computeSurfaceMeshes(maxTriArea)
+      shp.computeSurfaceNormals()
       numFaces = len(shp.surfaceMeshes)
       for iFace in range(numFaces):
         print '*** iFace = ', iFace
         face = shp.surfaceMeshes[iFace]
-        shp.computeSurfaceNormals()
         normals = shp.surfaceNormals[iFace]
         print '*** normals = ', normals
         print '*** face = ', face
-        print '*** points = ', shp.points
-        verts = shp.points[face] 
+        print '*** points.shape = ', shp.points.shape
+        verts = shp.points[face]
+        print '*** verts.shape = ', verts.shape, ' face.shape = ', face.shape, ' normals.shape = ', normals.shape
         displVerts = verts.copy()
+        print '???? verts[:, 0, :] = ', verts[:, 0, :]
+        print '???? verts[:, 1, :] = ', verts[:, 1, :]
+        print '???? verts[:, 2, :] = ', verts[:, 2, :]
         displVerts[:, 0, :] += eps*normals
         displVerts[:, 1, :] += eps*normals
         displVerts[:, 2, :] += eps*normals
@@ -346,12 +347,12 @@ def test():
     xNorm = pts[:, 0] - origin1[0]
     yNorm = pts[:, 1] - origin1[1]
     zNorm = pts[:, 2] - origin1[2]
-    return radius1*radius1 - xNorm**2 - yNorm**2 - zNorm**2 > 0
+    return radius1**2 - xNorm**2 - yNorm**2 - zNorm**2 > 0
 
   s1 = PrimitiveShape()
   s1.setSurfaceFunctions(surfaceFunctions1)
   s1.setEvaluateFunction(evalFunction1)
-  s1.computeSurfaceMeshes(maxTriArea=0.1)
+  #s1.computeSurfaceMeshes(maxTriArea=0.1)
 
   # create second sphere
   radius2 = 1.0
@@ -363,12 +364,12 @@ def test():
     xNorm = pts[:, 0] - origin2[0]
     yNorm = pts[:, 1] - origin2[1]
     zNorm = pts[:, 2] - origin2[2]
-    return radius2*radius2 - xNorm**2 - yNorm**2 - zNorm**2 > 0
+    return radius2**2 - xNorm**2 - yNorm**2 - zNorm**2 > 0
 
   s2 = PrimitiveShape()
   s2.setSurfaceFunctions(surfaceFunctions2)
   s2.setEvaluateFunction(evalFunction2)
-  s2.computeSurfaceMeshes(maxTriArea=0.1)
+  #s2.computeSurfaceMeshes(maxTriArea=0.1)
 
   # assemble
   cs = CompositeShape()
