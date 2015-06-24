@@ -150,7 +150,10 @@ class CompositeShape(BaseShape):
     ugrid.GetCellData().SetScalars(vData)
     
     writer = vtk.vtkUnstructuredGridWriter()
-    writer.SetInput(ugrid)
+    if vtk.VTK_MAJOR_VERSION >= 6:
+      writer.SetInputData(ugrid)
+    else:
+      writer.SetInput(ugrid)
     writer.SetFileName('t.vtk')
     writer.Update()
 
@@ -356,7 +359,7 @@ def test():
 
   # create second sphere
   radius2 = 1.0
-  origin2 = numpy.array([2.0, 0.0, 0.0])
+  origin2 = numpy.array([1.0, 0.0, 0.0])
   surfaceFunctions2 = [(lambda u,v: radius2*sin(pi*u)*cos(2*pi*v) + origin2[0], 
                         lambda u,v: radius2*sin(pi*u)*sin(2*pi*v) + origin2[1],
                         lambda u,v: radius2*cos(pi*u) + origin2[2])]
