@@ -93,7 +93,8 @@ class CompositeShape(BaseShape):
 
     # add more points by sampling the volume containing the boundary surfaces
     cellLength = numpy.sqrt(2*maxTriArea)
-    ns = numpy.array([ int( (hiBound[i] - loBound[i])/cellLength + 0.5) for i in range(3) ])
+    ns = numpy.array([ max(1, int( (hiBound[i] - loBound[i])/cellLength + 0.5)) \
+                      for i in range(3) ])
     xx, yy, zz = uniformGrid(loBound, hiBound, ns)
     npts = len(xx.flat)
     gridPts = numpy.zeros( (npts, 3), numpy.float64 )
@@ -142,6 +143,15 @@ class CompositeShape(BaseShape):
 
     validCells = self.evaluate(centroidPoints)
     print '*** validCells = ', validCells
+    
+    vData = vtk.vtkDoubleArray()
+    vData.SetVoidArray(numpy.array(validCells, numpy.float64), numCells, 1)
+    ugrid.GetCellData().SetScalars(vData)
+    
+    writer = vtk.vtkUnstructuredGridWriter()
+    writer.SetInput(ugrid)
+    writer.SetFileName('t.vtk')
+    writer.Update()
 
     ugrid2 = vtk.vtkUnstructuredGrid()
     ugrid2.SetPoints(pts)
@@ -161,9 +171,9 @@ class CompositeShape(BaseShape):
     
     surf = vtk.vtkGeometryFilter()
     if vtk.VTK_MAJOR_VERSION >= 6:
-      surf.SetInputData(ugrid2)
+      surf.SetInputData(ugrid)
     else:
-      surf.SetInput(ugrid2)
+      surf.SetInput(ugrid)
     surf.Update()
 
     print '*** surf = ', surf
@@ -327,8 +337,8 @@ def test():
   from numpy import sin, cos, pi
 
   # create first sphere
-  radius1 = 0.5
-  origin1 = numpy.array([0.1, 0.2, 0.3])
+  radius1 = 1.0
+  origin1 = numpy.array([0., 0., 0.])
   surfaceFunctions1 = [(lambda u,v: radius1*sin(pi*u)*cos(2*pi*v) + origin1[0], 
                        lambda u,v: radius1*sin(pi*u)*sin(2*pi*v) + origin1[1], 
                        lambda u,v: radius1*cos(pi*u) + origin1[2])]
@@ -344,18 +354,17 @@ def test():
   s1.computeSurfaceMeshes(maxTriArea=0.1)
 
   # create second sphere
-  radius2 = 0.5
-  origin2 = numpy.array([0.9, 0.8, 0.6])
+  radius2 = 1.0
+  origin2 = numpy.array([2.0, 0.0, 0.0])
   surfaceFunctions2 = [(lambda u,v: radius2*sin(pi*u)*cos(2*pi*v) + origin2[0], 
-                       lambda u,v: radius2*sin(pi*u)*sin(2*pi*v) + origin2[1], 
-                       lambda u,v: radius2*cos(pi*u) + origin2[2])]
+                        lambda u,v: radius2*sin(pi*u)*sin(2*pi*v) + origin2[1],
+                        lambda u,v: radius2*cos(pi*u) + origin2[2])]
   def evalFunction2(pts):
     xNorm = pts[:, 0] - origin2[0]
     yNorm = pts[:, 1] - origin2[1]
     zNorm = pts[:, 2] - origin2[2]
     return radius2*radius2 - xNorm**2 - yNorm**2 - zNorm**2 > 0
 
-  # create another sphere
   s2 = PrimitiveShape()
   s2.setSurfaceFunctions(surfaceFunctions2)
   s2.setEvaluateFunction(evalFunction2)
@@ -363,8 +372,9 @@ def test():
 
   # assemble
   cs = CompositeShape()
-  cs.assemble('$0 + $1', (s1, s2))
-  cs.computeSurfaceMeshes(maxTriArea=0.01)
+  #cs.assemble('$0 + $1', (s1, s2))
+  cs.assemble('$0', (s2,))
+  cs.computeSurfaceMeshes(maxTriArea=0.1)
   cs.save('testCompositeShape.vtk')
 
 
