@@ -54,7 +54,6 @@ class CompositeShape(BaseShape):
     # in or out
     eps = 1.e-6
 
-    print '*** self.surfaceMeshes = ', self.surfaceMeshes
     numFaces = len(self.surfaceMeshes)
     insidePointList = []
     totalNumPoints = 0
@@ -65,18 +64,10 @@ class CompositeShape(BaseShape):
       shp.computeSurfaceNormals()
       numFaces = len(shp.surfaceMeshes)
       for iFace in range(numFaces):
-        print '*** iFace = ', iFace
         face = shp.surfaceMeshes[iFace]
         normals = shp.surfaceNormals[iFace]
-        print '*** normals = ', normals
-        print '*** face = ', face
-        print '*** points.shape = ', shp.points.shape
         verts = shp.points[face]
-        print '*** verts.shape = ', verts.shape, ' face.shape = ', face.shape, ' normals.shape = ', normals.shape
         displVerts = verts.copy()
-        print '???? verts[:, 0, :] = ', verts[:, 0, :]
-        print '???? verts[:, 1, :] = ', verts[:, 1, :]
-        print '???? verts[:, 2, :] = ', verts[:, 2, :]
         displVerts[:, 0, :] += eps*normals
         displVerts[:, 1, :] += eps*normals
         displVerts[:, 2, :] += eps*normals
@@ -154,7 +145,7 @@ class CompositeShape(BaseShape):
       writer.SetInputData(ugrid)
     else:
       writer.SetInput(ugrid)
-    writer.SetFileName('t.vtk')
+    writer.SetFileName('ugrid.vtk')
     writer.Update()
 
     ugrid2 = vtk.vtkUnstructuredGrid()
@@ -168,10 +159,18 @@ class CompositeShape(BaseShape):
         print '*** number of Ids = ', ptIds.GetNumberOfIds()
         ugrid2.InsertNextCell(vtk.VTK_TETRA, ptIds)
 
+    writer2 = vtk.vtkUnstructuredGridWriter()
+    if vtk.VTK_MAJOR_VERSION >= 6:
+      writer2.SetInputData(ugrid2)
+    else:
+      writer2.SetInput(ugrid2)
+    writer2.SetFileName('ugrid2.vtk')
+    writer2.Update()
+
     # apply filter to extract boundary cell faces
 
-    print '*** ugrid = ', ugrid
-    print '*** ugrid2 = ', ugrid2
+    #print '*** ugrid = ', ugrid
+    #print '*** ugrid2 = ', ugrid2
     
     surf = vtk.vtkGeometryFilter()
     if vtk.VTK_MAJOR_VERSION >= 6:
@@ -372,7 +371,8 @@ def test():
   s2 = PrimitiveShape()
   s2.setSurfaceFunctions(surfaceFunctions2)
   s2.setEvaluateFunction(evalFunction2)
-  #s2.computeSurfaceMeshes(maxTriArea=0.1)
+  s2.computeSurfaceMeshes(maxTriArea=0.1)
+  s2.save('s2.vtk')
 
   # assemble
   cs = CompositeShape()

@@ -49,7 +49,7 @@ add_test(NAME testPrimitiveSphere
          --output testPrimitiveSphere.vtk --type "sphere" --options "radius=0.5" "origin=(0.5, 0.2, 0.3)")
 add_test(NAME testPrimitiveCylinder
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
-         --output testPrimitiveCylinder.vtk 
+         --output testPrimitiveCylinder.ply 
          --type "cylinder" 
          --options "radius=0.5" "origin=(0.5, 0.2, 0.3)" "length=0.35")
 add_test(NAME testPrimitiveCone
