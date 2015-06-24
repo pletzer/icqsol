@@ -135,21 +135,6 @@ class CompositeShape(BaseShape):
       if validCells[i]:
         ugrid2.InsertNextCell(vtk.VTK_TETRA, ptIds)
 
-    surf2 = vtk.vtkUnstructuredGridGeometryFilter()
-    surf2.SetInputData(ugrid2)
-    ugrid3 = surf2.GetOutput()
-    print '*** ugrid3 = ', ugrid3
-    print '*** surf2 = ', surf2
-
-    # DEBUG
-    writer2 = vtk.vtkUnstructuredGridWriter()
-    if vtk.VTK_MAJOR_VERSION >= 6:
-      writer2.SetInputData(ugrid2)
-    else:
-      writer2.SetInput(ugrid2)
-    writer2.SetFileName('ugrid2.vtk')
-    writer2.Update()
-
     # apply filter to extract boundary cell faces
     surf = vtk.vtkGeometryFilter()
     if vtk.VTK_MAJOR_VERSION >= 6:
@@ -157,26 +142,6 @@ class CompositeShape(BaseShape):
     else:
       surf.SetInput(ugrid2)
     surf.Update()
-    print '*** surf = ', surf
-
-    print '*** surf.GetOutput() = ', surf.GetOutput()
-
-    # DEBUG
-    mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(surf.GetOutputPort())
-    actor = vtk.vtkActor()
-    actor.SetMapper(mapper)
-    ren = vtk.vtkRenderer()
-    win = vtk.vtkRenderWindow()
-    iren = vtk.vtkRenderWindowInteractor()
-    ren.AddActor(actor)
-    win.AddRenderer(ren)
-    iren.SetRenderWindow(win)
-    win.SetSize(500, 500)
-    iren.Initialize()
-    win.Render()
-    iren.Start()
-
 
     # get the boundary cells
     # copy all the surface meshes into a single connectivity array
@@ -203,8 +168,7 @@ class CompositeShape(BaseShape):
   def _getBounds(self, maxTriArea):
     """
     Compute the min/max corner points
-    @param maxTriArea may need to compute the individual shape surface meshes and use maxTriArea
-                      to do so
+    @param maxTriArea defines the resolution of the sampling grid
     """
     loBound = numpy.array([float('inf')] * 3)
     hiBound = numpy.array([-float('inf')] * 3)
@@ -249,6 +213,7 @@ def test():
                        lambda u,v: radius1*sin(pi*u)*sin(2*pi*v) + origin1[1], 
                        lambda u,v: radius1*cos(pi*u) + origin1[2])]
   def evalFunction1(pts):
+    # make sure the boundary triangles are inside the shape
     eps = 1.e-6
     xNorm = pts[:, 0] - origin1[0]
     yNorm = pts[:, 1] - origin1[1]
@@ -267,6 +232,7 @@ def test():
                         lambda u,v: radius2*sin(pi*u)*sin(2*pi*v) + origin2[1],
                         lambda u,v: radius2*cos(pi*u) + origin2[2])]
   def evalFunction2(pts):
+    # make sure the boundary triangles are inside the shape
     eps = 1.e-6
     xNorm = pts[:, 0] - origin2[0]
     yNorm = pts[:, 1] - origin2[1]
@@ -283,7 +249,7 @@ def test():
   cs = CompositeShape()
   #cs.assemble('$0 + $1', (s1, s2))
   cs.assemble('$0 + $1', (s1, s2,))
-  cs.computeSurfaceMeshes(maxTriArea=0.1)
+  cs.computeSurfaceMeshes(maxTriArea=0.05)
   cs.save('testCompositeShape.vtk')
 
 
