@@ -57,7 +57,7 @@ parser.add_argument('--check', dest='check', action='store_true',
 
 
 parser.add_argument('--output', dest='output', 
-  default='createPrimitiveShape-{0}'.format(tid), 
+  default='createPrimitiveShape-{0}.vtk'.format(tid), 
 	help='Output file.')
 
 args = parser.parse_args()

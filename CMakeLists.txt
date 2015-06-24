@@ -62,6 +62,11 @@ add_test(NAME testPrimitiveBox
          --output testPrimitiveBox.vtk 
          --type "box" 
          --options "loBound=(0.5, 0.2, 0.3)" "hiBound=(0.7, 0.8, 0.9)")
+add_test(NAME testCompositeUnion
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createCompositeShape.py" 
+         --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
+         --compose "$0 + $1"
+         --output testCompositeUnion.vtk)
 
 
 

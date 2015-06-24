@@ -26,7 +26,7 @@ parser.add_argument('--compose', dest='expression',
 	help='An expression containing + (union) - (removal) and * (intersection) operations. Shape variable names are $0, $1, ...')
 
 parser.add_argument('--output', dest='output', 
-  default='createCompositeShape-{0}'.format(tid), 
+  default='createCompositeShape-{0}.vtk'.format(tid), 
 	help='Output file.')
 
 args = parser.parse_args()
