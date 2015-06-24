@@ -99,7 +99,8 @@ class BaseShape:
   def save(self, filename):
     """
     Save data in file 
-    @param filename file name
+    @param filename file name, either a PLY or VTK file (suffix will determine
+                    which file format will be used)
     """
 
     # point array
@@ -164,6 +165,7 @@ class BaseShape:
     else:
       # will default to VTK
       writer = vtk.vtkPolyDataWriter()
+
     writer.SetFileName(filename)
     if vtk.VTK_MAJOR_VERSION >= 6:
       writer.SetInputData(polyData)
@@ -172,7 +174,43 @@ class BaseShape:
     writer.Write()
     writer.Update()
 
+  def load(self, filename):
+    """
+    Load object from file
+    @param filename file name, either a PLY or VTK file (suffix will determine
+                    which file format will be used)
+    """
 
+    reader = None
+    if filename.lower().find('ply') > 0:
+      # PLY format
+      reader = vtk.vtkPLYReader()
+    else:
+      # will default to VTK
+      reader = vtk.vtkPolyDataReader()
+
+    reader.SetFileName(filename)
+
+    pdata = reader.GetOutput()
+    pts = pdata.GetPoints()
+    cells = pdata.GetPolys()
+
+    numPoints = pts.GetNumberOfPoints()
+    numCells = cells.GetNumberOfCells()
+
+    self.points = numpy.zeros( (numPoints, 3), numpy.float64 )
+    allTriangles = numpy.zeros( (numCells, 3), numpy.int )
+
+    for i in range(numPoints):
+      self.points[i, :] = pts.GetPoint(i)
+
+    cells.InitTraversal()
+    ptIds = vtk.vtkIdList()
+    for i in range(numCells):
+      cells.GetNextCell(ptIds)
+      allTriangles[i, :] = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
+
+    self.surfaceMeshes = [allTriangles]
 
 
 
