@@ -49,11 +49,6 @@ class CompositeShape(BaseShape):
     # find all the points inside the volume
     #
 
-    # move point outwards by a small amount to avoid floating
-    # point comparison issues when determining whether a point is
-    # in or out
-    eps = 1.e-6
-
     numFaces = len(self.surfaceMeshes)
     insidePointList = []
     totalNumPoints = 0
