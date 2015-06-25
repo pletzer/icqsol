@@ -40,9 +40,9 @@ if not args.input:
   sys.exit(3)
 
 shp = BaseShape()
-origin = eval(origin)
-axis = eval(axis)
-shp.rotate(origin=origin, angle=args.angle, axis=axis)
+origin = eval(args.origin)
+axis = eval(args.axis)
+shp.rotate(origin=origin, angleDeg=args.angle, axis=axis)
 if args.output:
   shp.save(args.output)
 

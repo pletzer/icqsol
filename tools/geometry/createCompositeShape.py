@@ -43,9 +43,7 @@ shp = CompositeShape()
 argShapes = []
 for inputFile in args.input:
   s = BaseShape()
-  print '*** loading ', inputFile
   s.load(inputFile)
-  print '*** success'
   argShapes.append(s)
 
 shp.compose(args.expression, argShapes)

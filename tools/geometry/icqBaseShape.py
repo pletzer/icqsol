@@ -101,7 +101,6 @@ class BaseShape:
     Translate
     @param transVec translation vector
     """
-    print '*** transVec = ', transVec
     for i in range(3):
       self.points[:, i] += transVec[i]
 
@@ -240,7 +239,6 @@ class BaseShape:
     else:
       reader = vtk.vtkPolyDataReader()
 
-    print '*** setting file name >', filename, '<'
     reader.SetFileName(filename)
     reader.Update()
 
