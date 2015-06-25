@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Create a primitive shape of a certain type
+Combine multiple shape objects
 """
 
 import argparse
@@ -43,9 +43,7 @@ shp = CompositeShape()
 argShapes = []
 for inputFile in args.input:
   s = BaseShape()
-  print '*** reading file ', inputFile
   s.load(inputFile)
-  print '*** success'
   argShapes.append(s)
 
 shp.compose(args.expression, argShapes)

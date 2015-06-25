@@ -96,6 +96,38 @@ class BaseShape:
 
       self.surfaceNormals.append(normals)
 
+  def translate(self, transVec):
+    """
+    Translate
+    @param transVec translation vector
+    """
+    for i in range(3)
+      self.points[:, i] += transVec[i]
+
+  def rotate(self, origin=(0., 0., 0.), axis=(0., 0., 1.), angleDeg=90.0):
+    """
+    Rotate shape
+    @param origin origin of the rotation
+    @param axis rotation axis
+    @param angle angleDeg angle in degrees
+    """
+
+    cosAlpha = numpy.cos(numpy.pi*angleDeg/180.)
+    sinAlpha = numpy.sin(numpy.pi*angleDeg/180.)
+    origin = numpy.array(origin)
+
+    # normalize axis
+    axis = numpy.array(axis)
+    axis /= numpy.sqrt( numpy.dot(axis, axis) )
+
+    for i in range(self.points.shape[0]):
+      p = self.points[i, :] - origin
+      pDotAxis = numpy.dot(p, axis)
+      pAxis = pDotAxis*axis
+      rho = p - pAxis
+      tau = numpy.cross(axis, rho)
+      self.points[i, :] = origin + pDotAxis*axis + cosAlpha*rho * sinAlpha*tau
+
   def save(self, filename, format='vtk', fileType='binary'):
     """
     Save data in file 
