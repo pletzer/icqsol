@@ -96,10 +96,12 @@ class BaseShape:
 
       self.surfaceNormals.append(normals)
 
-  def save(self, filename, format='vtk', file_type='binary'):
+  def save(self, filename, format='vtk', fileType='binary'):
     """
     Save data in file 
     @param filename file name, either a PLY or VTK file
+    @param format either 'ply' or 'vtk'
+    @param fileType either 'ascii' or 'binary'
     """
 
     # point array
@@ -156,23 +158,28 @@ class BaseShape:
     polyData.SetPoints(points)
     polyData.SetPolys(cellArr)
 
+    # handle file format options
+    if format not in ['ply', 'vtk']:
+      # default to VTK format.
+      format = 'vtk'
+    if fileType not in ['ascii', 'binary']:
+      # default to binary format.
+      fileType = 'binary'
+
     # write to file
     writer = None
-    if format not in [ 'ply', 'vtk' ]:
-      # Default to VTK format.
-      format = 'vtk'
-    if file_type not in [ 'ascii', 'binary' ]:
-      # Default to binary format.
-      file_type = 'binary'
-    if format == '.ply':
+    if format == 'ply':
       writer = vtk.vtkPLYWriter()
     else:
       writer = vtk.vtkPolyDataWriter()
-    writer.SetFileName(filename)
-    if file_type == 'ascii':
+
+    if fileType == 'ascii':
       writer.SetFileTypeToASCII()
     else:
       writer.SetFileTypeToBinary()
+
+    writer.SetFileName(filename)
+
     if vtk.VTK_MAJOR_VERSION >= 6:
       writer.SetInputData(polyData)
     else:
@@ -180,19 +187,24 @@ class BaseShape:
     writer.Write()
     writer.Update()
 
-  def load(self, filename):
+  def load(self, filename, format='vtk'):
     """
     Load object from file
     @param filename file name, either a PLY or VTK file (suffix will determine
                     which file format will be used)
+    @param format either 'ply' or 'vtk'
     """
 
+    # handle file format options
+    if format not in ['ply', 'vtk']:
+      # default to VTK format.
+      format = 'vtk'
+
     reader = None
-    if filename.lower().find('ply') > 0:
-      # PLY format
+
+    if format == 'ply':
       reader = vtk.vtkPLYReader()
     else:
-      # will default to VTK
       reader = vtk.vtkPolyDataReader()
 
     reader.SetFileName(filename)
