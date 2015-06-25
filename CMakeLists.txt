@@ -46,21 +46,23 @@ add_test(NAME testBolt COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/tes
 
 add_test(NAME testPrimitiveSphere 
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
-         --output testPrimitiveSphere.vtk --type "sphere" --options "radius=0.5" "origin=(0.5, 0.2, 0.3)")
+         --output testPrimitiveSphere.vtk 
+         --type "sphere" --ascii 
+         --options "radius=0.5" "origin=(0.5, 0.2, 0.3)")
 add_test(NAME testPrimitiveCylinder
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
          --output testPrimitiveCylinder.ply 
-         --type "cylinder" 
+         --type "cylinder"  
          --options "radius=0.5" "origin=(0.5, 0.2, 0.3)" "length=0.35")
 add_test(NAME testPrimitiveCone
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
          --output testPrimitiveCone.vtk 
-         --type "cone" 
+         --type "cone" --ascii 
          --options "radius=0.5" "origin=(0.5, 0.2, 0.3)" "length=0.35")
 add_test(NAME testPrimitiveBox
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
          --output testPrimitiveBox.vtk 
-         --type "box" 
+         --type "box" --ascii 
          --options "loBound=(0.5, 0.2, 0.3)" "hiBound=(0.7, 0.8, 0.9)")
 add_test(NAME testCompositeUnion
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createCompositeShape.py" 

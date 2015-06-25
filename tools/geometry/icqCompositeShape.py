@@ -45,6 +45,7 @@ class CompositeShape(BaseShape):
     Compute the surface meshes
     @param maxTriArea maximum triangle area
     """
+    
     #
     # find all the points inside the volume
     #

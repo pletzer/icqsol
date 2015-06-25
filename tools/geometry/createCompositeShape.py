@@ -48,7 +48,7 @@ if len(args.input) == 0:
 shp = CompositeShape()
 argShapes = []
 for inputFile in args.input:
-  s = BaseShape()
+  s = CompositeShape()
   s.load(inputFile)
   argShapes.append(s)
 
