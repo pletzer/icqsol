@@ -4,6 +4,7 @@ import re
 # extensions
 import vtk
 import numpy
+from numpy import sin, cos, pi
 
 from icqBaseShape import BaseShape
 
@@ -24,41 +25,41 @@ class PrimitiveShape(BaseShape):
     self.surfaceFuncs = []
     self.evalFunc = None
 
-    @property
-    def origin_x():
-        if self.origin is not None:
-            return self.origin[ 0 ]
-        return None
+  @property
+  def origin_x(self):
+    if self.origin is not None:
+        return self.origin[ 0 ]
+    return None
 
-    @property
-    def origin_y():
-        if self.origin is not None:
-            return self.origin[ 1 ]
-        return None
+  @property
+  def origin_y(self):
+    if self.origin is not None:
+      return self.origin[ 1 ]
+    return None
 
-    @property
-    def origin_z():
-        if self.origin is not None:
-            return self.origin[ 2 ]
-        return None
+  @property
+  def origin_z(self):
+    if self.origin is not None:
+      return self.origin[ 2 ]
+    return None
 
-    @property
-    def end_x():
-        if self.end_point is not None:
-            return self.end_point[ 0 ]
-        return None
+  @property
+  def end_x(self):
+    if self.end_point is not None:
+      return self.end_point[ 0 ]
+    return None
 
-    @property
-    def end_y():
-        if self.end_point is not None:
-            return self.end_point[ 1 ]
-        return None
+  @property
+  def end_y(self):
+    if self.end_point is not None:
+      return self.end_point[ 1 ]
+    return None
 
-    @property
-    def end_z():
-        if self.end_point is not None:
-            return self.end_point[ 2 ]
-        return None
+  @property
+  def end_z(self):
+    if self.end_point is not None:
+      return self.end_point[ 2 ]
+    return None
 
   def evaluate(self, pts):
     """
@@ -219,9 +220,9 @@ class PrimitiveShape(BaseShape):
 class Box( PrimitiveShape ):
 
     def __init__( self, origin, end_point ):
-        PrimitiveShape.__init__( origin=origin, end_point=end_point )
-        self.loBound = numpy.array( self.origin_x, self.origin_y, self.origin_z )
-        self.hiBound = numpy.array( self.end_x, self.end_y, self.end_z )
+        PrimitiveShape.__init__( self, origin=origin, end_point=end_point )
+        self.loBound = numpy.array( [ self.origin_x, self.origin_y, self.origin_z ] )
+        self.hiBound = numpy.array( [ self.end_x, self.end_y, self.end_z ] )
         self.deltas = self.hiBound - self.loBound
         # Define the six faces of the box.
         self.surfaceFuncs = [ ( lambda u, v: self.loBound[0] * numpy.ones( u.shape ),
@@ -256,7 +257,7 @@ class Box( PrimitiveShape ):
 class Cone( PrimitiveShape ):
 
     def __init__( self, length, radius, origin ):
-        PrimitiveShape.__init__( length=length, radius=radius, origin=origin )
+        PrimitiveShape.__init__( self, length=length, radius=radius, origin=origin )
         self.surfaceFuncs = [ ( lambda u, v: u * self.radius * cos( 2 * pi * v ) + self.origin_x,
                                 lambda u, v: u * self.radius * sin( 2 * pi * v ) + self.origin_y,
                                 lambda u, v: u * self.length + self.origin_z ),
@@ -280,7 +281,7 @@ class Cone( PrimitiveShape ):
 class Cylinder( PrimitiveShape ):
 
     def __init__( self, length, radius, origin ):
-        PrimitiveShape.__init__( length=length, radius=radius, origin=origin )
+        PrimitiveShape.__init__( self, length=length, radius=radius, origin=origin )
         self.surfaceFuncs = [ ( lambda u, v: self.radius * cos( 2 * pi * u ) + self.origin_x, 
                                 lambda u, v: self.radius * sin( 2 * pi * u ) + self.origin_y, 
                                 lambda u, v: self.length * ( v-0.5 ) + self.origin_z ),
@@ -303,7 +304,7 @@ class Cylinder( PrimitiveShape ):
 class Sphere( PrimitiveShape ):
 
     def __init__( self, radius, origin ):
-        PrimitiveShape.__init__( radius=radius, origin=origin )
+        PrimitiveShape.__init__( self, radius=radius, origin=origin )
 
         self.surfaceFuncs = [ ( lambda u, v: self.radius * sin( pi * u ) * cos( 2 * pi * v ) + self.origin_x,
                                 lambda u, v: self.radius * sin( pi * u ) * sin( 2 * pi * v ) + self.origin_y,

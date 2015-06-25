@@ -161,7 +161,7 @@ class BaseShape:
     if format not in [ 'ply', 'vtk' ]:
       # Default to VTK format.
       format = 'vtk'
-    if fily_type not in [ 'ascii', 'binary' ]:
+    if file_type not in [ 'ascii', 'binary' ]:
       # Default to binary format.
       file_type = 'binary'
     if format == '.ply':
