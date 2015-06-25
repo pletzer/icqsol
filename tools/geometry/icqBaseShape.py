@@ -96,11 +96,10 @@ class BaseShape:
 
       self.surfaceNormals.append(normals)
 
-  def save(self, filename):
+  def save(self, filename, format='vtk', file_type='binary'):
     """
     Save data in file 
-    @param filename file name, either a PLY or VTK file (suffix will determine
-                    which file format will be used)
+    @param filename file name, either a PLY or VTK file
     """
 
     # point array
@@ -159,14 +158,21 @@ class BaseShape:
 
     # write to file
     writer = None
-    if filename.lower().find('.ply') > 0:
-      # PLY format
+    if format not in [ 'ply', 'vtk' ]:
+      # Default to VTK format.
+      format = 'vtk'
+    if fily_type not in [ 'ascii', 'binary' ]:
+      # Default to binary format.
+      file_type = 'binary'
+    if format == '.ply':
       writer = vtk.vtkPLYWriter()
     else:
-      # will default to VTK
       writer = vtk.vtkPolyDataWriter()
-
     writer.SetFileName(filename)
+    if file_type == 'ascii':
+      writer.SetFileTypeToASCII()
+    else:
+      writer.SetFileTypeToBinary()
     if vtk.VTK_MAJOR_VERSION >= 6:
       writer.SetInputData(polyData)
     else:

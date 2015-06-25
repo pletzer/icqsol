@@ -9,28 +9,56 @@ from icqBaseShape import BaseShape
 
 class PrimitiveShape(BaseShape):
 
-  def __init__(self,):
+  def __init__(self, angle=None, length=None, radius=None, origin=None, end_point=None ):
     """
     Constructor
     """
-    BaseShape.__init__(self,)
-
+    BaseShape.__init__(self)
+    self.angle = angle
+    self.length = length
+    self.radius = radius
+    self.origin = origin
+    self.end_point = end_point
+    self.surfaceFuncs = []
+    self.evalFunc = None
     self.surfaceFuncs = []
     self.evalFunc = None
 
-  def setSurfaceFunctions(self, funcs):
-    """
-    Set the surface functions
-    @param funcs a list of 3-tuples, [(x(u,v), y(u,v), z(u,v)), ...] 
-           with 0 <= u, v <= 1
-    """
-    self.surfaceFuncs = funcs
+    @property
+    def origin_x():
+        if self.origin is not None:
+            return self.origin[ 0 ]
+        return None
 
-  def setEvaluateFunction(self, func):
-    """
-    Set the function of (x, y, z) that returns > 0 inside and 0 outside
-    """
-    self.evalFunc = func
+    @property
+    def origin_y():
+        if self.origin is not None:
+            return self.origin[ 1 ]
+        return None
+
+    @property
+    def origin_z():
+        if self.origin is not None:
+            return self.origin[ 2 ]
+        return None
+
+    @property
+    def end_x():
+        if self.end_point is not None:
+            return self.end_point[ 0 ]
+        return None
+
+    @property
+    def end_y():
+        if self.end_point is not None:
+            return self.end_point[ 1 ]
+        return None
+
+    @property
+    def end_z():
+        if self.end_point is not None:
+            return self.end_point[ 2 ]
+        return None
 
   def evaluate(self, pts):
     """
@@ -187,10 +215,112 @@ class PrimitiveShape(BaseShape):
 
     return max(nOpt, 1)
 
+
+class Box( PrimitiveShape ):
+
+    def __init__( self, origin, end_point ):
+        PrimitiveShape.__init__( origin=origin, end_point=end_point )
+        self.loBound = numpy.array( self.origin_x, self.origin_y, self.origin_z )
+        self.hiBound = numpy.array( self.end_x, self.end_y, self.end_z )
+        self.deltas = self.hiBound - self.loBound
+        # Define the six faces of the box.
+        self.surfaceFuncs = [ ( lambda u, v: self.loBound[0] * numpy.ones( u.shape ),
+                                lambda u, v: self.loBound[1] + v * self.deltas[1],
+                                lambda u, v: self.loBound[2] + u * self.deltas[2] ),
+                              ( lambda u, v: self.hiBound[0] * numpy.ones( u.shape ),
+                                lambda u, v: self.loBound[1] + u * self.deltas[1],
+                                lambda u, v: self.loBound[2] + v * self.deltas[2] ),
+                              ( lambda u, v: self.loBound[0] + u * self.deltas[0],
+                                lambda u, v: self.loBound[1] * numpy.ones( u.shape ),
+                                lambda u, v: self.loBound[2] + v * self.deltas[2] ),
+                              ( lambda u, v: self.loBound[0] + v * self.deltas[0],
+                                lambda u, v: self.hiBound[1] * numpy.ones( u.shape ),
+                                lambda u, v: self.loBound[2] + u * self.deltas[2]),
+                              ( lambda u, v: self.loBound[0] + v * self.deltas[0],
+                                lambda u, v: self.loBound[1] + u * self.deltas[1],
+                                lambda u, v: self.loBound[2] * numpy.ones( u.shape ) ),
+                              ( lambda u, v: self.loBound[0] + u * self.deltas[0],
+                                lambda u, v: self.loBound[1] + v * self.deltas[1],
+                                lambda u, v: self.hiBound[2] * numpy.ones( u.shape ) ) ]
+    def evalFunc( pts ):
+        x, y, z = pts[ :, 0 ], pts[ :, 1 ], pts[ :, 2 ]
+        res = x > self.loBound[0]
+        res &= x < self.hiBound[0]
+        res &= y > self.loBound[1]
+        res &= y < self.hiBound[1]
+        res &= z > self.loBound[2]
+        res &= x < self.hiBound[2]
+        return res
+
+
+class Cone( PrimitiveShape ):
+
+    def __init__( self, length, radius, origin ):
+        PrimitiveShape.__init__( length=length, radius=radius, origin=origin )
+        self.surfaceFuncs = [ ( lambda u, v: u * self.radius * cos( 2 * pi * v ) + self.origin_x,
+                                lambda u, v: u * self.radius * sin( 2 * pi * v ) + self.origin_y,
+                                lambda u, v: u * self.length + self.origin_z ),
+                              ( lambda u, v: v * self.radius * cos( 2 * pi * u ) + self.origin_x,
+                                lambda u, v: v * self.radius * sin( 2 * pi * u ) + self.origin_y,
+                                lambda u, v: ( self.length + self.origin_z ) * numpy.ones( u.shape ) ) ]
+        self.radiusSq = self.radius**2
+
+    def evalFunc( pts ):
+        xNorm = pts[ :, 0 ] - self.origin_x
+        yNorm = pts[ :, 1 ] - self.origin_y
+        zNorm = pts[ :, 2 ] - self.origin_z
+        res = zNorm > 0
+        res &= zNorm < self.length
+        u = zNorm / self.length
+        uRadius = u * self.radius
+        res &= uRadius * uRadius - xNorm * xNorm - yNorm * yNorm > 0
+        return res
+
+
+class Cylinder( PrimitiveShape ):
+
+    def __init__( self, length, radius, origin ):
+        PrimitiveShape.__init__( length=length, radius=radius, origin=origin )
+        self.surfaceFuncs = [ ( lambda u, v: self.radius * cos( 2 * pi * u ) + self.origin_x, 
+                                lambda u, v: self.radius * sin( 2 * pi * u ) + self.origin_y, 
+                                lambda u, v: self.length * ( v-0.5 ) + self.origin_z ),
+                              ( lambda u, v: v * self.radius * cos( 2 * pi * u ) + self.origin_x,
+                                lambda u, v: v * self.radius * sin( 2 * pi * u ) + self.origin_y,
+                                lambda u, v: ( self.origin_z - 0.5 * self.length ) * numpy.ones( u.shape ) ),
+                              ( lambda u, v: u * self.radius * cos( 2 * pi * v ) + self.origin_x,
+                                lambda u, v: u * self.radius * sin( 2 * pi * v ) + self.origin_y,
+                                lambda u, v: ( self.origin_z + 0.5 * self.length ) * numpy.ones( u.shape ) ) ]
+        self.radiusSq = self.radius**2
+
+    def evalFunc( pts ):
+        res = ( self.radiusSq - ( pts[ :,0 ] - self.origin_x )**2 - ( pts[ :,1 ] - self.origin_y )**2 ) > 0
+        zNorm = pts[ :,2 ] - self.origin_z
+        res &= zNorm > -0.5 * self.length
+        res &= zNorm < 0.5 * self.length
+        return res
+
+
+class Sphere( PrimitiveShape ):
+
+    def __init__( self, radius, origin ):
+        PrimitiveShape.__init__( radius=radius, origin=origin )
+
+        self.surfaceFuncs = [ ( lambda u, v: self.radius * sin( pi * u ) * cos( 2 * pi * v ) + self.origin_x,
+                                lambda u, v: self.radius * sin( pi * u ) * sin( 2 * pi * v ) + self.origin_y,
+                                lambda u, v: self.radius * cos( pi * u ) + self.origin_z ) ]
+        self.radiusSq = self.radius**2
+
+    def evalFunc( pts ):
+        xNorm = pts[ :, 0 ] - self.origin_x
+        yNorm = pts[ :, 1 ] - self.origin_y
+        zNorm = pts[ :, 2 ] - self.origin_z
+        return self.radiusSq - xNorm**2 - yNorm**2 - zNorm**2 > 0
+
 ################################################################################
 def test():
 
   # create a cylinder terminated by two half-spheres
+  print "Testing creation of a cylinder terminated by 2 half spheres..."
   radius = 1.0
   radius2 = radius**2
   length = 0.5
@@ -255,4 +385,14 @@ def test():
 
   s.save('testPrimitiveShape.vtk')
 
+  print "Testing creation of a cylinder..."
+  radius = 1.0
+  length = 0.5
+  origin_tup = ( 0.0, 0.0, 0.0 )
+  
+  s = Cylinder( length, radius, origin_tup  )
+  print 'number of cells for face 0: ', s._getSurfaceNumberOfCells(0, 0.1)
+  print 'number of cells for face 1: ', s._getSurfaceNumberOfCells(1, 0.1)
+  print 'number of cells for face 2: ', s._getSurfaceNumberOfCells(2, 0.1)
+  
 if __name__ == '__main__': test()
