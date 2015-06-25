@@ -25,6 +25,9 @@ parser.add_argument('--input', dest='input', nargs='+', default=[],
 parser.add_argument('--compose', dest='expression',
 	help='An expression containing + (union) - (removal) and * (intersection) operations. Shape variable names are $0, $1, ...')
 
+parser.add_argument('--ascii', dest='ascii', action='store_true',
+  help='Save data in ASCII format (default is binary)')
+
 parser.add_argument('--output', dest='output', 
   default='createCompositeShape-{0}.vtk'.format(tid), 
 	help='Output file.')
@@ -49,5 +52,11 @@ for inputFile in args.input:
 shp.compose(args.expression, argShapes)
 
 if args.output:
+  fileFormat = 'vtk'
+  fileType = 'binary'
+  if args.ascii:
+    fileType = 'ascii'
+  if args.output.lower().find('.ply') > 0:
+    fileFormat = 'ply'
   shp.save(args.output)
 

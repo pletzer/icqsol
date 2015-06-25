@@ -55,6 +55,8 @@ parser.add_argument('--list', dest='list', action='store_true',
 parser.add_argument('--check', dest='check', action='store_true',
   help='Check validity of supplied options, by default errors will ignored.')
 
+parser.add_argument('--ascii', dest='ascii', action='store_true',
+  help='Save data in ASCII format (default is binary)')
 
 parser.add_argument('--output', dest='output', 
   default='createPrimitiveShape-{0}.vtk'.format(tid), 
@@ -120,6 +122,8 @@ shp.computeSurfaceMeshes(args.maxArea)
 if args.output:
   fileFormat = 'vtk'
   fileType = 'binary'
+  if args.ascii:
+    fileType = 'ascii'
   if args.output.lower().find('.ply') > 0:
     fileFormat = 'ply'
   shp.save(args.output, fileFormat=fileFormat, fileType=fileType)

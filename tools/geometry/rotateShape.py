@@ -29,6 +29,9 @@ parser.add_argument('--origin', dest='origin', default="0.,0.,0.",
 parser.add_argument('--axis', dest='axis', default="0.,0.,1.",
 	help='Specify rotation axis as three floating point numbers')
 
+parser.add_argument('--ascii', dest='ascii', action='store_true',
+  help='Save data in ASCII format (default is binary)')
+
 parser.add_argument('--output', dest='output', 
   default='createCompositeShape-{0}.vtk'.format(tid), 
 	help='Output file.')
@@ -44,5 +47,11 @@ origin = eval(args.origin)
 axis = eval(args.axis)
 shp.rotate(origin=origin, angleDeg=args.angle, axis=axis)
 if args.output:
+  fileFormat = 'vtk'
+  fileType = 'binary'
+  if args.ascii:
+    fileType = 'ascii'
+  if args.output.lower().find('.ply') > 0:
+    fileFormat = 'ply'
   shp.save(args.output)
 

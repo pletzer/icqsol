@@ -23,6 +23,9 @@ parser.add_argument('--input', dest='input', default='',
 parser.add_argument('--translate', dest='translation',
 	help='Specify the translation vector as three floats')
 
+parser.add_argument('--ascii', dest='ascii', action='store_true',
+  help='Save data in ASCII format (default is binary)')
+
 parser.add_argument('--output', dest='output', 
   default='createCompositeShape-{0}.vtk'.format(tid), 
 	help='Output file.')
@@ -42,5 +45,11 @@ shp.load(args.input)
 transVec = eval(args.translation)
 shp.translate(transVec)
 if args.output:
+  fileFormat = 'vtk'
+  fileType = 'binary'
+  if args.ascii:
+    fileType = 'ascii'
+  if args.output.lower().find('.ply') > 0:
+    fileFormat = 'ply'
   shp.save(args.output)
 

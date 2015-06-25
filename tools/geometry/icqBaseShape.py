@@ -126,7 +126,7 @@ class BaseShape:
       pAxis = pDotAxis*axis
       rho = p - pAxis
       tau = numpy.cross(axis, rho)
-      self.points[i, :] = origin + pDotAxis*axis + cosAlpha*rho * sinAlpha*tau
+      self.points[i, :] = origin + pAxis + cosAlpha*rho * sinAlpha*tau
 
     self.computeSurfaceNormals()
 
