@@ -30,6 +30,7 @@ class BaseShape:
   def evaluate(self, points):
     """
     Evaluate whether points are inside/outside
+    @param points array of points
     @return > 0 for points inside, 0 for points outside
     """
     raise NotImplementedError
@@ -101,7 +102,7 @@ class BaseShape:
     Translate
     @param transVec translation vector
     """
-    for i in range(3)
+    for i in range(3):
       self.points[:, i] += transVec[i]
 
   def rotate(self, origin=(0., 0., 0.), axis=(0., 0., 1.), angleDeg=90.0):
@@ -127,6 +128,8 @@ class BaseShape:
       rho = p - pAxis
       tau = numpy.cross(axis, rho)
       self.points[i, :] = origin + pDotAxis*axis + cosAlpha*rho * sinAlpha*tau
+
+    self.computeSurfaceNormals()
 
   def save(self, filename, format='vtk', fileType='binary'):
     """

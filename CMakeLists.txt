@@ -77,6 +77,16 @@ add_test(NAME testCompositeRemoval
          --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
          --compose "$0 - $1"
          --output testCompositeRemoval.vtk)
+add_test(NAME testTranslate
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/translateShape.py" 
+         --input testPrimitiveBox.vtk
+         --translate "1, 2, 3"
+         --output testTranslatedBox.vtk)
+add_test(NAME testRotate
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/rotateShape.py" 
+         --input testPrimitiveBox.vtk
+         --angle 45.0 --axis "1,0,0" --origin "0.,0.,0."
+         --output testRotatedBox.vtk)
 
 
 
