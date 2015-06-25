@@ -38,6 +38,7 @@ if not args.input:
   sys.exit(3)
 
 shp = BaseShape()
+shp.load(args.input)
 transVec = eval(args.translation)
 shp.translate(transVec)
 if args.output:

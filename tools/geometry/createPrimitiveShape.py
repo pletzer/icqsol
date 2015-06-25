@@ -118,5 +118,9 @@ if args.list:
 shp.computeSurfaceMeshes(args.maxArea)
 
 if args.output:
-  shp.save(args.output)
+  fileFormat = 'vtk'
+  fileType = 'binary'
+  if args.output.lower().find('.ply') > 0:
+    fileFormat = 'ply'
+  shp.save(args.output, fileFormat=fileFormat, fileType=fileType)
 
