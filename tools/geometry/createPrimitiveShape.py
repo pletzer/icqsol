@@ -11,7 +11,7 @@ import re
 import numpy
 from numpy import cos, sin, pi
 
-from icqsol.tools.geometry.icqPrimitiveShape import PrimitiveShape
+from icqsol.tools.geometry.icqPrimitiveShape import Box, Cone, Cylinder, Sphere
 
 
 options = {
@@ -82,15 +82,7 @@ optDic = options[args.type]
 if args.type == 'sphere':
   radius = optDic['radius']
   origin = optDic['origin']
-  surfaceFunctions = [(lambda u,v: radius*sin(pi*u)*cos(2*pi*v) + origin[0], 
-                       lambda u,v: radius*sin(pi*u)*sin(2*pi*v) + origin[1], 
-                       lambda u,v: radius*cos(pi*u) + origin[2])]
-  radiusSq = radius**2
-  def evalFunction(pts):
-    xNorm = pts[:, 0] - origin[0]
-    yNorm = pts[:, 1] - origin[1]
-    zNorm = pts[:, 2] - origin[2]
-    return radiusSq - xNorm**2 - yNorm**2 - zNorm**2 > 0
+  shp = Sphere( radius, origin )
 
 elif args.type == 'cylinder':
   radius = optDic['radius']
@@ -98,22 +90,7 @@ elif args.type == 'cylinder':
   length = optDic['length']
   # the cylindrical side followed by the two end disks
   # u x v normal should point out
-  surfaceFunctions = [(lambda u,v: radius*cos(2*pi*u) + origin[0], 
-                       lambda u,v: radius*sin(2*pi*u) + origin[1], 
-                       lambda u,v: length*(v-0.5) + origin[2]),
-                      (lambda u,v: v*radius*cos(2*pi*u) + origin[0],
-                       lambda u,v: v*radius*sin(2*pi*u) + origin[1],
-                       lambda u,v: (origin[2] - 0.5*length)*numpy.ones(u.shape)),
-                      (lambda u,v: u*radius*cos(2*pi*v) + origin[0],
-                       lambda u,v: u*radius*sin(2*pi*v) + origin[1],
-                       lambda u,v: (origin[2] + 0.5*length)*numpy.ones(u.shape))]
-  radiusSq = radius**2
-  def evalFunction(pts):
-    res = (radiusSq - (pts[:,0]-origin[0])**2 - (pts[:,1]-origin[1])**2) > 0
-    zNorm = pts[:,2] - origin[2]
-    res &= zNorm > -0.5*length
-    res &= zNorm < 0.5*length
-    return res
+  shp = Cylinder( length, radius, origin )
 
 elif args.type == 'cone':
   radius = optDic['radius']
@@ -122,56 +99,12 @@ elif args.type == 'cone':
   # origin is the focal point of the cone
   # cone expands in the z direction
   # surface of the cone followed by the end disk
-  surfaceFunctions = [(lambda u,v: u*radius*cos(2*pi*v) + origin[0], 
-                       lambda u,v: u*radius*sin(2*pi*v) + origin[1], 
-                       lambda u,v: u*length + origin[2]),
-                      (lambda u,v: v*radius*cos(2*pi*u) + origin[0],
-                       lambda u,v: v*radius*sin(2*pi*u) + origin[1],
-                       lambda u,v: (length + origin[2])*numpy.ones(u.shape))]
-  radiusSq = radius**2
-  def evalFunction(pts):
-    xNorm = pts[:, 0] - origin[0]
-    yNorm = pts[:, 1] - origin[1]
-    zNorm = pts[:, 2] - origin[2]
-    res = zNorm > 0
-    res &= zNorm < length
-    u = zNorm/length
-    uRadius = u*radius
-    res &= uRadius*uRadius - xNorm*xNorm - yNorm*yNorm > 0
-    return res
+  shp = Cone( length, radius, origin )
 
 elif args.type == 'box':
   loBound = numpy.array(optDic['loBound'])
   hiBound = numpy.array(optDic['hiBound'])
-  deltas = hiBound - loBound
-  # the six faces of the box
-  surfaceFunctions = [(lambda u,v: loBound[0]*numpy.ones(u.shape), 
-                       lambda u,v: loBound[1]+v*deltas[1], 
-                       lambda u,v: loBound[2]+u*deltas[2]),
-                      (lambda u,v: hiBound[0]*numpy.ones(u.shape), 
-                       lambda u,v: loBound[1]+u*deltas[1], 
-                       lambda u,v: loBound[2]+v*deltas[2]), 
-                      (lambda u,v: loBound[0]+u*deltas[0], 
-                       lambda u,v: loBound[1]*numpy.ones(u.shape),
-                       lambda u,v: loBound[2]+v*deltas[2]), 
-                      (lambda u,v: loBound[0]+v*deltas[0], 
-                       lambda u,v: hiBound[1]*numpy.ones(u.shape), 
-                       lambda u,v: loBound[2]+u*deltas[2]), 
-                      (lambda u,v: loBound[0]+v*deltas[0], 
-                       lambda u,v: loBound[1]+u*deltas[1], 
-                       lambda u,v: loBound[2]*numpy.ones(u.shape)), 
-                      (lambda u,v: loBound[0]+u*deltas[0], 
-                       lambda u,v: loBound[1]+v*deltas[1], 
-                       lambda u,v: hiBound[2]*numpy.ones(u.shape))]
-  def evalFunction(pts):
-    x, y, z = pts[:, 0], pts[:, 1], pts[:, 2]
-    res = x > loBound[0]
-    res &= x < hiBound[0]
-    res &= y > loBound[1]
-    res &= y < hiBound[1]
-    res &= z > loBound[2]
-    res &= x < hiBound[2]
-    return res
+  shp = Box( loBound, hiBound )
 
 else:
   print 'ERROR: unknown shape'
@@ -182,11 +115,7 @@ if args.list:
   for optName, optVal in options[args.type].items():
     print '{:>10} --> {:>20}'.format(optName, optVal)
 
-shp = PrimitiveShape()
-shp.setSurfaceFunctions(surfaceFunctions)
-shp.setEvaluateFunction(evalFunction)
 shp.computeSurfaceMeshes(args.maxArea)
-
 
 if args.output:
   shp.save(args.output)
