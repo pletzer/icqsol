@@ -34,6 +34,13 @@ class Triangulation:
     """
     self.delny.Update()
 
+  def getVTKUnstructuredGrid(self):
+    """
+    Get the VTK unstructured grid
+    @return VTK object
+    """
+    return self.delny.GetOutput()
+
   def getCells(self):
     """
     Get cells
@@ -67,8 +74,9 @@ def test():
                         (1, 1, 1)
                         ], numpy.float64)
   tri = Triangulation()
-  tri.setInputVertices(points)
+  tri.setInputPoints(points)
   tri.triangulate()
+  print tri.getVTKUnstructuredGrid()
   cells = tri.getCells()
   print 'cells = ', cells
 
