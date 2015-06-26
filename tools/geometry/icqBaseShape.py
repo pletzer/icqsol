@@ -24,7 +24,6 @@ class BaseShape:
 
     self.points = numpy.array([])
     self.surfaceMeshes = []
-    self.surfaceNormals = []
 
   def evaluate(self, points):
     """
@@ -64,17 +63,15 @@ class BaseShape:
     """
     return self.surfaceNormals[faceId]
 
-  def computeSurfaceNormals(self):
+  def getSurfaceNormals(self):
     """
     Compute the normals for each surface triangle
+    @return array of normal vectors, one per surface triangle
     @note the vectors are NOT normalized, the magnitudes are the 
     cell areas
     """
 
-    if self.surfaceNormals:
-      # nothing to do
-      return 
-
+    surfaceNormals = []
     for face in self.surfaceMeshes:
 
       # index 0 is cell index
@@ -94,7 +91,9 @@ class BaseShape:
       normals[:, 1] = verts1[:, 2]*verts2[:, 0] - verts1[:, 0]*verts2[:, 2]
       normals[:, 2] = verts1[:, 0]*verts2[:, 1] - verts1[:, 1]*verts2[:, 0]
 
-      self.surfaceNormals.append(normals)
+      surfaceNormals.append(normals)
+
+    return surfaceNormals
 
   def translate(self, transVec):
     """
@@ -127,8 +126,6 @@ class BaseShape:
       rho = p - pAxis
       tau = numpy.cross(axis, rho)
       self.points[i, :] = origin + pAxis + cosAlpha*rho * sinAlpha*tau
-
-    self.computeSurfaceNormals()
 
   def save(self, filename, fileFormat='vtk', fileType='binary'):
     """
