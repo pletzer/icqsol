@@ -21,84 +21,127 @@ class Shape:
     """
     Constructor
     """
+    # data structure holding array of points
+    self.pointArray = vtk.vtkFloatArray()
+    self.pointArray.SetNumberOfComponents(3)
+    
+    # data structire holding points
+    self.points = vtk.vtkPoints()
+    self.points.SetData(self.pointArray)
+    
+    # data structure holding cell indices
+    self.cellInds = vtk.vtkIdTypeArray()
+    
+    # data structure holding cell connectivity data
+    self.cells = vtk.vtkCellArray()
+    
+    # data structure holding points and triangles
+    self.surfPolyData = vtk.vtkPolyData()
+    self.surfPolyData.SetPoints(self.points)
+    self.surfPolyData.SetPolys(self.cells)
+  
+    # tolerance used to determine when a point is considered to be at distance zero
+    self.tol = 1.e-6
 
-    # implicit function, either boolean or non-boolean
-    self.func = None
-
-    # low/high corners of hte box containing the object. 
-    self.loBound = numpy.array([float('inf')] * 3)
-    self.hiBound = numpy.array([-float('inf')] * 3)
-
-    # this is to compute the boundary points
-    self.sampleFunc = vtk.vtkSampleFunction()
-    self.sampleFunc.ComputeNormalsOff()
-
-    self.surface = vtk.vtkContourFilter()
-    self.surface.SetValue(0, 0.0)
-    if vtk.VTK_MAJOR_VERSION >= 6:
-      self.surface.SetInputConnection(self.sampleFunc.GetOutputPort())
+  def load(file_name, file_format):
+    """
+    Load the shape form file
+    @param file_name file name
+    @param file_format file format, currently either VTK or PLY
+    """
+    reader = None
+    
+    if file_format.lower() == 'ply':
+        reader = vtk.vtkPLYReader()
     else:
-      self.surface.SetInput(self.sampleFunc.GetOutput())
-
-    self.surfPolyData = None
-
-    # store all the transformations 
-    self.transf = vtk.vtkTransform()
-
-    # I prefer to apply the rotations after creation of the object
-    self.transf.PostMultiply()
-
-  def setBounds(self, loBound, hiBound):
+        reader = vtk.vtkPolyDataReader()
+    
+    reader.SetFileName(filename)
+    reader.Update()
+    
+    self.surfPolyData = reader.GetOutput()
+        
+  def save(self, file_name, file_format, file_type):
     """
-    Set the domain bounds
-    @param loBound low corner 
-    @param hiBound high corner     
+    Save the shape in file
+    @param file_name file name
+    @param file_format file format, currently either VTK or PLY
+    @param file_type either 'ascii' or 'binary'
     """
-    self.loBound = loBound[:]
-    self.hiBound = hiBound[:]
-
-  def updateBounds(self, loBound, hiBound):
-    """
-    Update the domain bounds
-    @param loBound low corner 
-    @param hiBound high corner 
-    """
-    self.loBound = numpy.minimum(self.loBound, numpy.array(loBound))
-    self.hiBound = numpy.maximum(self.hiBound, numpy.array(hiBound))
-
-  def getBounds(self):
-    """
-    Get the domain bounds
-    @return bounds
-    """
-    return self.loBound, self.hiBound
+    writer = None
+    if file_format.lower() == 'ply':
+      writer == vtk.vtkPLYWriter()
+    else:
+      writer = vtk.vtkPolyDataWriter()
+    
+    writer.SetFileName(file_name)
+    if file_type.lower() == 'ascii':
+      writer.SetFileTypeToASCII()
+    else:
+      writer.SetFileTypeToBinary()
+    
+    if vtk.VTK_MAJOR_VERSION >= 6:
+      writer.SetInputData(self.surfPolyData)
+    else:
+      writer.SetInput(self.surfPolyData)
+    
+    writer.Write()
+    writer.Update()
 
   def rotate(self, axis, angleDeg):
     """
-    Rotate object around axis
-    @param axis axis index (0 for x, 1 for y, and 2 for z)
+    Rotate shape around axis
+    @param axis array of three floats
     @param angleDeg angle in degrees (counterclockwise is positive)
+    @return new shape
     """
-    # must have created object
-    if self.func == None:
-      # a no-operation
-      return
+    transf = vtk.vtkTranspform()
+    transf.RotateWXYZ(angleDeg, axis)
+    transfPDF = vtk.vtkTransformPolyDataFilter()
+    transfPDF.SetTransform(transf)
+    if vtk.VTK_MAJOR_VERSION >= 6:
+        transfPDF.SetInputData(self.surfPolyData)
+    else:
+        transfPDF.SetInput(self.surfPolyData)
+    transfPDF.Update()
+    res = Shape()
+    res.surfPolyData = transfPDF.GetOutput()
+    return res
 
-    # Not clear at this point whether we should modify the 
-    # the bounds. Note that this is more omcplicated than just 
-    # applying rotations to self.loBound and self.hiBound since 
-    # in the case of a 180 deg rotation lo and hi get switched.
-
-    self.func.SetTransform(self.transf)
-
-    if axis == 0:
-      self.transf.RotateX(angleDeg)
-
-    elif axis == 1:
-      self.transf.RotateY(angleDeg)
-
-    elif axis == 2:
-      self.transf.RotateZ(angleDeg)
+  def translate(self, disp):
+    """
+    Translate shape
+    @param disp three float array displacement
+    @return new shape
+    """
+    transf = vtk.vtkTranspform()
+    transf.Translate(disp)
+    transfPDF = vtk.vtkTransformPolyDataFilter()
+    transfPDF.SetTransform(transf)
+    if vtk.VTK_MAJOR_VERSION >= 6:
+      transfPDF.SetInputData(self.surfPolyData)
+    else:
+      transfPDF.SetInput(self.surfPolyData)
+    transfPDF.Update()
+    res = Shape()
+    res.surfPolyData = transfPDF.GetOutput()
+    return res
+  
+  def isInside(self, points):
+    """
+    Test if points are inside shape
+    @param points array of x, y, z points
+    @return array of +1 (inside), -1 (outside), or 0 if close to the surface
+    """
+    obb = vtk.vtkOBBTree()
+    obb.SetDataSet(self.surfPolyData)
+    obb.BuildLocator()
+    n = len(points)
+    res = numpy.zeros( (n,), numpy.int )
+    for i in range(n):
+        # -1 if inside, 1 if outside, 0 if undecided
+        res[i] = -obb.InsideOrOutside(p0)
+    return res
 
   def __add__(self, otherShape):
     """
@@ -106,16 +149,18 @@ class Shape:
     @param otherShape other shape
     @return composite shape
     """
+    op = vtk.vtkBooleanOperationPolyDataFilter()
+    op.SetOperationTypeToUnion()
+    op.SetTolerance(self.tol)
+    if vtk.VTK_MAJOR_VERSION >= 6:
+      op.SetInputData(0, self.surfPolyData)
+      op.SetInputData(1, otherShape.surfPolyData)
+    else:
+      op.SetInputConnection(0, self.surfPolyData.GetProducerPort())
+      op.SetInputConnection(1, otherShape.surfPolyData.GetProducerPort())
+    
     res = Shape()
-
-    res.updateBounds(self.loBound, self.hiBound)
-    res.updateBounds(otherShape.loBound, otherShape.hiBound)
-
-    res.func = vtk.vtkImplicitBoolean()
-    res.func.SetOperationTypeToUnion()
-    res.func.AddFunction(self.func)
-    res.func.AddFunction(otherShape.func)
-
+    res.surfPolyData = op.GetOutput()
     return res
 
   def __mul__(self, otherShape):
@@ -124,16 +169,18 @@ class Shape:
     @param otherShape other shape
     @return composite shape
     """
+    op = vtk.vtkBooleanOperationPolyDataFilter()
+    op.SetOperationTypeToIntersection()
+    op.SetTolerance(self.tol)
+    if vtk.VTK_MAJOR_VERSION >= 6:
+        op.SetInputData(0, self.surfPolyData)
+        op.SetInputData(1, otherShape.surfPolyData)
+    else:
+        op.SetInputConnection(0, self.surfPolyData.GetProducerPort())
+        op.SetInputConnection(1, otherShape.surfPolyData.GetProducerPort())
+    
     res = Shape()
-
-    res.updateBounds(self.loBound, self.hiBound)
-    res.updateBounds(otherShape.loBound, otherShape.hiBound)
-
-    res.func = vtk.vtkImplicitBoolean()
-    res.func.SetOperationTypeToIntersection()
-    res.func.AddFunction(self.func)
-    res.func.AddFunction(otherShape.func)
-
+    res.surfPolyData = op.GetOutput()
     return res
 
   def __sub__(self, otherShape):
@@ -142,89 +189,19 @@ class Shape:
     @param otherShape other shape
     @return composite shape
     """
-    res = Shape()
-
-    res.updateBounds(self.loBound, self.hiBound)
-    res.updateBounds(otherShape.loBound, otherShape.hiBound)
-
-    res.func = vtk.vtkImplicitBoolean()
-    res.func.SetOperationTypeToDifference()
-    res.func.AddFunction(self.func)
-    res.func.AddFunction(otherShape.func)
-
-    return res
-
-  def computeBoundarySurface(self, nx, ny, nz):
-    """
-    Discretize the boundary 
-    @param nx number of cells in the x direction
-    @param ny number of cells in the y direction
-    @param nz number of cells in the z direction
-    @return {'points': array of points, 'cells': array of cells}
-    """
-
-    self.sampleFunc.SetImplicitFunction(self.func)
-
-    # set the bounds for the sampling function
-    self.sampleFunc.SetModelBounds(self.loBound[0], self.hiBound[0], \
-                                   self.loBound[1], self.hiBound[1], \
-                                   self.loBound[2], self.hiBound[2])
-
-
-    self.sampleFunc.SetSampleDimensions(nx, ny, nz)
-    self.surface.Update()
-    self.surfPolyData = self.surface.GetOutput()
-
-  def getBoundarySurface(self):
-    """
-    Discretize the boundary 
-    @return {'points': array of points, 'cells': array of cells}
-    """
-
-    # gather the boundary vertices
-    points = self.surfPolyData.GetPoints()
-    numPoints = points.GetNumberOfPoints()
-    pointArr = numpy.zeros( (numPoints, 3), numpy.float32 )
-    for i in range(numPoints):
-      pointArr[i, :] = points.GetPoint(i)
-
-    # gather the triangles
-    numCells = self.surfPolyData.GetNumberOfCells()
-    cellArr = numpy.zeros( (numCells, 3), numpy.int )
-    for i in range(numCells):
-      cell = self.surfPolyData.GetCell(i)
-      ptIds = cell.GetPointIds()
-      npts = ptIds.GetNumberOfIds()
-      pInds = [0 for j in range(npts)]
-      for j in range(npts):
-        pInds[j] = int(ptIds.GetId(j))
-      cellArr[i, :] = pInds
-
-    return {'points': pointArr, 'cells': cellArr}
-
-  def save(self, plyFilename):
-    """
-    Save data in PLY file 
-    @param plyFilename PLY file
-    """
-    writer = vtk.vtkPLYWriter()
-    writer.SetFileName(plyFilename)
+    op = vtk.vtkBooleanOperationPolyDataFilter()
+    op.SetOperationTypeToDifference()
+    op.SetTolerance(self.tol)
     if vtk.VTK_MAJOR_VERSION >= 6:
-      writer.SetInputData(self.surfPolyData)
+        op.SetInputData(0, self.surfPolyData)
+        op.SetInputData(1, otherShape.surfPolyData)
     else:
-      writer.SetInput(self.surfPolyData)
-    writer.SetInput(self.surfPolyData)
-    writer.Write()
-
-  def load(self, plyFilename):
-    """
-    Load data from PLY file
-    @param plyFilename PLY file
-    """
-    reader = vtk.vtkPLYReader()
-    reader.SetFileName(plyFilename)
-    reader.Update()
-    self.surfPolyData = reader.GetOutput()
+        op.SetInputConnection(0, self.surfPolyData.GetProducerPort())
+        op.SetInputConnection(1, otherShape.surfPolyData.GetProducerPort())
+    
+    res = Shape()
+    res.surfPolyData = op.GetOutput()
+    return res
 
   def show(self, windowSizeX=600, windowSizeY=400, filename=''):
     """
@@ -259,10 +236,8 @@ class Shape:
     # mapper
     mapper = vtk.vtkPolyDataMapper()
     if vtk.VTK_MAJOR_VERSION >= 6:
-      #mapper.SetInputConnection(self.surface.GetOutputPort())
       mapper.SetInputData(self.surfPolyData)
     else:
-      #mapper.SetInput(self.surface.GetOutput())
       mapper.SetInput(self.surfPolyData)
     mapper.ScalarVisibilityOff()
  
@@ -302,7 +277,9 @@ class Shape:
     for at in axesTransf:
       at.Translate(lo)
 
-    axesTPD = [vtk.vtkTransformPolyDataFilter(), vtk.vtkTransformPolyDataFilter(), vtk.vtkTransformPolyDataFilter()]
+    axesTPD = [vtk.vtkTransformPolyDataFilter(),
+               vtk.vtkTransformPolyDataFilter(),
+               vtk.vtkTransformPolyDataFilter()]
     axesMappers = [vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper()]
     axesActors = [vtk.vtkActor(), vtk.vtkActor(), vtk.vtkActor()]
     for i in range(3):
