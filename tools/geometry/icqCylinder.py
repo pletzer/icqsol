@@ -9,14 +9,14 @@ from icqUniformGrid import uniformGrid2D, uniformIndexGrid2D
 class Cylinder(Shape):
 
   def __init__(self, radius, origin, length,
-               n_rho=10, n_theta = 32, n_z=2):
+               n_rho=10, n_theta=32, n_z=2):
     """
     Constructor
     @param radius radius
     @param origin center of low end disk
     @param length length of the cylinder in the z direction
-    @param n_theta number of theta cells
     @param n_rho number of radial cells
+    @param n_theta number of theta cells
     @param n_z number of z cells
     """
 
@@ -240,9 +240,8 @@ class Cylinder(Shape):
 def test():
 
   cyl = Cylinder(radius=1.0, origin=(0., 0., 0.), length=1.,
-                 n_rho=2, n_theta=8, n_z=1)
+                 n_rho=5, n_theta=8, n_z=3)
   cyl.save('cyl.vtk', file_format='vtk', file_type='ascii')
-  #cyl.debug()
   cyl.show()
 
 if __name__ == '__main__':
