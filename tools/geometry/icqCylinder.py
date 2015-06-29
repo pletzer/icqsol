@@ -193,7 +193,7 @@ class Cylinder(Shape):
 
   def _createHiMesh(self, origin, radius, length, n_rho, n_theta):
     """
-    Create low end disk mesh
+    Create high end disk mesh
     @param origin origin of the disk on the lower end
     @param radius radius
     @param length cylinder length
