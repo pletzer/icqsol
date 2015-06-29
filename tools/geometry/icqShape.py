@@ -134,7 +134,7 @@ class Shape:
     @return composite shape
     """
     op = vtk.vtkBooleanOperationPolyDataFilter()
-    op.SetOperationTypeToUnion()
+    op.SetOperationToUnion()
     op.SetTolerance(self.tol)
     if vtk.VTK_MAJOR_VERSION >= 6:
       op.SetInputData(0, self.surfPolyData)
@@ -154,7 +154,7 @@ class Shape:
     @return composite shape
     """
     op = vtk.vtkBooleanOperationPolyDataFilter()
-    op.SetOperationTypeToIntersection()
+    op.SetOperationToIntersection()
     op.SetTolerance(self.tol)
     if vtk.VTK_MAJOR_VERSION >= 6:
         op.SetInputData(0, self.surfPolyData)
@@ -174,7 +174,7 @@ class Shape:
     @return composite shape
     """
     op = vtk.vtkBooleanOperationPolyDataFilter()
-    op.SetOperationTypeToDifference()
+    op.SetOperationToDifference()
     op.SetTolerance(self.tol)
     if vtk.VTK_MAJOR_VERSION >= 6:
         op.SetInputData(0, self.surfPolyData)
@@ -188,6 +188,9 @@ class Shape:
     return res
 
   def debug(self):
+    """
+    Debug output of this object
+    """
     points = self.surfPolyData.GetPoints()
     cells = self.surfPolyData.GetPolys()
     numPoints = points.GetNumberOfPoints()
@@ -196,6 +199,10 @@ class Shape:
     for i in range(numPoints):
       p = points.GetPoint(i)
       print '{} {:>20} {:>20} {:>20}'.format(i, p[0], p[1], p[2])
+    print 'Number of cells: ', numCells
+    for i in range(numCells):
+      c = cells.GetCell(i)
+      print '{} {:>20} {:>20} {:>20}'.format(i, c[1], c[2], c[3])
 
   def show(self, windowSizeX=600, windowSizeY=400, filename=''):
     """
