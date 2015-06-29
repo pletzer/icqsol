@@ -145,6 +145,7 @@ class Shape:
     
     res = Shape()
     res.surfPolyData = op.GetOutput()
+    op.Update()
     return res
 
   def __mul__(self, otherShape):
@@ -165,6 +166,7 @@ class Shape:
     
     res = Shape()
     res.surfPolyData = op.GetOutput()
+    op.Update()
     return res
 
   def __sub__(self, otherShape):
@@ -185,6 +187,7 @@ class Shape:
     
     res = Shape()
     res.surfPolyData = op.GetOutput()
+    op.Update()
     return res
 
   def debug(self):
@@ -200,9 +203,10 @@ class Shape:
       p = points.GetPoint(i)
       print '{} {:>20} {:>20} {:>20}'.format(i, p[0], p[1], p[2])
     print 'Number of cells: ', numCells
+    ptIds = vtk.vtkIdList()
     for i in range(numCells):
-      c = cells.GetCell(i)
-      print '{} {:>20} {:>20} {:>20}'.format(i, c[1], c[2], c[3])
+      c = cells.GetCell(i, ptIds)
+      print '{} {:>20} {:>20} {:>20}'.format(i, ptIds.GetId(1), ptIds.GetId(2), ptIds.GetId(3))
 
   def show(self, windowSizeX=600, windowSizeY=400, filename=''):
     """

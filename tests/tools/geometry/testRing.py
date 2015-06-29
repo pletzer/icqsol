@@ -10,4 +10,4 @@ from icqsol.tools.geometry.icqCylinder import Cylinder
 c1 = Cylinder(radius=0.4, origin=(0.5, 0.5, 0.5), length=0.5)
 c2 = Cylinder(radius=0.2, origin=(0.5, 0.5, 0.5), length=0.5)
 geom = c1 - c2
-geom.show(filename='testRing.png')
+geom.show() #filename='testRing.png')
