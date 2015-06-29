@@ -135,6 +135,7 @@ class Cone(Shape):
     connectivity[numQuadCells:, 1] = numpy.ravel(bigII[:-1, :-1])
     connectivity[numQuadCells:, 2] = numpy.ravel(bigII[1:, 1:])
     connectivity[numQuadCells:, 3] = numpy.ravel(bigII[:-1, 1:])
+    
     connectivity[:, 0] = 3 # triangles
 
     return points, connectivity
@@ -173,13 +174,14 @@ class Cone(Shape):
     
     # lower triangles
     connectivity[:numQuadCells, 1] = numpy.ravel(bigII[:-1, :-1])
-    connectivity[:numQuadCells, 2] = numpy.ravel(bigII[1:, 1:])
-    connectivity[:numQuadCells, 3] = numpy.ravel(bigII[1:, :-1])
+    connectivity[:numQuadCells, 2] = numpy.ravel(bigII[1:, :-1])
+    connectivity[:numQuadCells, 3] = numpy.ravel(bigII[1:, 1:])
     
     # upper triangles
     connectivity[numQuadCells:, 1] = numpy.ravel(bigII[:-1, :-1])
-    connectivity[numQuadCells:, 2] = numpy.ravel(bigII[:-1, 1:])
-    connectivity[numQuadCells:, 3] = numpy.ravel(bigII[1:, 1:])
+    connectivity[numQuadCells:, 2] = numpy.ravel(bigII[1:, 1:])
+    connectivity[numQuadCells:, 3] = numpy.ravel(bigII[:-1, 1:])
+    
     connectivity[:, 0] = 3 # triangles
     
     return points, connectivity

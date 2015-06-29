@@ -178,15 +178,15 @@ class Cylinder(Shape):
         
     connectivity = numpy.zeros( (numCells, 4), numpy.int )
         
-    # lower triangles
-    connectivity[:numQuadCells, 1] = numpy.ravel(bigII[:-1, :-1])
-    connectivity[:numQuadCells, 2] = numpy.ravel(bigII[1:, 1:])
-    connectivity[:numQuadCells, 3] = numpy.ravel(bigII[1:, :-1])
+        # lower triangles
+        connectivity[:numQuadCells, 1] = numpy.ravel(bigII[:-1, :-1])
+        connectivity[:numQuadCells, 2] = numpy.ravel(bigII[1:, 1:])
+        connectivity[:numQuadCells, 3] = numpy.ravel(bigII[1:, :-1])
         
-    # upper triangles
-    connectivity[numQuadCells:, 1] = numpy.ravel(bigII[:-1, :-1])
-    connectivity[numQuadCells:, 2] = numpy.ravel(bigII[:-1, 1:])
-    connectivity[numQuadCells:, 3] = numpy.ravel(bigII[1:, 1:])
+        # upper triangles
+        connectivity[numQuadCells:, 1] = numpy.ravel(bigII[:-1, :-1])
+        connectivity[numQuadCells:, 2] = numpy.ravel(bigII[:-1, 1:])
+        connectivity[numQuadCells:, 3] = numpy.ravel(bigII[1:, 1:])
 
     connectivity[:, 0] = 3 # triangles
 
@@ -223,16 +223,6 @@ class Cylinder(Shape):
     bigII = iiRho*(n_theta + 1) + jjTheta
     
     connectivity = numpy.zeros( (numCells, 4), numpy.int )
-    
-    # lower triangles
-    connectivity[:numQuadCells, 1] = numpy.ravel(bigII[:-1, :-1])
-    connectivity[:numQuadCells, 2] = numpy.ravel(bigII[1:, :-1])
-    connectivity[:numQuadCells, 3] = numpy.ravel(bigII[1:, 1:])
-    
-    # upper triangles
-    connectivity[numQuadCells:, 1] = numpy.ravel(bigII[:-1, :-1])
-    connectivity[numQuadCells:, 2] = numpy.ravel(bigII[1:, 1:])
-    connectivity[numQuadCells:, 3] = numpy.ravel(bigII[:-1, 1:])
     
     connectivity[:, 0] = 3 # triangles
     
