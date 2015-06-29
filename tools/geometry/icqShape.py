@@ -21,24 +21,8 @@ class Shape:
     """
     Constructor
     """
-    # data structure holding array of points
-    self.pointArray = vtk.vtkFloatArray()
-    self.pointArray.SetNumberOfComponents(3)
-    
-    # data structire holding points
-    self.points = vtk.vtkPoints()
-    self.points.SetData(self.pointArray)
-    
-    # data structure holding cell indices
-    self.cellInds = vtk.vtkIdTypeArray()
-    
-    # data structure holding cell connectivity data
-    self.cells = vtk.vtkCellArray()
-    
     # data structure holding points and triangles
     self.surfPolyData = vtk.vtkPolyData()
-    self.surfPolyData.SetPoints(self.points)
-    self.surfPolyData.SetPolys(self.cells)
   
     # tolerance used to determine when a point is considered to be at distance zero
     self.tol = 1.e-6
@@ -95,7 +79,7 @@ class Shape:
     @param angleDeg angle in degrees (counterclockwise is positive)
     @return new shape
     """
-    transf = vtk.vtkTranspform()
+    transf = vtk.vtkTransform()
     transf.RotateWXYZ(angleDeg, axis)
     transfPDF = vtk.vtkTransformPolyDataFilter()
     transfPDF.SetTransform(transf)
@@ -114,7 +98,7 @@ class Shape:
     @param disp three float array displacement
     @return new shape
     """
-    transf = vtk.vtkTranspform()
+    transf = vtk.vtkTransform()
     transf.Translate(disp)
     transfPDF = vtk.vtkTransformPolyDataFilter()
     transfPDF.SetTransform(transf)
@@ -203,6 +187,16 @@ class Shape:
     res.surfPolyData = op.GetOutput()
     return res
 
+  def debug(self):
+    points = self.surfPolyData.GetPoints()
+    cells = self.surfPolyData.GetPolys()
+    numPoints = points.GetNumberOfPoints()
+    numCells = cells.GetNumberOfCells()
+    print 'Number of points: ', numPoints
+    for i in range(numPoints):
+      p = points.GetPoint(i)
+      print '{} {:>20} {:>20} {:>20}'.format(i, p[0], p[1], p[2])
+
   def show(self, windowSizeX=600, windowSizeY=400, filename=''):
     """
     Show the boundary surface or write image to file
@@ -240,7 +234,7 @@ class Shape:
     else:
       mapper.SetInput(self.surfPolyData)
     mapper.ScalarVisibilityOff()
- 
+
     # actor
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)

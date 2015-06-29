@@ -22,65 +22,85 @@ class Cylinder(Shape):
 
     Shape.__init__(self)
     
-    self.pointList = []
-    self.connectivityList = []
+    # data structure holding array of points
+    self.pointArray = vtk.vtkDoubleArray()
+    self.pointArray.SetNumberOfComponents(3)
+    
+    # data structire holding points
+    self.points = vtk.vtkPoints()
+    self.points.SetData(self.pointArray)
+    
+    # data structure holding cell indices
+    self.cellInds = vtk.vtkIdTypeArray()
+    
+    # data structure holding cell connectivity data
+    self.cells = vtk.vtkCellArray()
+    
+    # list of numpy arrays, one element for each surface mesh
+    pointList = []
+    connectivityList = []
     
     # create outer, side mesh
     pointsOuter, connectivityOuter = self._createSideMesh(origin, radius, length,
                                                           n_theta=n_theta,
                                                           n_z=n_z)
-    self.pointList.append(pointsOuter)
-    self.connectivityList.append(connectivityOuter)
+    pointList.append(pointsOuter)
+    connectivityList.append(connectivityOuter)
     
     
     # create low end side mesh
     pointsLo, connectivityLo = self._createLoMesh(origin, radius, length,
                                                   n_rho=n_rho,
                                                   n_theta=n_theta)
-    self.pointList.append(pointsLo)
-    self.connectivityList.append(connectivityLo)
+    pointList.append(pointsLo)
+    connectivityList.append(connectivityLo)
 
     # create high end side mesh
     pointsHi, connectivityHi = self._createHiMesh(origin, radius, length,
                                                   n_rho=n_rho,
                                                   n_theta=n_theta)
-    self.pointList.append(pointsHi)
-    self.connectivityList.append(connectivityHi)
+    pointList.append(pointsHi)
+    connectivityList.append(connectivityHi)
     
     # concatenate all the meshes
     totNumPoints = 0
     totNumCells = 0
-    numMeshes = len(self.pointList)
+    numMeshes = len(pointList)
     for i in range(numMeshes):
-      self.connectivityList[i][:, 1:] += totNumPoints
-      numPoints = self.pointList[i].shape[0]
-      numCells = self.connectivityList[i].shape[0]
+      cl = connectivityList[i]
+      # increment the connectivity
+      cl[:, 1:] += totNumPoints
+      numPoints = pointList[i].shape[0]
+      numCells = cl.shape[0]
       totNumPoints += numPoints
       totNumCells += numCells
     
-    allPoints = numpy.zeros( (totNumPoints, 3), numpy.float32 )
-    allConnectivity = numpy.zeros( (totNumCells, 4), numpy.int )
+    self.allPoints = numpy.zeros( (totNumPoints, 3), numpy.float64 )
+    self.allConnectivity = numpy.zeros( (totNumCells, 4), numpy.int )
     
     totNumPoints = 0
     totNumCells = 0
     for i in range(numMeshes):
-      numPoints = self.pointList[i].shape[0]
-      numCells = self.connectivityList[i].shape[0]
-      allPoints[totNumPoints: totNumPoints + numPoints, :] = \
-            self.pointList[i]
-      allConnectivity[totNumCells: totNumCells + numCells, :] = \
-            self.connectivityList[i]
+      pl = pointList[i]
+      cl = connectivityList[i]
+      numPoints = pl.shape[0]
+      numCells = cl.shape[0]
+      self.allPoints[totNumPoints: totNumPoints + numPoints, :] = pl
+      self.allConnectivity[totNumCells: totNumCells + numCells, :] = cl
       totNumPoints += numPoints
       totNumCells += numCells
 
     # set the points and connectivity array
     self.pointArray.SetNumberOfTuples(totNumPoints)
-    self.pointArray.SetVoidArray(allPoints, totNumPoints*3, 1)
+    self.pointArray.SetVoidArray(self.allPoints, totNumPoints*3, 1)
     
     self.cellInds.SetNumberOfTuples(totNumCells)
-    self.cellInds.SetVoidArray(allConnectivity, totNumCells*4, 1)
+    self.cellInds.SetVoidArray(self.allConnectivity, totNumCells*4, 1)
     
     self.cells.SetCells(totNumCells, self.cellInds)
+
+    self.surfPolyData.SetPoints(self.points)
+    self.surfPolyData.SetPolys(self.cells)
 
   def _createSideMesh(self, origin, radius, length, n_theta, n_z):
     """
@@ -100,7 +120,7 @@ class Cylinder(Shape):
     yy += origin[1]
     zz += origin[2]
     numPoints = len(xx.flat)
-    points = numpy.zeros( (numPoints, 3), numpy.float32 )
+    points = numpy.zeros( (numPoints, 3), numpy.float64 )
     points[:, 0] = xx.flat
     points[:, 1] = yy.flat
     points[:, 2] = zz.flat
@@ -145,7 +165,7 @@ class Cylinder(Shape):
     yy += origin[1]
     zz += origin[2]
     numPoints = len(xx.flat)
-    points = numpy.zeros( (numPoints, 3), numpy.float32 )
+    points = numpy.zeros( (numPoints, 3), numpy.float64 )
     points[:, 0] = xx.flat
     points[:, 1] = yy.flat
     points[:, 2] = zz.flat
@@ -190,7 +210,7 @@ class Cylinder(Shape):
     yy += origin[1]
     zz += origin[2]
     numPoints = len(xx.flat)
-    points = numpy.zeros( (numPoints, 3), numpy.float32 )
+    points = numpy.zeros( (numPoints, 3), numpy.float64 )
     points[:, 0] = xx.flat
     points[:, 1] = yy.flat
     points[:, 2] = zz.flat
@@ -220,9 +240,10 @@ class Cylinder(Shape):
 def test():
 
   cyl = Cylinder(radius=1.0, origin=(0., 0., 0.), length=1.,
-                 n_rho=2, n_theta=6, n_z=2)
+                 n_rho=2, n_theta=8, n_z=1)
   cyl.save('cyl.vtk', file_format='vtk', file_type='ascii')
-  #cyl.show()
+  #cyl.debug()
+  cyl.show()
 
 if __name__ == '__main__':
   test()
