@@ -206,17 +206,35 @@ class Shape:
                     non-empty string
     """
     # create a rendering window and renderer
-    ren = vtk.vtkRenderer()
-    renWin = vtk.vtkRenderWindow()
+    try:
+      ren = vtk.vtkRenderer()
+      renWin = vtk.vtkRenderWindow()
+      iren = vtk.vtkRenderWindowInteractor()
+
+      camera = vtk.vtkCamera()
+      mapper = vtk.vtkPolyDataMapper()
+      actor = vtk.vtkActor()
+
+      axes = [vtk.vtkArrowSource(), vtk.vtkArrowSource(), vtk.vtkArrowSource()]
+      axesTransf = [vtk.vtkTransform(), vtk.vtkTransform(), vtk.vtkTransform()]
+      axesTPD = [vtk.vtkTransformPolyDataFilter(),
+                 vtk.vtkTransformPolyDataFilter(),
+                 vtk.vtkTransformPolyDataFilter()]
+      axesMappers = [vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper()]
+      axesActors = [vtk.vtkActor(), vtk.vtkActor(), vtk.vtkActor()]
+
+      renderLarge = vtk.vtkRenderLargeImage()
+    except:
+      print 'WARNING: Cannot call save method -- likely missing VTK components'
+      return
+
     renWin.AddRenderer(ren)
     renWin.SetSize(windowSizeX, windowSizeY)
  
     # create a renderwindowinteractor
-    iren = vtk.vtkRenderWindowInteractor()
     iren.SetRenderWindow(renWin)
 
     # camera
-    camera = vtk.vtkCamera()
     xmin, xmax, ymin, ymax, zmin, zmax = self.surfPolyData.GetBounds()
     lo = numpy.array([xmin, ymin, zmin])
     hi = numpy.array([xmax, ymax, zmax])
@@ -228,7 +246,6 @@ class Shape:
     ren.SetActiveCamera(camera)
  
     # mapper
-    mapper = vtk.vtkPolyDataMapper()
     if vtk.VTK_MAJOR_VERSION >= 6:
       mapper.SetInputData(self.surfPolyData)
     else:
@@ -236,7 +253,6 @@ class Shape:
     mapper.ScalarVisibilityOff()
 
     # actor
-    actor = vtk.vtkActor()
     actor.SetMapper(mapper)
     actor.GetProperty().SetColor(1,1,1)
     
@@ -244,9 +260,7 @@ class Shape:
     # add axes
     #
 
-    axes = [vtk.vtkArrowSource(), vtk.vtkArrowSource(), vtk.vtkArrowSource()]
     axesColrs = [(1., 0., 0.,), (0., 1., 0.,), (0., 0., 1.,)]
-    axesTransf = [vtk.vtkTransform(), vtk.vtkTransform(), vtk.vtkTransform()]
 
     for a in axes:
       a.SetShaftRadius(0.01)
@@ -271,11 +285,6 @@ class Shape:
     for at in axesTransf:
       at.Translate(lo)
 
-    axesTPD = [vtk.vtkTransformPolyDataFilter(),
-               vtk.vtkTransformPolyDataFilter(),
-               vtk.vtkTransformPolyDataFilter()]
-    axesMappers = [vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper(), vtk.vtkPolyDataMapper()]
-    axesActors = [vtk.vtkActor(), vtk.vtkActor(), vtk.vtkActor()]
     for i in range(3):
       axesTPD[i].SetInputConnection(axes[i].GetOutputPort())
       axesTPD[i].SetTransform(axesTransf[i])
@@ -289,7 +298,6 @@ class Shape:
 
     # write to file
     writer = None
-    renderLarge = vtk.vtkRenderLargeImage()
     if filename:
       if filename.lower().find('.png') > 0:
         writer = vtk.vtkPNGWriter()

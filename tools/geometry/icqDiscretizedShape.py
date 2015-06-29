@@ -17,7 +17,8 @@ class DiscretizedShape(BaseShape):
     """
     BaseShape.__init__(self,)
 
-  def 
+    self.ugrid = None
+
 
   def evaluate(self, pts):
     """
@@ -25,6 +26,11 @@ class DiscretizedShape(BaseShape):
     @param pts array of points
     """
     return eval(self.expression)
+
+  def computeVolumeMesh(self, maxTetVolume):
+    """
+    """
+    
 
   def computeSurfaceMeshes(self, maxTriArea):
     """
