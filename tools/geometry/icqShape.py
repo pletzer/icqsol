@@ -25,7 +25,7 @@ class Shape:
     self.surfPolyData = vtk.vtkPolyData()
   
     # tolerance used to determine when a point is considered to be at distance zero
-    self.tol = 1.e-6
+    self.tol = 1.e-6 # 1.e-6
 
   def load(file_name, file_format):
     """

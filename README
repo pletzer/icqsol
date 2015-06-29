@@ -31,7 +31,7 @@ $ cmake -DINSTALL_USER=ON .
 c) Install in a user specified directory. Will require the user
 to set PYTHONPATH
 
-$ cmake -DUSER_PREFIX=ON -DCMAKE_INSTALL_PREFIX=<myDirectory> .
+$ cmake -DINSTALL_PREFIX=ON -DCMAKE_INSTALL_PREFIX=<myDirectory> .
 
 How to test ICQSol
 ------------------
