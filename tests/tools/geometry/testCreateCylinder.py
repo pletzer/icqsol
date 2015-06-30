@@ -30,6 +30,10 @@ s = Cylinder(radius=args.radius, origin=eval(args.origin), length=args.length,
              n_rho=args.n_rho, n_theta=args.n_theta, n_z=args.n_z)
 
 if args.output:
-	s.show(args.output)
+	file_format = 'vtk'
+        file_type = 'ascii'
+        if args.output.find('.ply') > 0:
+    		file_format = 'ply'
+	s.save(args.output, file_format, file_type)
 else:
 	s.show()
