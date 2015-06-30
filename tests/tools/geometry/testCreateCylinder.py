@@ -11,7 +11,7 @@ from icqsol.tools.geometry.icqCylinder import Cylinder
 parser = argparse.ArgumentParser(description='Create cylinder')
 
 parser.add_argument('--output', type=str, dest='output', default='',
-                   help='Set output file')
+                   help='Set output file, the suffix (either .vtk or .ply) determines the format')
 parser.add_argument('--radius', type=float, dest='radius', default=1.0,
                    help='Set radius')
 parser.add_argument('--length', type=float, dest='length', default=1.0,

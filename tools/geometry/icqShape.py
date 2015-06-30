@@ -61,7 +61,7 @@ class Shape:
     """
     writer = None
     if file_format.lower() == 'ply':
-      writer == vtk.vtkPLYWriter()
+      writer = vtk.vtkPLYWriter()
     else:
       writer = vtk.vtkPolyDataWriter()
     
