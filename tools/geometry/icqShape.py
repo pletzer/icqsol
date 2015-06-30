@@ -27,6 +27,13 @@ class Shape:
     # tolerance used to determine when a point is considered to be at distance zero
     self.tol = 1.e-6 # 1.e-6
 
+    # this is to overcome issues with vtkBoolenaOperationPolyDataFilter when two 
+    # faces are parallel
+    oneOverSqrt3 = 1./numpy.sqrt(3.)
+    self.pertRotAxis = (oneOverSqrt3, oneOverSqrt3, oneOverSqrt3)
+    # keep this small
+    self.pertAngle = 0.1
+
   def load(file_name, file_format):
     """
     Load the shape form file
@@ -136,9 +143,8 @@ class Shape:
     # the vtkBooleanOperationPolyDataFilter fails for 
     # cases where there are two parallel faces. To avoid 
     # this we slightly rotate the second object
-    oneOverSqrt3 = 1.0/numpy.sqrt(3.)
-    axis = (oneOverSqrt3, oneOverSqrt3, oneOverSqrt3)
-    newOtherShape = otherShape.rotate(axis=axis, angleDeg=0.1)
+    newOtherShape = otherShape.rotate(axis=self.pertRotAxis, 
+                                      angleDeg=self.pertAngle)
 
     op = vtk.vtkBooleanOperationPolyDataFilter()
     op.SetOperationToUnion()
@@ -164,9 +170,8 @@ class Shape:
     # the vtkBooleanOperationPolyDataFilter fails for 
     # cases where there are two parallel faces. To avoid 
     # this we slightly rotate the second object
-    oneOverSqrt3 = 1.0/numpy.sqrt(3.)
-    axis = (oneOverSqrt3, oneOverSqrt3, oneOverSqrt3)
-    newOtherShape = otherShape.rotate(axis=axis, angleDeg=0.1)
+    newOtherShape = otherShape.rotate(axis=self.pertRotAxis, 
+                                      angleDeg=self.pertAngle)
 
     op = vtk.vtkBooleanOperationPolyDataFilter()
     op.SetOperationToIntersection()
@@ -192,9 +197,8 @@ class Shape:
     # the vtkBooleanOperationPolyDataFilter fails for 
     # cases where there are two parallel faces. To avoid 
     # this we slightly rotate the second object
-    oneOverSqrt3 = 1.0/numpy.sqrt(3.)
-    axis = (oneOverSqrt3, oneOverSqrt3, oneOverSqrt3)
-    newOtherShape = otherShape.rotate(axis=axis, angleDeg=0.1)
+    newOtherShape = otherShape.rotate(axis=self.pertRotAxis, 
+                                      angleDeg=self.pertAngle)
 
     op = vtk.vtkBooleanOperationPolyDataFilter()
     op.SetOperationToDifference()
