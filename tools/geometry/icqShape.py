@@ -133,15 +133,22 @@ class Shape:
     @param otherShape other shape
     @return composite shape
     """
+    # the vtkBooleanOperationPolyDataFilter fails for 
+    # cases where there are two parallel faces. To avoid 
+    # this we slightly rotate the second object
+    oneOverSqrt3 = 1.0/numpy.sqrt(3.)
+    axis = (oneOverSqrt3, oneOverSqrt3, oneOverSqrt3)
+    newOtherShape = otherShape.rotate(axis=axis, angleDeg=0.1)
+
     op = vtk.vtkBooleanOperationPolyDataFilter()
     op.SetOperationToUnion()
     op.SetTolerance(self.tol)
     if vtk.VTK_MAJOR_VERSION >= 6:
       op.SetInputData(0, self.surfPolyData)
-      op.SetInputData(1, otherShape.surfPolyData)
+      op.SetInputData(1, newOtherShape.surfPolyData)
     else:
       op.SetInputConnection(0, self.surfPolyData.GetProducerPort())
-      op.SetInputConnection(1, otherShape.surfPolyData.GetProducerPort())
+      op.SetInputConnection(1, newOtherShape.surfPolyData.GetProducerPort())
     
     res = Shape()
     res.surfPolyData = op.GetOutput()
@@ -154,15 +161,22 @@ class Shape:
     @param otherShape other shape
     @return composite shape
     """
+    # the vtkBooleanOperationPolyDataFilter fails for 
+    # cases where there are two parallel faces. To avoid 
+    # this we slightly rotate the second object
+    oneOverSqrt3 = 1.0/numpy.sqrt(3.)
+    axis = (oneOverSqrt3, oneOverSqrt3, oneOverSqrt3)
+    newOtherShape = otherShape.rotate(axis=axis, angleDeg=0.1)
+
     op = vtk.vtkBooleanOperationPolyDataFilter()
     op.SetOperationToIntersection()
     op.SetTolerance(self.tol)
     if vtk.VTK_MAJOR_VERSION >= 6:
         op.SetInputData(0, self.surfPolyData)
-        op.SetInputData(1, otherShape.surfPolyData)
+        op.SetInputData(1, newOtherShape.surfPolyData)
     else:
         op.SetInputConnection(0, self.surfPolyData.GetProducerPort())
-        op.SetInputConnection(1, otherShape.surfPolyData.GetProducerPort())
+        op.SetInputConnection(1, newOtherShape.surfPolyData.GetProducerPort())
     
     res = Shape()
     res.surfPolyData = op.GetOutput()
@@ -175,15 +189,22 @@ class Shape:
     @param otherShape other shape
     @return composite shape
     """
+    # the vtkBooleanOperationPolyDataFilter fails for 
+    # cases where there are two parallel faces. To avoid 
+    # this we slightly rotate the second object
+    oneOverSqrt3 = 1.0/numpy.sqrt(3.)
+    axis = (oneOverSqrt3, oneOverSqrt3, oneOverSqrt3)
+    newOtherShape = otherShape.rotate(axis=axis, angleDeg=0.1)
+
     op = vtk.vtkBooleanOperationPolyDataFilter()
     op.SetOperationToDifference()
     op.SetTolerance(self.tol)
     if vtk.VTK_MAJOR_VERSION >= 6:
         op.SetInputData(0, self.surfPolyData)
-        op.SetInputData(1, otherShape.surfPolyData)
+        op.SetInputData(1, newOtherShape.surfPolyData)
     else:
         op.SetInputConnection(0, self.surfPolyData.GetProducerPort())
-        op.SetInputConnection(1, otherShape.surfPolyData.GetProducerPort())
+        op.SetInputConnection(1, newOtherShape.surfPolyData.GetProducerPort())
     
     res = Shape()
     res.surfPolyData = op.GetOutput()
