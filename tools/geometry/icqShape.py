@@ -34,6 +34,55 @@ class Shape:
     # keep this small
     self.pertAngle = 0.1
 
+  def toPolygons(self):
+    """
+    Convert this class to a list of polygons
+    """
+    from csg.geom import Vector, Vertex
+    from csg.geom import Polygon
+    res = []
+    points = self.surfPolyData.GetPoints()
+    cells = self.surfPolyData.GetPolys()
+    numPoints = points.GetNumberOfPoints()
+    numCells = cells.GetNumberOfCells()
+    ptIds = vtk.vtkIdList()
+    for i in range(numCells):
+      c = cells.GetCell(i, ptIds)
+      ia, ib, ic = ptIds.GetId(1), ptIds.GetId(2), ptIds.GetId(3)
+      pa, pb, pc = points.GetPoint(ia), points.GetPoint(ib), points.GetPoint(ic)
+      verts = [Vertex(Vector(pa)), Vertex(Vector(pb)), Vertex(Vector(pc))]
+      res.append(verts)
+    return res
+
+  def fromPolygons(self, polys):
+    """
+    Build data from polygon list
+    """
+    point2Index = {}
+    points = vtk.vtkPoints()
+    cells = vtk.vtkCellArray()
+    cells.InitTraversal()
+    p = numpy.array([0., 0., 0.])
+    ptIds = vtk.vtkIdList()
+    prIds.SetNumberOfIds(4)
+    for poly in polys:
+      ptIds.SetId(0, 4)
+      for j in range(3):
+        v = poly.vertices[j]
+        p[:] = v[0], v[1], v[2]
+        sp = str(p)
+        if not point2Index.has_key(sp):
+          # new point
+          points.InsertNextPoint(p)
+          point2Index[sp] = len(point2Index)
+          count += 1
+        indx = point2Index[sp]
+        ptIds.SetId(j + 1, indx)
+      cells.InsertNextCell(ptIds)
+
+    self.surfPolyData.GetPoints().SetPoints(points)
+    self.surfPolyData.GetPolys().SetPolys(cells)
+
   def load(file_name, file_format):
     """
     Load the shape form file
