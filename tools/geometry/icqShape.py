@@ -63,24 +63,23 @@ class Shape:
     cells.InitTraversal()
     p = numpy.array([0., 0., 0.])
     ptIds = vtk.vtkIdList()
-    prIds.SetNumberOfIds(4)
+    ptIds.SetNumberOfIds(4)
     for poly in polys:
       ptIds.SetId(0, 4)
       for j in range(3):
         v = poly.vertices[j]
-        p[:] = v[0], v[1], v[2]
+        p[:] = v.pos[0], v.pos[1], v.pos[2]
         sp = str(p)
         if not point2Index.has_key(sp):
           # new point
           points.InsertNextPoint(p)
           point2Index[sp] = len(point2Index)
-          count += 1
         indx = point2Index[sp]
         ptIds.SetId(j + 1, indx)
       cells.InsertNextCell(ptIds)
 
-    self.surfPolyData.GetPoints().SetPoints(points)
-    self.surfPolyData.GetPolys().SetPolys(cells)
+    self.surfPolyData.SetPoints(points)
+    self.surfPolyData.SetPolys(cells)
 
   def load(file_name, file_format):
     """
