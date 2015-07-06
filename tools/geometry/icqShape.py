@@ -10,6 +10,7 @@
 # extensions
 import vtk
 import numpy
+from csg.geom import Vector, Vertex, Polygon
 
 class Shape:
 
@@ -38,8 +39,6 @@ class Shape:
     """
     Convert this class to a list of polygons
     """
-    from csg.geom import Vector, Vertex
-    from csg.geom import Polygon
     res = []
     points = self.surfPolyData.GetPoints()
     cells = self.surfPolyData.GetPolys()
@@ -189,25 +188,11 @@ class Shape:
     @param otherShape other shape
     @return composite shape
     """
-    # the vtkBooleanOperationPolyDataFilter fails for 
-    # cases where there are two parallel faces. To avoid 
-    # this we slightly rotate the second object
-    newOtherShape = otherShape.rotate(axis=self.pertRotAxis, 
-                                      angleDeg=self.pertAngle)
-
-    op = vtk.vtkBooleanOperationPolyDataFilter()
-    op.SetOperationToUnion()
-    op.SetTolerance(self.tol)
-    if vtk.VTK_MAJOR_VERSION >= 6:
-      op.SetInputData(0, self.surfPolyData)
-      op.SetInputData(1, newOtherShape.surfPolyData)
-    else:
-      op.SetInputConnection(0, self.surfPolyData.GetProducerPort())
-      op.SetInputConnection(1, newOtherShape.surfPolyData.GetProducerPort())
-    
+    a = CSG.fromPolygons(self.toPolygons())
+    b = CSG.fromPolygons(otherShape.toPolygons())
+    c = a.union(b)
     res = Shape()
-    res.surfPolyData = op.GetOutput()
-    op.Update()
+    res.fromPolygons(c)
     return res
 
   def __mul__(self, otherShape):
