@@ -11,6 +11,7 @@
 import vtk
 import numpy
 from csg.geom import Vector, Vertex, Polygon
+from csg.core import CSG
 
 class Shape:
 
@@ -50,12 +51,14 @@ class Shape:
       ia, ib, ic = ptIds.GetId(1), ptIds.GetId(2), ptIds.GetId(3)
       pa, pb, pc = points.GetPoint(ia), points.GetPoint(ib), points.GetPoint(ic)
       verts = [Vertex(Vector(pa)), Vertex(Vector(pb)), Vertex(Vector(pc))]
-      res.append(verts)
+      poly = Polygon(verts)
+      res.append(poly)
     return res
 
   def fromPolygons(self, polys):
     """
     Build data from polygon list
+    @param polys list of Polygon instances
     """
     point2Index = {}
     points = vtk.vtkPoints()
@@ -177,8 +180,8 @@ class Shape:
     n = len(points)
     res = numpy.zeros( (n,), numpy.int )
     for i in range(n):
-        # -1 if inside, 1 if outside, 0 if undecided
-        res[i] = -obb.InsideOrOutside(p0)
+      # -1 if inside, 1 if outside, 0 if undecided
+      res[i] = -obb.InsideOrOutside(p0)
     return res
 
   def __add__(self, otherShape):

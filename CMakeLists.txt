@@ -43,6 +43,7 @@ enable_testing()
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests/tools")
 add_test(NAME testToPolygons COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testToPolygons.py")
 add_test(NAME testFromPolygons COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testFromPolygons.py")
+add_test(NAME testUnion COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testUnion.py")
 add_test(NAME testRing COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testRing.py")
 add_test(NAME testBolt COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testBolt.py")
 
