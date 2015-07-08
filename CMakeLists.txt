@@ -41,6 +41,14 @@ enable_testing()
 #
 
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests/tools")
+add_test(NAME testCreateCylinder 
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testCreateCylinder.py" --output testCreateCylinder.vtk)
+add_test(NAME testCreateBox 
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testCreateBox.py" --output testCreateBox.vtk)
+add_test(NAME testCreateSphere 
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testCreateSphere.py" --output testCreateSphere.vtk)
+add_test(NAME testCreateCone
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testCreateCone.py" --output testCreateCone.vtk)
 add_test(NAME testToPolygons COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testToPolygons.py")
 add_test(NAME testFromPolygons COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testFromPolygons.py")
 add_test(NAME testUnion COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testUnion.py")
