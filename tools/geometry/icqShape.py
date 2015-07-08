@@ -264,10 +264,15 @@ class Shape:
       p = points.GetPoint(i)
       print '{} {:>20} {:>20} {:>20}'.format(i, p[0], p[1], p[2])
     print 'Number of cells: ', numCells
-    ptIds = vtk.vtkIdList()
+    
     for i in range(numCells):
+      ptIds = vtk.vtkIdList()
       c = cells.GetCell(i, ptIds)
-      print '{} {:>20} {:>20} {:>20}'.format(i, ptIds.GetId(1), ptIds.GetId(2), ptIds.GetId(3))
+      np = ptIds.GetNumberOfIds()
+      print 'cell index: {:>4} number of points: {:>3} point indices: '.format(i, np),
+      for j in range(np):
+        print '{:>8} '.format(ptIds.GetId(j)), 
+      print
 
   def show(self, windowSizeX=600, windowSizeY=400, filename=''):
     """
