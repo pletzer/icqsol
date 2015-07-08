@@ -45,12 +45,17 @@ class Shape:
     cells = self.surfPolyData.GetPolys()
     numPoints = points.GetNumberOfPoints()
     numCells = cells.GetNumberOfCells()
+    pa = [0., 0., 0.]
+    pb = [0., 0., 0.]
+    pc = [0., 0., 0.]
     ptIds = vtk.vtkIdList()
     cells.InitTraversal()
     for i in range(numCells):
       c = cells.GetNextCell(ptIds)
       ia, ib, ic = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
-      pa, pb, pc = points.GetPoint(ia), points.GetPoint(ib), points.GetPoint(ic)
+      pa[:] = points.GetPoint(ia)
+      pb[:] = points.GetPoint(ib)
+      pc[:] = points.GetPoint(ic)
       verts = [Vertex(Vector(pa)), Vertex(Vector(pb)), Vertex(Vector(pc))]
       poly = Polygon(verts)
       res.append(poly)

@@ -41,6 +41,8 @@ enable_testing()
 #
 
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests/tools")
+add_test(NAME testPolygon
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testPolygon.py")
 add_test(NAME testCreateCylinder 
          COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testCreateCylinder.py" --output testCreateCylinder.vtk)
 add_test(NAME testCreateBox 
