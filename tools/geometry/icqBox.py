@@ -66,7 +66,7 @@ class  Box(Shape):
         
         totNumPoints = 0
         totNumCells = 0
-        for  i  in  range(numMeshes):
+        for i in range(numMeshes):
             pl = pointList[i]
             cl = connectivityList[i]
             numPoints = pl.shape[0]
@@ -94,8 +94,8 @@ class  Box(Shape):
         @return  index
         """
         index = 0
-        while  index  <  3  and  vector[index] == 0:
-                index += 1
+        while index < 3 and vector[index] == 0:
+            index += 1
         return  index
 
     def  _createSideMesh(self, origin, lengths, side, n_x, n_y, n_z):
@@ -126,14 +126,14 @@ class  Box(Shape):
         #  be  pointing  down  or  up,  depending  on  the  side
         lo = numpy.copy(origin)
         if  side[index] == 1:
-                lo[index] += lengths[index]
+            lo[index] += lengths[index]
         if  uHat[indexU] == -1:
-                lo[indexU] += lengths[indexU]
+            lo[indexU] += lengths[indexU]
 
         ns = (n_x, n_y, n_z)
         n_u, n_v = ns[indexU], ns[indexV]
 
-        uu, vv = uniformGrid2D([0.,  0.], [1.,  1.], (n_u,  n_v))
+        uu, vv = uniformGrid2D([0., 0.], [1., 1.], (n_u, n_v))
 
         xx = (uu*uHat[0] + vv*vHat[0]) * lengths[0]
         yy = (uu*uHat[1] + vv*vHat[1]) * lengths[1]
@@ -154,17 +154,17 @@ class  Box(Shape):
         iiU, jjV = uniformIndexGrid2D((0,  0),  (n_u,  n_v))
         bigII = iiU*(n_v + 1) + jjV
             
-        connectivity = numpy.zeros(  (numCells,  4),  numpy.int  )
+        connectivity = numpy.zeros((numCells, 4), numpy.int)
             
         #  lower  triangles
-        connectivity[:numQuadCells, 1] =  numpy.ravel(bigII[:-1,  :-1])
-        connectivity[:numQuadCells, 2] = numpy.ravel(bigII[1:,  :-1])
-        connectivity[:numQuadCells, 3] = numpy.ravel(bigII[1:,  1:])
+        connectivity[:numQuadCells, 1] =  numpy.ravel(bigII[:-1, :-1])
+        connectivity[:numQuadCells, 2] = numpy.ravel(bigII[1:, :-1])
+        connectivity[:numQuadCells, 3] = numpy.ravel(bigII[1:, 1:])
         
         #  upper  triangles
-        connectivity[numQuadCells:, 1] = numpy.ravel(bigII[:-1,  :-1])
-        connectivity[numQuadCells:, 2] = numpy.ravel(bigII[1:,  1:])
-        connectivity[numQuadCells:, 3] = numpy.ravel(bigII[:-1,  1:])
+        connectivity[numQuadCells:, 1] = numpy.ravel(bigII[:-1, :-1])
+        connectivity[numQuadCells:, 2] = numpy.ravel(bigII[1:, 1:])
+        connectivity[numQuadCells:, 3] = numpy.ravel(bigII[:-1, 1:])
         connectivity[:, 0] = 3  #  triangles
 
         return  points,  connectivity
