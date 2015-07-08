@@ -46,9 +46,10 @@ class Shape:
     numPoints = points.GetNumberOfPoints()
     numCells = cells.GetNumberOfCells()
     ptIds = vtk.vtkIdList()
+    cells.InitTraversal()
     for i in range(numCells):
-      c = cells.GetCell(i, ptIds)
-      ia, ib, ic = ptIds.GetId(1), ptIds.GetId(2), ptIds.GetId(3)
+      c = cells.GetNextCell(ptIds)
+      ia, ib, ic = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
       pa, pb, pc = points.GetPoint(ia), points.GetPoint(ib), points.GetPoint(ic)
       verts = [Vertex(Vector(pa)), Vertex(Vector(pb)), Vertex(Vector(pc))]
       poly = Polygon(verts)
@@ -265,9 +266,10 @@ class Shape:
       print '{} {:>20} {:>20} {:>20}'.format(i, p[0], p[1], p[2])
     print 'Number of cells: ', numCells
     
+    ptIds = vtk.vtkIdList()
+    cells.InitTraversal()
     for i in range(numCells):
-      ptIds = vtk.vtkIdList()
-      c = cells.GetCell(i, ptIds)
+      c = cells.GetNextCell(ptIds)
       np = ptIds.GetNumberOfIds()
       print 'cell index: {:>4} number of points: {:>3} point indices: '.format(i, np),
       for j in range(np):
