@@ -56,9 +56,14 @@ class Shape:
       pa[:] = points.GetPoint(ia)
       pb[:] = points.GetPoint(ib)
       pc[:] = points.GetPoint(ic)
-      verts = [Vertex(Vector(pa)), Vertex(Vector(pb)), Vertex(Vector(pc))]
-      poly = Polygon(verts)
-      res.append(poly)
+      pba = numpy.array(pb) - numpy.array(pa)
+      pca = numpy.array(pc) - numpy.array(pa)
+      areaVec = numpy.cross(pba, pca)
+      area = numpy.sqrt( numpy.dot(areaVec, areaVec) )
+      if area > self.tol:
+        verts = [Vertex(Vector(pa)), Vertex(Vector(pb)), Vertex(Vector(pc))]
+        poly = Polygon(verts)
+        res.append(poly)
     return res
 
   def fromPolygons(self, polys):
