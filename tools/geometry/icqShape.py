@@ -13,7 +13,7 @@ import numpy
 from csg.geom import Vector, Vertex, Polygon
 from csg.core import CSG
 
-class Shape:
+class Shape(CSG):
 
   """
   Base class for shapes
@@ -23,95 +23,35 @@ class Shape:
     """
     Constructor
     """
-    # data structure holding points and triangles
-    self.surfPolyData = vtk.vtkPolyData()
-  
-    # tolerance used to determine when a point is considered to be at distance zero
-    self.tol = 1.e-6 # 1.e-6
+    CSG.__init__(self)
 
-    # this is to overcome issues with vtkBoolenaOperationPolyDataFilter when two 
-    # faces are parallel
-    oneOverSqrt3 = 1./numpy.sqrt(3.)
-    self.pertRotAxis = (oneOverSqrt3, oneOverSqrt3, oneOverSqrt3)
-    # keep this small
-    self.pertAngle = 0.1
+  def toVTKPolyData(self):
+    """
+    Convert the data to a VTK polydata object
+    """
 
-  def toPolygons(self):
-    """
-    Convert this class to a list of polygons
-    """
-    res = []
-    points = self.surfPolyData.GetPoints()
-    cells = self.surfPolyData.GetPolys()
-    numPoints = points.GetNumberOfPoints()
-    numCells = cells.GetNumberOfCells()
-    pa = [0., 0., 0.]
-    pb = [0., 0., 0.]
-    pc = [0., 0., 0.]
-    ptIds = vtk.vtkIdList()
-    cells.InitTraversal()
+    verts, polys, count = self.toVerticesAndPolygons()
+
+    pts = vtk.vtkPoints()
+    numPoints = len(verts)
+    pts.SetNumberOfPoints(numPoints)
+    for i in range(numPoints):
+      pts.SetPoint(i, verts[i])
+
+    pdata = vtk.vtkPolyData()
+    pdata.SetPoints(pts)
+    numCells = len(polys)
+    pdata.Allocate(numCells, 1)
+    ptIds = vtk.vtkIdList
     for i in range(numCells):
-      c = cells.GetNextCell(ptIds)
-      ia, ib, ic = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
-      pa[:] = points.GetPoint(ia)
-      pb[:] = points.GetPoint(ib)
-      pc[:] = points.GetPoint(ic)
-      pba = numpy.array(pb) - numpy.array(pa)
-      pca = numpy.array(pc) - numpy.array(pa)
-      areaVec = numpy.cross(pba, pca)
-      area = numpy.sqrt( numpy.dot(areaVec, areaVec) )
-      if area > self.tol:
-        verts = [Vertex(Vector(pa)), Vertex(Vector(pb)), Vertex(Vector(pc))]
-        poly = Polygon(verts)
-        res.append(poly)
-    return res
+      npts = len(polys[i])
+      ptIds.SetNumberIOfIds(npts)
+      for j in range(npts):
+        ptIds.SetId(j, polys[i][j])
+      pdata.InsertNextCell(vtk.VTK_POLY, ptIds)
 
-  def fromPolygons(self, polys):
-    """
-    Build data from polygon list
-    @param polys list of Polygon instances
-    """
-    point2Index = {}
-    points = vtk.vtkPoints()
-    cells = vtk.vtkCellArray()
-    cells.InitTraversal()
-    p = numpy.array([0., 0., 0.])
-    ptIds = vtk.vtkIdList()
-    ptIds.SetNumberOfIds(4)
-    for poly in polys:
-      ptIds.SetId(0, 4)
-      for j in range(3):
-        v = poly.vertices[j]
-        p[:] = v.pos[0], v.pos[1], v.pos[2]
-        sp = str(p)
-        if not point2Index.has_key(sp):
-          # new point
-          points.InsertNextPoint(p)
-          point2Index[sp] = len(point2Index)
-        indx = point2Index[sp]
-        ptIds.SetId(j + 1, indx)
-      cells.InsertNextCell(ptIds)
-
-    self.surfPolyData.SetPoints(points)
-    self.surfPolyData.SetPolys(cells)
-
-  def load(file_name, file_format):
-    """
-    Load the shape form file
-    @param file_name file name
-    @param file_format file format, currently either VTK or PLY
-    """
-    reader = None
-    
-    if file_format.lower() == 'ply':
-        reader = vtk.vtkPLYReader()
-    else:
-        reader = vtk.vtkPolyDataReader()
-    
-    reader.SetFileName(filename)
-    reader.Update()
-    
-    self.surfPolyData = reader.GetOutput()
+    # may be we should also return points?
+    return pdata
         
   def save(self, file_name, file_format, file_type):
     """
@@ -132,158 +72,37 @@ class Shape:
     else:
       writer.SetFileTypeToBinary()
     
+    pdata = self.toVTKPolyData()
     if vtk.VTK_MAJOR_VERSION >= 6:
-      writer.SetInputData(self.surfPolyData)
+      writer.SetInputData(pdata)
     else:
-      writer.SetInput(self.surfPolyData)
+      writer.SetInput(pdata)
     
     writer.Write()
     writer.Update()
-
-  def rotate(self, axis, angleDeg):
-    """
-    Rotate shape around axis
-    @param axis array of three floats
-    @param angleDeg angle in degrees (counterclockwise is positive)
-    @return new shape
-    """
-    transf = vtk.vtkTransform()
-    transf.RotateWXYZ(angleDeg, axis)
-    transfPDF = vtk.vtkTransformPolyDataFilter()
-    transfPDF.SetTransform(transf)
-    if vtk.VTK_MAJOR_VERSION >= 6:
-        transfPDF.SetInputData(self.surfPolyData)
-    else:
-        transfPDF.SetInput(self.surfPolyData)
-    transfPDF.Update()
-    res = Shape()
-    res.surfPolyData = transfPDF.GetOutput()
-    return res
-
-  def translate(self, disp):
-    """
-    Translate shape
-    @param disp three float array displacement
-    @return new shape
-    """
-    transf = vtk.vtkTransform()
-    transf.Translate(disp)
-    transfPDF = vtk.vtkTransformPolyDataFilter()
-    transfPDF.SetTransform(transf)
-    if vtk.VTK_MAJOR_VERSION >= 6:
-      transfPDF.SetInputData(self.surfPolyData)
-    else:
-      transfPDF.SetInput(self.surfPolyData)
-    transfPDF.Update()
-    res = Shape()
-    res.surfPolyData = transfPDF.GetOutput()
-    return res
-  
-  def isInside(self, points):
-    """
-    Test if points are inside shape
-    @param points array of x, y, z points
-    @return array of +1 (inside), -1 (outside), or 0 if close to the surface
-    """
-    obb = vtk.vtkOBBTree()
-    obb.SetDataSet(self.surfPolyData)
-    obb.BuildLocator()
-    n = len(points)
-    res = numpy.zeros( (n,), numpy.int )
-    for i in range(n):
-      # -1 if inside, 1 if outside, 0 if undecided
-      res[i] = -obb.InsideOrOutside(p0)
-    return res
-
-  def __add__(self, otherShape):
-    """
-    + operator or union
-    @param otherShape other shape
-    @return composite shape
-    """
-    a = CSG.fromPolygons(self.toPolygons())
-    b = CSG.fromPolygons(otherShape.toPolygons())
-    c = a.union(b)
-    res = Shape()
-    res.fromPolygons(c)
-    return res
-
-  def __mul__(self, otherShape):
-    """
-    * operator or intersect
-    @param otherShape other shape
-    @return composite shape
-    """
-    # the vtkBooleanOperationPolyDataFilter fails for 
-    # cases where there are two parallel faces. To avoid 
-    # this we slightly rotate the second object
-    newOtherShape = otherShape.rotate(axis=self.pertRotAxis, 
-                                      angleDeg=self.pertAngle)
-
-    op = vtk.vtkBooleanOperationPolyDataFilter()
-    op.SetOperationToIntersection()
-    op.SetTolerance(self.tol)
-    if vtk.VTK_MAJOR_VERSION >= 6:
-        op.SetInputData(0, self.surfPolyData)
-        op.SetInputData(1, newOtherShape.surfPolyData)
-    else:
-        op.SetInputConnection(0, self.surfPolyData.GetProducerPort())
-        op.SetInputConnection(1, newOtherShape.surfPolyData.GetProducerPort())
-    
-    res = Shape()
-    res.surfPolyData = op.GetOutput()
-    op.Update()
-    return res
-
-  def __sub__(self, otherShape):
-    """
-    - operator or remove
-    @param otherShape other shape
-    @return composite shape
-    """
-    # the vtkBooleanOperationPolyDataFilter fails for 
-    # cases where there are two parallel faces. To avoid 
-    # this we slightly rotate the second object
-    newOtherShape = otherShape.rotate(axis=self.pertRotAxis, 
-                                      angleDeg=self.pertAngle)
-
-    op = vtk.vtkBooleanOperationPolyDataFilter()
-    op.SetOperationToDifference()
-    op.SetTolerance(self.tol)
-    if vtk.VTK_MAJOR_VERSION >= 6:
-        op.SetInputData(0, self.surfPolyData)
-        op.SetInputData(1, newOtherShape.surfPolyData)
-    else:
-        op.SetInputConnection(0, self.surfPolyData.GetProducerPort())
-        op.SetInputConnection(1, newOtherShape.surfPolyData.GetProducerPort())
-    
-    res = Shape()
-    res.surfPolyData = op.GetOutput()
-    op.Update()
-    return res
 
   def debug(self):
     """
     Debug output of this object
     """
-    points = self.surfPolyData.GetPoints()
-    cells = self.surfPolyData.GetPolys()
-    numPoints = points.GetNumberOfPoints()
-    numCells = cells.GetNumberOfCells()
+
+    points, polys, count = self.toVerticesAndPolygons()
+
+    numPoints = len(points)
+    numCells = len(polys)
+
     print 'Number of points: ', numPoints
     for i in range(numPoints):
-      p = points.GetPoint(i)
+      p = points[i]
       print '{} {:>20} {:>20} {:>20}'.format(i, p[0], p[1], p[2])
+
     print 'Number of cells: ', numCells
-    
-    ptIds = vtk.vtkIdList()
-    cells.InitTraversal()
     for i in range(numCells):
-      c = cells.GetNextCell(ptIds)
-      np = ptIds.GetNumberOfIds()
+      c = polys[i]
+      np = len(c)
       print 'cell index: {:>4} number of points: {:>3} point indices: '.format(i, np),
       for j in range(np):
-        print '{:>8} '.format(ptIds.GetId(j)), 
+        print '{:>8} '.format(c[j]), 
       print
 
   def show(self, windowSizeX=600, windowSizeY=400, filename=''):
@@ -294,6 +113,9 @@ class Shape:
     @param filename write to a file if this keyword is present and a 
                     non-empty string
     """
+
+    pdata = self.toVTKPolyData()
+
     # create a rendering window and renderer
     try:
       ren = vtk.vtkRenderer()
@@ -324,7 +146,7 @@ class Shape:
     iren.SetRenderWindow(renWin)
 
     # camera
-    xmin, xmax, ymin, ymax, zmin, zmax = self.surfPolyData.GetBounds()
+    xmin, xmax, ymin, ymax, zmin, zmax = pdata.GetBounds()
     lo = numpy.array([xmin, ymin, zmin])
     hi = numpy.array([xmax, ymax, zmax])
     camera.SetFocalPoint(hi)
@@ -336,9 +158,9 @@ class Shape:
  
     # mapper
     if vtk.VTK_MAJOR_VERSION >= 6:
-      mapper.SetInputData(self.surfPolyData)
+      mapper.SetInputData(pdata)
     else:
-      mapper.SetInput(self.surfPolyData)
+      mapper.SetInput(pdata)
     mapper.ScalarVisibilityOff()
 
     # actor
