@@ -16,16 +16,9 @@ parser.add_argument('--lengths', type=str, dest='lengths', default="1.,1.,1.",
                    help='Set box lengths')
 parser.add_argument('--origin', type=str, dest='origin', default="0.,0.,0.",
                    help='Set origin, comma separated list of three floats')
-parser.add_argument('--n_x', type=int, dest='n_x', default=1,
-                   help='Set number of x cells')
-parser.add_argument('--n_y', type=int, dest='n_y', default=1,
-                   help='Set number of y cells')
-parser.add_argument('--n_z', type=int, dest='n_z', default=1,
-                   help='Set number of z cells')
 args = parser.parse_args()
 
-s = Box(origin=eval(args.origin), lengths=eval(args.lengths),
-      n_x=args.n_x, n_y=args.n_y, n_z=args.n_z)
+s = Box(origin=eval(args.origin), lengths=eval(args.lengths),)
 
 if args.output:
 	file_format = 'vtk'
