@@ -24,15 +24,12 @@ class Sphere(Shape):
                       stacks = n_phi)
 
     self.polygons = shp.polygons
-    print '.... self.polygons = ', self.polygons
 
 ################################################################################
 def test():
 
   sph = Sphere(radius=1.0, origin=(0., 0., 0.),
                  n_theta=8, n_phi=4)
-  print '*** dir(sph) = ', dir(sph)
-  print '*** sph.polygons = ', sph.polygons
   sph.save('sph.vtk', file_format='vtk', file_type='ascii')
   sph.show()
 
