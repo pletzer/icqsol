@@ -8,7 +8,7 @@ Test conversion from a shape to a list of polygons
 @author pletzer@psu.edu
 """
 
-shp = Box(origin = [0., 0., 0.], lengths = [1., 1., 1.], n_x=1, n_y=1, n_z=1)
+shp = Box(origin = [0., 0., 0.], lengths = [1., 1., 1.],)
 
 #shp.debug()
 
