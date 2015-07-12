@@ -19,12 +19,6 @@ class Shape(CSG):
   Base class for shapes
   """
 
-  def __init__(self):
-    """
-    Constructor
-    """
-    CSG.__init__(self)
-
   def toVTKPolyData(self):
     """
     Convert the data to a VTK polydata object
@@ -32,23 +26,23 @@ class Shape(CSG):
 
     verts, polys, count = self.toVerticesAndPolygons()
 
-    pts = vtk.vtkPoints()
+    self.points = vtk.vtkPoints()
     numPoints = len(verts)
-    pts.SetNumberOfPoints(numPoints)
+    self.points.SetNumberOfPoints(numPoints)
     for i in range(numPoints):
-      pts.SetPoint(i, verts[i])
+      self.points.SetPoint(i, verts[i])
 
     pdata = vtk.vtkPolyData()
-    pdata.SetPoints(pts)
+    pdata.SetPoints(self.points)
     numCells = len(polys)
     pdata.Allocate(numCells, 1)
-    ptIds = vtk.vtkIdList
+    ptIds = vtk.vtkIdList()
     for i in range(numCells):
       npts = len(polys[i])
-      ptIds.SetNumberIOfIds(npts)
+      ptIds.SetNumberOfIds(npts)
       for j in range(npts):
         ptIds.SetId(j, polys[i][j])
-      pdata.InsertNextCell(vtk.VTK_POLY, ptIds)
+      pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
     # may be we should also return points?
     return pdata
