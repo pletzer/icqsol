@@ -9,7 +9,7 @@ from csg.core import CSG
 class Sphere(Shape):
 
   def __init__(self, radius, origin,
-               n_theta=32, n_phi=16):
+               n_theta=16, n_phi=8):
     """
     Constructor
     @param radius radius

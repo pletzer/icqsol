@@ -83,6 +83,46 @@ class Shape:
 
     # may be we should also return points?
     return pdata
+
+  def load(self, file_name):
+    """
+    Load geometry from file
+    @param file_name file name
+    """
+
+    reader = None
+    # select the reader according to the suffix
+    if file_name.lower().find('.ply') >= 0:
+      reader = vtk.vtkPLYReader()
+    else:
+      reader = vtk.vtkPolyDataReader()
+    reader.SetFileName(file_name)
+    # read
+    reader.Update()
+
+    # vtkPolyData
+    pdata = reader.GetOutput()
+
+    # store the cell connectivity as CSG polygons
+    numCells = pdata.GetNumberOfPolys()
+    cells = pdata.GetPolys()
+    cells.InitTraversal()
+    ptIds = vtk.vtkIdList()
+    polygons = []
+    for i in range(numCells):
+      cells.GetNextCell(ptIds)
+      npts = ptIds.GetNumberOfIds()
+      verts = []
+      for j in range(npts):
+        pointIndex = ptIds.GetId(j)
+        pt = pdata.GetPoint(pointIndex)
+        v = Vertex(Vector(pt[0], pt[1], pt[2]))
+        verts.append(v)
+      polygons.append(verts)
+
+    # instantiate the shape
+    csg = CSG.fromPolygons(polygons)
+    self = Shape(csg=csg)
         
   def save(self, file_name, file_format, file_type):
     """

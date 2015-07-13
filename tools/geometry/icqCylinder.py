@@ -10,7 +10,7 @@ from csg.geom import Vector
 class Cylinder(Shape):
 
   def __init__(self, radius, origin, lengths,
-               n_theta=32):
+               n_theta=16):
     """
     Constructor
     @param radius radius

@@ -25,9 +25,6 @@ parser.add_argument('--input', dest='input', nargs='+', default=[],
 parser.add_argument('--compose', dest='expression',
 	help='An expression containing + (union) - (removal) and * (intersection) operations. Shape variable names are $0, $1, ...')
 
-parser.add_argument('--maxTriangleArea', dest='maxTriangleArea', default=0.1, type=float, 
-  help='Max area of triangles')
-
 parser.add_argument('--ascii', dest='ascii', action='store_true',
   help='Save data in ASCII format (default is binary)')
 
