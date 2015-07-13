@@ -107,10 +107,12 @@ class Shape:
     # may be we should also return points?
     return pdata
 
+  @classmethod
   def load(self, file_name):
     """
     Load geometry from file
-    @param file_name file name
+    @param file_name file name, suffix should be .ply or .vtk
+    @return a Shape object
     """
 
     reader = None
@@ -145,7 +147,7 @@ class Shape:
 
     # instantiate the shape
     csg = CSG.fromPolygons(polygons)
-    self = Shape(csg=csg)
+    return Shape(csg=csg)
         
   def save(self, file_name, file_format, file_type):
     """
@@ -333,19 +335,15 @@ def testConstructiveGeometry():
 
   s1 = Sphere(radius=0.7, origin=(0., 0., 0.))
   s = Sphere(radius=0.2, origin=(0.1, 0.2, 0.3))
-  b = Box(loBound=(0.1, 0.2, 0.3), hiBound=(1.0, 1.0, 1.0))
-  c = Cylinder(radius=0.5, origin=(0.3, 0.4, 0.5), length=0.6)
+  b = Box(origin=(0.1, 0.2, 0.3), lengths=(1.1, 1.2, 1.3))
+  c = Cylinder(radius=0.5, origin=(0.3, 0.4, 0.5), lengths=(1.0, 0.0, 0.0))
 
   geom = c*b - s - s1
 
-  geom.computeBoundarySurface(100, 100, 100)
+  geom.save('geom.ply', file_format='ply', file_type='binary')
 
-  geom.save('geom.ply')
+  geom2 = Shape.load('geom.ply')
 
-  geom2 = Shape()
-  geom2.load('geom.ply')
-
-  print geom2.getBoundarySurface()
   geom2.show()
 
 if __name__ == '__main__': 

@@ -11,8 +11,7 @@ import re
 import numpy
 from numpy import cos, sin, pi
 
-from icqsol.tools.geometry.icqCompositeShape import CompositeShape
-from icqsol.tools.geometry.icqBaseShape import BaseShape
+from icqsol.tools.geometry.icqShape import Shape
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -23,14 +22,13 @@ parser.add_argument('--input', dest='input', nargs='+', default=[],
   help='List of input files (PLY or VTK)')
 
 parser.add_argument('--compose', dest='expression',
-	help='An expression containing + (union) - (removal) and * (intersection) operations. Shape variable names are $0, $1, ...')
+	help='An expression containing + (union) - (removal) and * (intersection) operations. Refer to each shape as $0, $1, etc')
 
 parser.add_argument('--ascii', dest='ascii', action='store_true',
   help='Save data in ASCII format (default is binary)')
 
 parser.add_argument('--output', dest='output', 
-  default='createCompositeShape-{0}.vtk'.format(tid), 
-	help='Output file.')
+  default='createCompositeShape-{0}.vtk'.format(tid), help='Output file.')
 
 args = parser.parse_args()
 
@@ -42,22 +40,24 @@ if len(args.input) == 0:
   print 'ERROR: must specify at least one input file with --input <file1> <file2> ...'
   sys.exit(3)
 
-shp = CompositeShape()
+shp = Shape()
 argShapes = []
 for inputFile in args.input:
-  s = CompositeShape()
+  s = Shape()
   s.load(inputFile)
   argShapes.append(s)
 
-shp.compose(args.expression, argShapes)
-shp.computeSurfaceMeshes(args.maxTriangleArea)
+expr = args.expression
+for i in range(len(argShapes)):
+  expr = re.sub(r'\${}'.format(i), 'argShapes[{}]'.format(i), expr)
+compositeShape = eval(expr)
 
 if args.output:
   fileFormat = 'vtk'
   fileType = 'binary'
   if args.ascii:
     fileType = 'ascii'
-  if args.output.lower().find('.ply') > 0:
+  if args.output.lower().find('.ply') >= 0:
     fileFormat = 'ply'
-  shp.save(args.output, fileFormat=fileFormat, fileType=fileType)
+  compositeShape.save(args.output, file_format=fileFormat, file_type=fileType)
 
