@@ -32,6 +32,29 @@ class Shape:
   def fromPolygons(self, polys):
     return Shape(csg=CSG.fromPolygons(polys))
 
+  def rotate(self, axis=(1., 0., 0.), angleDeg=0.0):
+    """
+    Rotate along axis
+    @param axis rotation axis
+    @param angleDeg angle in degrees
+    @return new Shape
+    """
+    res = Shape()
+    res.csg = self.csg.clone()
+    res.csg.rotate(axis, angelDeg)
+    return res
+
+  def translate(self, disp=(0., 0., 0.)):
+    """
+    Translate
+    @param disp displacement
+    @return new Shape
+    """
+    res = Shape()
+    res.csg = self.csg.clone()
+    res.csg.translate(disp)
+    return res
+
   def __add__(self, other):
     """
     Union
