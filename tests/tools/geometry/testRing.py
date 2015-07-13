@@ -12,4 +12,4 @@ c1 = Cylinder(radius=0.4, origin=(0., 0., 0.),
 c2 = Cylinder(radius=0.2, origin=(0., 0., -0.1), 
               lengths=(1.0, 0., 0.))
 geom = c1 - c2
-geom.show() #filename='testRing.png')
+geom.show(filename='testRing.png')

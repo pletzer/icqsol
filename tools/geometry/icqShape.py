@@ -26,6 +26,12 @@ class Shape:
     """
     self.csg = csg
 
+  def toPolygons(self):
+    return  self.csg.toPolygons()
+
+  def fromPolygons(self, polys):
+    return Shape(csg=CSG.fromPolygons(polys))
+
   def __add__(self, other):
     """
     Union
