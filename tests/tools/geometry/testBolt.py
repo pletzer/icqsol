@@ -10,8 +10,8 @@ from icqsol.tools.geometry.icqCone import Cone
 from icqsol.tools.geometry.icqCylinder import Cylinder
 from icqsol.tools.geometry.icqBox import Box
 
-head = Cone(radius=0.7, origin = (0., 0., 3.7), length = 1.0)
-shaft = Cylinder(radius=0.5, origin=(0., 0., 2.0), length = 4.0)
+head = Cone(radius=0.7, origin = (0., 0., 3.7), lengths = (0., 0., 1.0))
+shaft = Cylinder(radius=0.5, origin=(0., 0., 2.0), lengths = (0., 0., 4.0))
 notch1 = Box(origin=(-1., -0.1, 4.4), lengths=(2., 0.2, 0.6))
 notch2 = Box(origin=(-0.1, -1., 4.4), lengths=(0.2, 2., 0.6))
 
