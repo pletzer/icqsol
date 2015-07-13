@@ -20,7 +20,7 @@ class  Box(Shape):
         shp = CSG.cube(center = center, 
                       radius = radius)
 
-        self.polygons = shp.polygons
+        Shape.__init__(self, csg=shp)
 
 ################################################################################
 def  test():

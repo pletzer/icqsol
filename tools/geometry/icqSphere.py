@@ -23,7 +23,7 @@ class Sphere(Shape):
                       slices = n_theta,
                       stacks = n_phi)
 
-    self.polygons = shp.polygons
+    Shape.__init__(self, csg=shp)
 
 ################################################################################
 def test():

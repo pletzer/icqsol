@@ -28,7 +28,7 @@ class  Cone(Shape):
                        radius = radius,
                        slices = n_theta)
 
-        self.polygons = shp.polygons
+        Shape.__init__(self, csg=shp)
 
 ################################################################################
 def  test():

@@ -13,18 +13,49 @@ import numpy
 from csg.geom import Vector, Vertex, Polygon
 from csg.core import CSG
 
-class Shape(CSG):
+class Shape:
 
   """
   Base class for shapes
   """
+
+  def __init__(self, csg=None):
+    """
+    Constructor
+    @param csg instance of csg.core.CSG
+    """
+    self.csg = csg
+
+  def __add__(self, other):
+    """
+    Union
+    @param other Shape instance
+    @return composite shape
+    """
+    return Shape(self.csg + other.csg)
+
+  def __sub__(self, other):
+    """
+    Removal 
+    @param other Shape instance
+    @return composite shape
+    """
+    return Shape(self.csg - other.csg)
+
+  def __mul__(self, other):
+    """
+    Intersection
+    @param other Shape instance
+    @return composite shape
+    """
+    return Shape(self.csg * other.csg)
 
   def toVTKPolyData(self):
     """
     Convert the data to a VTK polydata object
     """
 
-    verts, polys, count = self.toVerticesAndPolygons()
+    verts, polys, count = self.csg.toVerticesAndPolygons()
 
     self.points = vtk.vtkPoints()
     numPoints = len(verts)
@@ -80,7 +111,7 @@ class Shape(CSG):
     Debug output of this object
     """
 
-    points, polys, count = self.toVerticesAndPolygons()
+    points, polys, count = self.csg.toVerticesAndPolygons()
 
     numPoints = len(points)
     numCells = len(polys)
