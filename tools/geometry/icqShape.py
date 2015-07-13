@@ -41,7 +41,7 @@ class Shape:
     """
     res = Shape()
     res.csg = self.csg.clone()
-    res.csg.rotate(axis, angelDeg)
+    res.csg.rotate(axis, angleDeg)
     return res
 
   def translate(self, disp=(0., 0., 0.)):
