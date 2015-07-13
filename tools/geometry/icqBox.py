@@ -18,7 +18,7 @@ class  Box(Shape):
         center = [(origin[i] + lengths[i])/2.0 for i in range(len(origin))]
         radius = [le/2. for le in lengths]
         shp = CSG.cube(center = center, 
-                      radius = radius)
+                       radius = radius)
 
         Shape.__init__(self, csg=shp)
 

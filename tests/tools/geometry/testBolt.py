@@ -10,13 +10,12 @@ from icqsol.tools.geometry.icqCone import Cone
 from icqsol.tools.geometry.icqCylinder import Cylinder
 from icqsol.tools.geometry.icqBox import Box
 
-head = Cone(radius=0.7, origin = (0., 0., 3.7), lengths = (0., 0., 1.0))
-shaft = Cylinder(radius=0.5, origin=(0., 0., 2.0), lengths = (0., 0., 4.0))
-notch1 = Box(origin=(-1., -0.1, 4.4), lengths=(2., 0.2, 0.6))
-notch2 = Box(origin=(-0.1, -1., 4.4), lengths=(0.2, 2., 0.6))
+shaft = Cylinder(origin=[0., 0., 0.], lengths=[1., 0., 0.], radius=0.1, n_theta=32)
+head = Cone(origin=[-0.06, 0., 0.], lengths=[0.14, 0., 0.], radius=0.25)
+notch1 = Box(origin=[-0.12, -0.015, -0.25], lengths=[0.03, 0.03, 0.25])
+notch2 = notch1.rotate(axis=(1., 0., 0.), angleDeg=90.0)
 
 geom = head + shaft - notch1 - notch2
 
-geom.rotate(axis=(0., 0., 1.), angleDeg=45.0)
-
+geom.save('testBolt.vtk', file_format='vtk', file_type='ascii')
 geom.show(filename='testBolt.png')
