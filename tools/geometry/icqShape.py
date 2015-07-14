@@ -61,8 +61,6 @@ class Shape:
     @param other Shape instance
     @return composite shape
     """
-    print '*** self.csg = ', self.csg
-    print '*** other.csg = ', other.csg
     csg = self.csg + other.csg
     return Shape(csg=csg)
 

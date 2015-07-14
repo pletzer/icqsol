@@ -43,8 +43,7 @@ if len(args.input) == 0:
 shp = Shape()
 argShapes = []
 for inputFile in args.input:
-  s = Shape()
-  s.load(inputFile)
+  s = Shape.load(inputFile)
   argShapes.append(s)
 
 expr = args.expression
