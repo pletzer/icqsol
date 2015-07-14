@@ -9,8 +9,7 @@ from csg.geom import Vector
 
 class  Cone(Shape):
 
-    def  __init__(self,  radius,  origin,  lengths,
-                        n_theta=16):
+    def  __init__(self, radius, origin, lengths, n_theta=16):
         """
         Constructor
         @param  radius  radius

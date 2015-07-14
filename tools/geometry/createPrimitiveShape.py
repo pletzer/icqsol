@@ -11,8 +11,10 @@ import re
 import numpy
 from numpy import cos, sin, pi
 
-from icqsol.tools.geometry.icqPrimitiveShape import Box, Cone, Cylinder, Sphere
-
+from icqsol.tools.geometry.icqBox import Box
+from icqsol.tools.geometry.icqCone import Cone
+from icqsol.tools.geometry.icqCylinder import Cylinder
+from icqsol.tools.geometry.icqSphere import Sphere
 
 options = {
 	'sphere': {
@@ -21,17 +23,17 @@ options = {
   },
   'cylinder': {
     'radius': 1.0,
-    'origin': numpy.array([0.,0., 0.]),
-    'length': 1.0,
+    'origin': numpy.array([0.0, 0.0, 0.0]),
+    'lengths': numpy.array([1.0, 0.0, 0.0]),
   },
   'cone': {
-    'origin': numpy.array([0.,0., 0.]),
+    'origin': numpy.array([0.0, 0.0, 0.0]),
     'radius': 1.0,
-    'length': 1.0,
+    'lengths': numpy.array([1.0, 0.0, 0.0]),
   },
   'box': {
-    'loBound': numpy.array([0., 0., 0.]),
-    'hiBound': numpy.array([1., 1., 1.]),
+    'origin': numpy.array([0.0, 0.0, 0.0]),
+    'lengths': numpy.array([1.0, 1.0, 1.0]),
   }, 
 }
 
@@ -39,9 +41,6 @@ options = {
 tid = re.sub(r'\.', '', str(time.time()))
 
 parser = argparse.ArgumentParser(description='Create primitive shape.')
-
-parser.add_argument('--maxArea', dest='maxArea', type=float, default=0.01,
-  help='Max cell area estimate for surface discretization')
 
 parser.add_argument('--type', dest='type',
 	help='Type, currently either "sphere", "cylinder", "cone", or "box"')
@@ -89,24 +88,21 @@ if args.type == 'sphere':
 elif args.type == 'cylinder':
   radius = optDic['radius']
   origin = optDic['origin']
-  length = optDic['length']
+  lengths = optDic['lengths']
   # the cylindrical side followed by the two end disks
-  # u x v normal should point out
-  shp = Cylinder( length, radius, origin )
+  shp = Cylinder(origin=origin, radius=radius, lengths=lengths)
 
 elif args.type == 'cone':
   radius = optDic['radius']
   origin = optDic['origin']
-  length = optDic['length']
-  # origin is the focal point of the cone
-  # cone expands in the z direction
-  # surface of the cone followed by the end disk
-  shp = Cone( length, radius, origin )
+  lengths = optDic['lengths']
+  # origin is axis location where radius is max
+  shp = Cone(origin=origin, radius=radius, lengths=lengths)
 
 elif args.type == 'box':
-  loBound = numpy.array(optDic['loBound'])
-  hiBound = numpy.array(optDic['hiBound'])
-  shp = Box( loBound, hiBound )
+  origin = numpy.array(optDic['origin'])
+  lengths = numpy.array(optDic['lengths'])
+  shp = Box(origin=origin, lengths=lengths)
 
 else:
   print 'ERROR: unknown shape'
@@ -117,8 +113,6 @@ if args.list:
   for optName, optVal in options[args.type].items():
     print '{:>10} --> {:>20}'.format(optName, optVal)
 
-shp.computeSurfaceMeshes(args.maxArea)
-
 if args.output:
   fileFormat = 'vtk'
   fileType = 'binary'
@@ -126,5 +120,5 @@ if args.output:
     fileType = 'ascii'
   if args.output.lower().find('.ply') > 0:
     fileFormat = 'ply'
-  shp.save(args.output, fileFormat=fileFormat, fileType=fileType)
+  shp.save(args.output, file_format=fileFormat, file_type=fileType)
 

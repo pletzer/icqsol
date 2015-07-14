@@ -67,17 +67,17 @@ add_test(NAME testPrimitiveCylinder
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
          --output testPrimitiveCylinder.ply 
          --type "cylinder"  
-         --options "radius=0.5" "origin=(0.5, 0.2, 0.3)" "length=0.35")
+         --options "radius=0.5" "origin=(0.5, 0.2, 0.3)" "lengths=(0.35, 0., 0.)")
 add_test(NAME testPrimitiveCone
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
          --output testPrimitiveCone.vtk 
          --type "cone" --ascii 
-         --options "radius=0.5" "origin=(0.5, 0.2, 0.3)" "length=0.35")
+         --options "radius=0.5" "origin=(0.5, 0.2, 0.3)" "lengths=(0.35, 0.0, 0.0)")
 add_test(NAME testPrimitiveBox
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
          --output testPrimitiveBox.vtk 
          --type "box" --ascii 
-         --options "loBound=(0.5, 0.2, 0.3)" "hiBound=(0.7, 0.8, 0.9)")
+         --options "origin=(0.5, 0.2, 0.3)" "lengths=(0.7, 0.8, 0.9)")
 add_test(NAME testCompositeUnion
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createCompositeShape.py" 
          --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply

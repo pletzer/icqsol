@@ -61,7 +61,10 @@ class Shape:
     @param other Shape instance
     @return composite shape
     """
-    return Shape(self.csg + other.csg)
+    print '*** self.csg = ', self.csg
+    print '*** other.csg = ', other.csg
+    csg = self.csg + other.csg
+    return Shape(csg=csg)
 
   def __sub__(self, other):
     """
