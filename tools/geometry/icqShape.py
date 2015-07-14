@@ -144,7 +144,7 @@ class Shape:
         pt = pdata.GetPoint(pointIndex)
         v = Vertex(Vector(pt[0], pt[1], pt[2]))
         verts.append(v)
-      polygons.append(verts)
+      polygons.append(Polygon(verts))
 
     # instantiate the shape
     csg = CSG.fromPolygons(polygons)
@@ -328,6 +328,15 @@ class Shape:
 
 ###############################################################################
 
+def testSaveLoad():
+  from icqSphere import Sphere
+  from icqBox import Box
+  s = Sphere(radius=0.7, origin=(0., 0., 0.), n_theta=8, n_phi=4)
+  s.save(file_name='t.vtk', file_format='vtk', file_type='ascii')
+  s2 = Shape.load('t.vtk')
+  s3 = Box(origin=(0.1, 0.2, 0.3), lengths=(1.1, 1.2, 1.3))
+  s4 = s2 + s3
+
 def testConstructiveGeometry():
 
   from icqSphere import Sphere
@@ -335,11 +344,11 @@ def testConstructiveGeometry():
   from icqCylinder import Cylinder
 
   s1 = Sphere(radius=0.7, origin=(0., 0., 0.))
-  s = Sphere(radius=0.2, origin=(0.1, 0.2, 0.3))
+  s2 = Sphere(radius=0.2, origin=(0.1, 0.2, 0.3))
   b = Box(origin=(0.1, 0.2, 0.3), lengths=(1.1, 1.2, 1.3))
   c = Cylinder(radius=0.5, origin=(0.3, 0.4, 0.5), lengths=(1.0, 0.0, 0.0))
 
-  geom = c*b - s - s1
+  geom = c*b - s2 - s1
 
   geom.save('geom.ply', file_format='ply', file_type='binary')
 
@@ -348,7 +357,8 @@ def testConstructiveGeometry():
   geom2.show()
 
 if __name__ == '__main__': 
-  testConstructiveGeometry()
+  testSaveLoad()
+  #testConstructiveGeometry()
 
 
 
