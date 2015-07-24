@@ -102,11 +102,10 @@ class Shape:
         for i in range(numCells):
             npts = len(polys[i])
             ptIds.SetNumberOfIds(npts)
-        for j in range(npts):
-            ptIds.SetId(j, polys[i][j])
+            for j in range(npts):
+                ptIds.SetId(j, polys[i][j])
             pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
-        # may be we should also return points?
         return pdata
 
     @classmethod
@@ -368,4 +367,4 @@ def testConstructiveGeometry():
 
 if __name__ == '__main__':
     testSaveLoad()
-    #testConstructiveGeometry()
+    testConstructiveGeometry()
