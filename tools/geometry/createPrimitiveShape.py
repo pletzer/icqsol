@@ -33,7 +33,7 @@ options = {
     'box': {
         'origin': numpy.array([0.0, 0.0, 0.0]),
         'lengths': numpy.array([1.0, 1.0, 1.0]),
-  }, 
+    },
 }
 
 # time stamp
@@ -41,24 +41,27 @@ tid = re.sub(r'\.', '', str(time.time()))
 
 parser = argparse.ArgumentParser(description='Create primitive shape.')
 
-parser.add_argument('--type', dest='type', \
-  help='Type, currently either "sphere", "cylinder", "cone", or "box"')
+parser.add_argument(
+    '--type', dest='type',
+    help='Type, currently either "sphere", "cylinder", "cone", or "box"')
 
-parser.add_argument('--options', dest='options', nargs='*', default=[], \
-  help='Options to be passed to the shape constructor.')
+parser.add_argument('--options', dest='options', nargs='*', default=[],
+                    help='Options to be passed to the shape constructor.')
 
-parser.add_argument('--list', dest='list', action='store_true', \
-  help='List of options to be passed to the shape constructor of type shape.')
+parser.add_argument(
+    '--list', dest='list', action='store_true',
+    help='List of options to be passed to the shape constructor.')
 
-parser.add_argument('--check', dest='check', action='store_true', \
-  help='Check validity of supplied options, by default errors will ignored.')
+parser.add_argument(
+    '--check', dest='check', action='store_true',
+    help='Check validity of supplied options, by default errors will ignored.')
 
-parser.add_argument('--ascii', dest='ascii', action='store_true', \
-  help='Save data in ASCII format (default is binary)')
+parser.add_argument('--ascii', dest='ascii', action='store_true',
+                    help='Save data in ASCII format (default is binary)')
 
-parser.add_argument('--output', dest='output', \
-  default='createPrimitiveShape-{0}.vtk'.format(tid), \
-  help='Output file.')
+parser.add_argument('--output', dest='output',
+                    default='createPrimitiveShape-{0}.vtk'.format(tid),
+                    help='Output file.')
 
 args = parser.parse_args()
 
