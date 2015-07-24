@@ -41,23 +41,23 @@ tid = re.sub(r'\.', '', str(time.time()))
 
 parser = argparse.ArgumentParser(description='Create primitive shape.')
 
-parser.add_argument('--type', dest='type',
+parser.add_argument('--type', dest='type', \
   help='Type, currently either "sphere", "cylinder", "cone", or "box"')
 
-parser.add_argument('--options', dest='options', nargs='*', default=[], 
+parser.add_argument('--options', dest='options', nargs='*', default=[], \
   help='Options to be passed to the shape constructor.')
 
-parser.add_argument('--list', dest='list', action='store_true',
+parser.add_argument('--list', dest='list', action='store_true', \
   help='List of options to be passed to the shape constructor of type shape.')
 
-parser.add_argument('--check', dest='check', action='store_true',
+parser.add_argument('--check', dest='check', action='store_true', \
   help='Check validity of supplied options, by default errors will ignored.')
 
-parser.add_argument('--ascii', dest='ascii', action='store_true',
+parser.add_argument('--ascii', dest='ascii', action='store_true', \
   help='Save data in ASCII format (default is binary)')
 
-parser.add_argument('--output', dest='output', 
-  default='createPrimitiveShape-{0}.vtk'.format(tid), 
+parser.add_argument('--output', dest='output', \
+  default='createPrimitiveShape-{0}.vtk'.format(tid), \
   help='Output file.')
 
 args = parser.parse_args()
@@ -82,7 +82,7 @@ optDic = options[args.type]
 if args.type == 'sphere':
     radius = optDic['radius']
     origin = optDic['origin']
-    shp = Sphere( radius, origin )
+    shp = Sphere(radius, origin)
 
 elif args.type == 'cylinder':
     radius = optDic['radius']
@@ -120,4 +120,3 @@ if args.output:
     if args.output.lower().find('.ply') > 0:
         fileFormat = 'ply'
     shp.save(args.output, file_format=fileFormat, file_type=fileType)
-
