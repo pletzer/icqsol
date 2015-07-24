@@ -255,7 +255,7 @@ class Shape:
         center = 0.5*(lo + hi)
         camera.SetPosition(center + hi - lo)
         camera.Zoom(1.0)
-        #camera.ParallelProjectionOn()
+
         ren.SetActiveCamera(camera)
 
         # mapper
