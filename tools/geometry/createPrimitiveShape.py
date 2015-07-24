@@ -9,7 +9,6 @@ import time
 import sys
 import re
 import numpy
-from numpy import cos, sin, pi
 
 from icqsol.tools.geometry.icqBox import Box
 from icqsol.tools.geometry.icqCone import Cone
@@ -19,7 +18,7 @@ from icqsol.tools.geometry.icqSphere import Sphere
 options = {
     'sphere': {
         'radius': 1.0,
-        'origin': numpy.array([0.,0., 0.]),
+        'origin': numpy.array([0., 0., 0.]),
     },
     'cylinder': {
         'radius': 1.0,
