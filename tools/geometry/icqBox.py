@@ -13,8 +13,8 @@ class Box(Shape):
         @param  origin/low  end  of  the  box
         @param  lengths  lengths  in  x,  y,  and  z
         """
-        center = [(origin[i] + lengths[i])/2.0 for i in range(len(origin))]
-        radius = [le/2. for le in lengths]
+        center = [origin[i] + 0.5*lengths[i] for i in range(len(origin))]
+        radius = [0.5*le for le in lengths]
         shp = CSG.cube(center=center, radius=radius)
 
         Shape.__init__(self, csg=shp)

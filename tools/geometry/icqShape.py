@@ -10,7 +10,7 @@
 # extensions
 import vtk
 import numpy
-from csg.geom import Vector, Vertex, Polygon
+from csg.geom import Vector, Vertex, Polygon, Node
 from csg.core import CSG
 
 
@@ -32,6 +32,18 @@ class Shape:
 
     def fromPolygons(self, polys):
         return Shape(csg=CSG.fromPolygons(polys))
+
+    def getBoundarySurfaceInside(self, other):
+        """
+        Return the portion of the surface that is inside another shape
+        @param other other shape
+        @return shape
+        """
+        a = Node(self.csg.clone().polygons)
+        b = Node(other.csg.clone().polygons)
+        b.invert()
+        a.clipTo(b)
+        return Shape(CSG.fromPolygons(a.allPolygons()))
 
     def rotate(self, axis=(1., 0., 0.), angleDeg=0.0):
         """
@@ -62,8 +74,7 @@ class Shape:
         @param other Shape instance
         @return composite shape
         """
-        csg = self.csg + other.csg
-        return Shape(csg=csg)
+        return Shape(self.csg + other.csg)
 
     def __sub__(self, other):
         """
