@@ -29,12 +29,12 @@ parser.add_argument('--ascii', dest='ascii', action='store_true',
 
 parser.add_argument('--output', dest='output',
                     default='createSurfaceFieldFromExpression-{0}.vtk'.format(tid),
-                    help='Output file.')
+                    help='Output file, the suffix (vtk or ply) determines the format.')
 
 args = parser.parse_args() 
 
 if not args.expression:
-    print 'ERROR: must specify --compose <expression>'
+    print 'ERROR: must specify --expression <expression>'
     sys.exit(2)
 
 if not args.input:

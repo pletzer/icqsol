@@ -10,7 +10,7 @@
 # extensions
 import vtk
 import numpy
-from csg.geom import Vector, Vertex, Polygon, Node
+from csg.geom import Vector, Vertex, Polygon, BSPNode
 from csg.core import CSG
 
 
