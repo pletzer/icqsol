@@ -149,13 +149,13 @@ class Shape:
         for i in range(numCells):
             cells.GetNextCell(ptIds)
             npts = ptIds.GetNumberOfIds()
-        verts = []
-        for j in range(npts):
-            pointIndex = ptIds.GetId(j)
-            pt = pdata.GetPoint(pointIndex)
-            v = Vertex(Vector(pt[0], pt[1], pt[2]))
-            verts.append(v)
-        polygons.append(Polygon(verts))
+            verts = []
+            for j in range(npts):
+                pointIndex = ptIds.GetId(j)
+                pt = pdata.GetPoint(pointIndex)
+                v = Vertex(Vector(pt[0], pt[1], pt[2]))
+                verts.append(v)
+            polygons.append(Polygon(verts))
 
         # instantiate the shape
         csg = CSG.fromPolygons(polygons)

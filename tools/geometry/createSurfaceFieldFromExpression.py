@@ -60,7 +60,7 @@ if args.output:
         writer = vtk.vtkPLYWriter()
     writer.SetFileName(args.output)
     if args.ascii:
-        writer.SetfileTypeToASCII()
+        writer.SetFileTypeToASCII()
     else:
         writer.SetFileTypeToBinary()       
     if vtk.VTK_MAJOR_VERSION >= 6:
