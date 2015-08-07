@@ -39,8 +39,8 @@ class Shape:
         @param other other shape
         @return shape
         """
-        a = Node(self.csg.clone().polygons)
-        b = Node(other.csg.clone().polygons)
+        a = BSPNode(self.csg.clone().polygons)
+        b = BSPNode(other.csg.clone().polygons)
         b.invert()
         a.clipTo(b)
         return Shape(CSG.fromPolygons(a.allPolygons()))

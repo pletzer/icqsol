@@ -29,7 +29,7 @@ parser.add_argument('--ascii', dest='ascii', action='store_true',
 
 parser.add_argument('--output', dest='output',
                     default='createSurfaceFieldFromExpression-{0}.vtk'.format(tid),
-                    help='Output file, the suffix (vtk or ply) determines the format.')
+                    help='VTK Output file.')
 
 args = parser.parse_args() 
 
@@ -56,8 +56,6 @@ pdata.GetPointData().SetScalars(data)
 
 if args.output:
     writer = vtk.vtkPolyDataWriter()
-    if args.output.lower().find('.ply') >= 0:
-        writer = vtk.vtkPLYWriter()
     writer.SetFileName(args.output)
     if args.ascii:
         writer.SetFileTypeToASCII()
