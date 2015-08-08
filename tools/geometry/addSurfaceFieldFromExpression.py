@@ -9,6 +9,7 @@ import time
 import sys
 import re
 from math import exp, log, sin, cos, pi, tan, acos, asin, atan2, atan, pi
+from numpy import linspace
 
 import vtk
 from icqsol.tools.geometry.icqShape import Shape
@@ -23,6 +24,9 @@ parser.add_argument('--input', dest='input', default='',
 
 parser.add_argument('--expression', dest='expression',
                     help='Expression of the coordinates x, y, and z')
+
+parser.add_argument('--times', dest='times', nargs='*', default=['0.0'],
+                    help='Comma separated list of time values')
 
 parser.add_argument('--ascii', dest='ascii', action='store_true',
                     help='Save data in ASCII format (default is binary)')
@@ -45,13 +49,16 @@ shp = Shape.load(args.input)
 pdata = shp.toVTKPolyData()
 points = pdata.GetPoints()
 numPoints = points.GetNumberOfPoints()
-data = vtk.vtkFloatArray()
-data.SetNumberOfComponents(1)
+data = vtk.vtkDoubleArray()
+numTimes = len(args.times)
+data.SetNumberOfComponents(numTimes)
 data.SetNumberOfTuples(numPoints)
 for i in range(numPoints):
     x, y, z = points.GetPoint(i)
-    fieldValue = eval(args.expression)
-    data.SetTuple1(i, fieldValue)
+    for j in range(numTimes):
+        t = float(args.times[j])
+        fieldValue = eval(args.expression)
+        data.SetComponent(i, j, fieldValue)
 pdata.GetPointData().SetScalars(data)
 
 if args.output:
