@@ -104,10 +104,10 @@ add_test(NAME testRotate
          --output testRotatedBox.vtk)
 add_test(NAME testAddSurfaceFieldFromExpression
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/addSurfaceFieldFromExpression.py"
-         --expression "1 + x**2*sin(-log(0.1+abs(x*y)*pi))"
+         --expression "1 + x**2*sin(-log(0.1+abs(x*y)*pi))*sin(2*pi*t)"
+         --times "linspace(0, 1., 10)"
          --input testPrimitiveSphere.vtk
-         --output testPrimitiveSphereWithField.vtk
-         --ascii)
+         --output testPrimitiveSphereWithField.vtk)
 
 
 

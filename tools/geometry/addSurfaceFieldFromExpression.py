@@ -23,9 +23,9 @@ parser.add_argument('--input', dest='input', default='',
                     help='Input files (PLY or VTK)')
 
 parser.add_argument('--expression', dest='expression',
-                    help='Expression of the coordinates x, y, and z')
+                    help='Expression of x, y, z, and t')
 
-parser.add_argument('--times', dest='times', nargs='*', default=['0.0'],
+parser.add_argument('--times', dest='times', default='0.0',
                     help='Comma separated list of time values')
 
 parser.add_argument('--ascii', dest='ascii', action='store_true',
@@ -50,13 +50,14 @@ pdata = shp.toVTKPolyData()
 points = pdata.GetPoints()
 numPoints = points.GetNumberOfPoints()
 data = vtk.vtkDoubleArray()
-numTimes = len(args.times)
+times = eval(args.times)
+numTimes = len(times)
 data.SetNumberOfComponents(numTimes)
 data.SetNumberOfTuples(numPoints)
 for i in range(numPoints):
     x, y, z = points.GetPoint(i)
     for j in range(numTimes):
-        t = float(args.times[j])
+        t = times[j]
         fieldValue = eval(args.expression)
         data.SetComponent(i, j, fieldValue)
 pdata.GetPointData().SetScalars(data)
