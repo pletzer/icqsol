@@ -62,6 +62,11 @@ add_test(NAME testPrimitiveSphere
          --output testPrimitiveSphere.vtk 
          --type "sphere" --ascii 
          --options "radius=0.5" "origin=(0.5, 0.2, 0.3)")
+add_test(NAME testPrimitiveSphere2x4 
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
+         --output testPrimitiveSphere2x4.vtk 
+         --type "sphere" --ascii 
+         --options "radius=1.0" "origin=(0., 0., 0.)" "n_theta=2" "n_phi=4")
 add_test(NAME testPrimitiveCylinder
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
          --output testPrimitiveCylinder.ply 
@@ -107,7 +112,8 @@ add_test(NAME testAddSurfaceFieldFromExpression
          --expression "1 + x**2*sin(-log(0.1+abs(x*y)*pi))*sin(2*pi*t)"
          --times "linspace(0, 1., 10)"
          --input testPrimitiveSphere.vtk
-         --output testPrimitiveSphereWithField.vtk)
+         --output testPrimitiveSphereWithField.vtk
+         --ascii)
 
 
 

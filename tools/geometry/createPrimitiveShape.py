@@ -19,16 +19,20 @@ options = {
     'sphere': {
         'radius': 1.0,
         'origin': numpy.array([0., 0., 0.]),
+        'n_theta': 8,
+        'n_phi': 16,
     },
     'cylinder': {
         'radius': 1.0,
         'origin': numpy.array([0.0, 0.0, 0.0]),
         'lengths': numpy.array([1.0, 0.0, 0.0]),
+        'n_theta': 16,
     },
     'cone': {
         'origin': numpy.array([0.0, 0.0, 0.0]),
         'radius': 1.0,
         'lengths': numpy.array([1.0, 0.0, 0.0]),
+        'n_theta': 16,
     },
     'box': {
         'origin': numpy.array([0.0, 0.0, 0.0]),
@@ -85,21 +89,28 @@ optDic = options[args.type]
 if args.type == 'sphere':
     radius = optDic['radius']
     origin = optDic['origin']
-    shp = Sphere(radius, origin)
+    n_theta = optDic['n_theta']
+    n_phi = optDic['n_phi']
+    shp = Sphere(radius=radius, origin=origin,
+                 n_theta=n_theta, n_phi=n_phi)
 
 elif args.type == 'cylinder':
     radius = optDic['radius']
     origin = optDic['origin']
     lengths = optDic['lengths']
+    n_theta = optDic['n_theta']
     # the cylindrical side followed by the two end disks
-    shp = Cylinder(origin=origin, radius=radius, lengths=lengths)
+    shp = Cylinder(origin=origin, radius=radius,
+                   lengths=lengths, n_theta=n_theta)
 
 elif args.type == 'cone':
     radius = optDic['radius']
     origin = optDic['origin']
     lengths = optDic['lengths']
+    n_theta = optDic['n_theta']
     # origin is axis location where radius is max
-    shp = Cone(origin=origin, radius=radius, lengths=lengths)
+    shp = Cone(origin=origin, radius=radius,
+               lengths=lengths, n_theta=n_theta)
 
 elif args.type == 'box':
     origin = numpy.array(optDic['origin'])
