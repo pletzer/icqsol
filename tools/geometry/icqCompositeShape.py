@@ -4,22 +4,42 @@ import re
 from icqShape import Shape
 
 
-class CompositeShapeBuilder( Shape ):
+class ShapeComposer( Shape ):
 
     def __init__( self, shape_tuples=None ):
-        """
-        Constructor
-        @param shape_tuples list of tuples (expr_var, shape)
-        """
         self.shape_tuples = shape_tuples
+        self.csg = None
+
+    def __add__( self, other ):
+        """
+        Union
+        @param other Shape instance
+        @return CompositeShape
+        """
+        self.csg = Shape( self.csg + other.csg )
+        return self.csg
+
+    def __sub__( self, other ):
+        """
+        Removal
+        @param other Shape instance
+        @return CompositeShape
+        """
+        self.csg = Shape( self.csg - other.csg )
+        return self.csg
+
+    def __mul__( self, other ):
+        """
+        Intersection
+        @param other Shape instance
+        @return CompositeShape
+        """
+        self.csg = Shape( self.csg * other.csg )
+        return self.csg
 
     def compose( self, expression ):
-        if expression is None or self.shape_tuples is None:
-            return None
         expr = expression
-        for expr_var, shape in self.shape_tuples:
-            # Return the string obtained by replacing the leftmost
-            # non-overlapping occurrences of expr_var in expr by
-            # the replacement shape.
-            expr = re.sub( expr_var, shape, expr )
+        for shape_tuple in self.shape_tuples:
+            expr_var, shape = shape_tuple
+            expr = re.sub( r'%s' % expr_var, shape, expr )
         return eval( expr )
