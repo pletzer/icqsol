@@ -14,7 +14,7 @@ class CompositeShapeBuilder( Shape ):
         self.shape_tuples = shape_tuples
 
     def compose( self, expression ):
-        if expression is None or self.shape_tupels is None:
+        if expression is None or self.shape_tuples is None:
             return None
         expr = expression
         for expr_var, shape in self.shape_tuples:
