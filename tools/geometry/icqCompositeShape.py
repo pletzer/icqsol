@@ -1,45 +1,25 @@
 #!/usr/bin/env python
 
-import re
 from icqShape import Shape
 
 
-class ShapeComposer( Shape ):
+def CompositeShape(shape_tuples=[], expression=''):
+    """
+    @param shape_tuples list of (variable_name, shape) pairs
+    @param expression expression involving +, -, and * operations. The name 
+           of the variables must match that used i
+    """
+    for i in range(len(shape_tuples)):
+        exec(shape_tuples[i][0] + ' = shape_tuples[i][1]')
+    return eval(expression)
 
-    def __init__( self, shape_tuples=None ):
-        self.shape_tuples = shape_tuples
-        self.csg = None
+###############################################################################
 
-    def __add__( self, other ):
-        """
-        Union
-        @param other Shape instance
-        @return CompositeShape
-        """
-        self.csg = Shape( self.csg + other.csg )
-        return self.csg
+def test():
+    from icqSphere import Sphere
+    s1 = Sphere(radius=1, origin=(0., 0., 0.))
+    s2 = Sphere(radius=1.2, origin=(0.8, 0., 0.))
+    s3 = CompositeShape([('s1', s1), ('s2', s2)], 's1 + s2')
+    s3.save('s3.vtk', file_format='vtk', file_type='ascii')
 
-    def __sub__( self, other ):
-        """
-        Removal
-        @param other Shape instance
-        @return CompositeShape
-        """
-        self.csg = Shape( self.csg - other.csg )
-        return self.csg
-
-    def __mul__( self, other ):
-        """
-        Intersection
-        @param other Shape instance
-        @return CompositeShape
-        """
-        self.csg = Shape( self.csg * other.csg )
-        return self.csg
-
-    def compose( self, expression ):
-        expr = expression
-        for shape_tuple in self.shape_tuples:
-            expr_var, shape = shape_tuple
-            expr = re.sub( r'%s' % expr_var, shape, expr )
-        return eval( expr )
+if __name__ == '__main__': test()
