@@ -61,12 +61,12 @@ add_test(NAME testPrimitiveSphere
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
          --output testPrimitiveSphere.vtk 
          --type "sphere" --ascii 
-         --options "radius=0.5" "origin=(0.5, 0.2, 0.3)")
+         --options "radius=1" "origin=(0, 1, 2)")
 add_test(NAME testPrimitiveSphere2x4 
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
-         --output testPrimitiveSphere2x4.vtk 
+         --output testPrimitiveSphere4x4.vtk 
          --type "sphere" --ascii 
-         --options "radius=1.0" "origin=(0., 0., 0.)" "n_theta=2" "n_phi=4")
+         --options "radius=1.0" "origin=(0., 0., 0.)" "n_theta=4" "n_phi=4")
 add_test(NAME testPrimitiveCylinder
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/createPrimitiveShape.py" 
          --output testPrimitiveCylinder.ply 
@@ -109,9 +109,9 @@ add_test(NAME testRotate
          --output testRotatedBox.vtk)
 add_test(NAME testAddSurfaceFieldFromExpression
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/addSurfaceFieldFromExpression.py"
-         --expression "1 + x**2*sin(-log(0.1+abs(x*y)*pi))*sin(2*pi*t)"
-         --times "linspace(0, 1., 10)"
-         --input testPrimitiveSphere.vtk
+         --expression "1 + x**2*sin(-log(0.1+abs(x*y)*pi))*sin(pi*t + 0.3)"
+         --times "linspace(0, 1., 4)"
+         --input testPrimitiveSphere4x4.vtk
          --output testPrimitiveSphereWithField.vtk
          --ascii)
 
