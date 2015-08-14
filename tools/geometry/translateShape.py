@@ -9,7 +9,7 @@ import time
 import sys
 import re
 
-from icqsol.tools.geometry.icqBaseShape import BaseShape
+from icqsol.tools.geometry.icqShape import Shape
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -39,15 +39,14 @@ if not args.input:
     print 'ERROR: must specify one input file with --input <file>'
     sys.exit(3)
 
-shp = BaseShape()
-shp.load(args.input)
+shp = Shape.load(args.input)
 transVec = eval(args.translation)
 shp.translate(transVec)
 if args.output:
-    fileFormat = 'vtk'
-    fileType = 'binary'
+    file_format = 'vtk'
+    file_type = 'binary'
     if args.ascii:
-        fileType = 'ascii'
+        file_type = 'ascii'
     if args.output.lower().find('.ply') >= 0:
-        fileFormat = 'ply'
-    shp.save(args.output, fileFormat=fileFormat, fileType=fileType)
+        file_format = 'ply'
+    shp.save(args.output, file_format=file_format, file_type=file_type)

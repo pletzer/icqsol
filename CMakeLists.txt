@@ -105,7 +105,7 @@ add_test(NAME testTranslate
 add_test(NAME testRotate
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/rotateShape.py" 
          --input testPrimitiveBox.vtk
-         --angle 45.0 --axis "1,0,0" --origin "0.,0.,0."
+         --angle 45.0 --axis "1,0,0"
          --output testRotatedBox.vtk)
 add_test(NAME testAddSurfaceFieldFromExpression
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/geometry/addSurfaceFieldFromExpression.py"

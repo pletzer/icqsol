@@ -9,7 +9,7 @@ import time
 import sys
 import re
 
-from icqsol.tools.geometry.icqBaseShape import BaseShape
+from icqsol.tools.geometry.icqShape import Shape
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -21,9 +21,6 @@ parser.add_argument('--input', dest='input', default='',
 
 parser.add_argument('--angle', dest='angle', type=float, default=0.0,
                     help='Specify rotation angle in degrees')
-
-parser.add_argument('--origin', dest='origin', default="0., 0., 0.",
-                    help='Specify rotation point (3 floating point numbers)')
 
 parser.add_argument('--axis', dest='axis', default="0., 0., 1.",
                     help='Specify rotation axis (3 floating point numbers)')
@@ -42,15 +39,14 @@ if not args.input:
     print 'ERROR: must specify one input file with --input <file>'
     sys.exit(3)
 
-shp = BaseShape()
-origin = eval(args.origin)
+shp = Shape.load(args.input)
 axis = eval(args.axis)
-shp.rotate(origin=origin, angleDeg=args.angle, axis=axis)
+shp.rotate(angleDeg=args.angle, axis=axis)
 if args.output:
-    fileFormat = 'vtk'
-    fileType = 'binary'
+    file_format = 'vtk'
+    file_type = 'binary'
     if args.ascii:
-        fileType = 'ascii'
+        file_type = 'ascii'
     if args.output.lower().find('.ply') >= 0:
-        fileFormat = 'ply'
-    shp.save(args.output, fileFormat=fileFormat, fileType=fileType)
+        file_format = 'ply'
+    shp.save(args.output, file_format=file_format, file_type=file_type)
