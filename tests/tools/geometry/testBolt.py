@@ -15,7 +15,8 @@ head = Cone(origin=[-0.06, 0., 0.],
             lengths=[0.14, 0., 0.], radius=0.25)
 notch1 = Box(origin=[-0.06, -0.015, -0.15],
              lengths=[0.03, 0.03, 0.30])
-notch2 = notch1.rotate(axis=(1., 0., 0.), angleDeg=90.0)
+notch2 = notch1.clone()
+notch2.rotate(axis=(1., 0., 0.), angleDeg=90.0)
 
 geom = head + shaft - notch1 - notch2
 

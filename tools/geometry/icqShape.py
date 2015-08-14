@@ -45,6 +45,13 @@ class Shape:
         a.clipTo(b)
         return Shape(CSG.fromPolygons(a.allPolygons()))
 
+    def clone(self):
+        """
+        Clone shape
+        @return new shape
+        """
+        return Shape(self.csg.clone())
+
     def rotate(self, axis=(1., 0., 0.), angleDeg=0.0):
         """
         Rotate along axis
