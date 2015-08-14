@@ -50,23 +50,15 @@ class Shape:
         Rotate along axis
         @param axis rotation axis
         @param angleDeg angle in degrees
-        @return new Shape
         """
-        res = Shape()
-        res.csg = self.csg.clone()
-        res.csg.rotate(axis, angleDeg)
-        return res
+        self.csg.rotate(axis, angleDeg)
 
     def translate(self, disp=(0., 0., 0.)):
         """
         Translate
         @param disp displacement
-        @return new Shape
         """
-        res = Shape()
-        res.csg = self.csg.clone()
-        res.csg.translate(disp)
-        return res
+        self.csg.translate(disp)
 
     def __add__(self, other):
         """
