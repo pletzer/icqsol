@@ -40,8 +40,15 @@ if not args.input:
     print 'ERROR: must specify input file: --input <file>'
     sys.exit(3)
 
-shp = Shape.load(args.input)
-pdata = shp.toVTKPolyData()
+reader = vtk.vtkPolyDataReader()
+if args.input.lower().find('.ply') >= 0:
+    reader = vtk.vtkPLYReader()
+reader.SetFileName(args.input)
+reader.Update()
+    
+# vtkPolyData
+pdata = reader.GetOutput()
+
 densifyFilter = vtk.vtkDensifyPolyData()
 densifyFilter.SetNumberOfSubdivisions(args.refine)
 if vtk.VTK_MAJOR_VERSION >= 6:
