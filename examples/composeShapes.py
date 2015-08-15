@@ -14,7 +14,7 @@ from icqsol.tools.geometry.icqShape import Shape
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
 
-parser = argparse.ArgumentParser(description='Create composite shape.')
+parser = argparse.ArgumentParser(description='Compose shapes.')
 
 parser.add_argument('--input', dest='input', nargs='+', default=[],
                     help='List of input files (PLY or VTK)')
@@ -39,7 +39,6 @@ if len(args.input) == 0:
     print 'ERROR: must specify input files: --input <file1> <file2> ...'
     sys.exit(3)
 
-shp = Shape()
 argShapes = []
 for inputFile in args.input:
     s = Shape.load(inputFile)

@@ -107,6 +107,12 @@ add_test(NAME testRotate
          --input testPrimitiveBox.vtk
          --angle 45.0 --axis "1,0,0"
          --output testRotatedBox.vtk)
+add_test(NAME testRefine
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/refineShape.py"
+         --input testPrimitiveSphere4x4.vtk
+         --refine 2
+         --output testPrimitiveSphere8x8.vtk
+         --ascii)
 add_test(NAME testAddSurfaceFieldFromExpression
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
          --expression "1 + x**2*sin(-log(0.1+abs(x*y)*pi))*sin(pi*t + 0.3)"

@@ -90,6 +90,35 @@ class Shape:
         @return composite shape
         """
         return Shape(self.csg * other.csg)
+    
+    @classmethod
+    def fromVTKPolyData(self, pdata):
+        """
+        Create a shape from a VTK PolyData object
+        @param pdata vtkPolyData instance
+        @return shape
+        @note field data will get lost
+        """
+        # store the cell connectivity as CSG polygons
+        numCells = pdata.GetNumberOfPolys()
+        cells = pdata.GetPolys()
+        cells.InitTraversal()
+        ptIds = vtk.vtkIdList()
+        polygons = []
+        for i in range(numCells):
+            cells.GetNextCell(ptIds)
+            npts = ptIds.GetNumberOfIds()
+            verts = []
+            for j in range(npts):
+                pointIndex = ptIds.GetId(j)
+                pt = pdata.GetPoint(pointIndex)
+                v = Vertex(Vector(pt[0], pt[1], pt[2]))
+                verts.append(v)
+            polygons.append(Polygon(verts))
+        
+        # instantiate the shape
+        csg = CSG.fromPolygons(polygons)
+        return Shape(csg=csg)
 
     def toVTKPolyData(self):
         """
@@ -138,27 +167,7 @@ class Shape:
 
         # vtkPolyData
         pdata = reader.GetOutput()
-
-        # store the cell connectivity as CSG polygons
-        numCells = pdata.GetNumberOfPolys()
-        cells = pdata.GetPolys()
-        cells.InitTraversal()
-        ptIds = vtk.vtkIdList()
-        polygons = []
-        for i in range(numCells):
-            cells.GetNextCell(ptIds)
-            npts = ptIds.GetNumberOfIds()
-            verts = []
-            for j in range(npts):
-                pointIndex = ptIds.GetId(j)
-                pt = pdata.GetPoint(pointIndex)
-                v = Vertex(Vector(pt[0], pt[1], pt[2]))
-                verts.append(v)
-            polygons.append(Polygon(verts))
-
-        # instantiate the shape
-        csg = CSG.fromPolygons(polygons)
-        return Shape(csg=csg)
+        return self.fromVTKPolyData(pdata)
 
     def save(self, file_name, file_format, file_type):
         """
