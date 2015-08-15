@@ -50,14 +50,19 @@ else:
     densifyFilter.SetInput(pdata)
 densifyFilter.Update()
 
-outShape = Shape.fromVTKPolyData(densifyFilter.GetOutput())
+outPdata = densifyFilter.GetOutput()
 
 if args.output:
-    fileFormat = 'vtk'
-    fileType = 'binary'
-    if args.ascii:
-        fileType = 'ascii'
+    writer = vtk.vtkPolyDataWriter()
     if args.output.lower().find('.ply') >= 0:
-        fileFormat = 'ply'
-    outShape.save(args.output, file_format=fileFormat,
-                file_type=fileType)
+        writer = vtk.vtk.PolyDataWriter()
+    writer.SetFileName(args.output)
+    writer.SetFileTypeToBinary()
+    if args.ascii:
+        writer.SetFileTypeToASCII()
+    if vtk.VTK_MAJOR_VERSION >= 6:
+        writer.SetInputData(outPdata)
+    else:
+        writer.SetInput(outPdata)
+    writer.Write()
+    writer.Update()
