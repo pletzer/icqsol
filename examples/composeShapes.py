@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Combine multiple shape objects
+Combine shape objects to create a composite object
 """
 
 import argparse

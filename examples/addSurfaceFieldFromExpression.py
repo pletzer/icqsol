@@ -22,8 +22,11 @@ parser = argparse.ArgumentParser(description='Apply a surface field to a shape')
 parser.add_argument('--input', dest='input', default='',
                     help='Input files (PLY or VTK)')
 
-parser.add_argument('--expression', dest='expression',
+parser.add_argument('--expression', dest='expression', default='scalar_field',
                     help='Expression of x, y, z, and t')
+
+parser.add_argument('--name', dest='name',
+                    help='Set the name of the field')
 
 parser.add_argument('--times', dest='times', default='0.0',
                     help='Comma separated list of time values')
@@ -45,11 +48,15 @@ if not args.input:
     print 'ERROR: must specify input file: --input <file>'
     sys.exit(3)
 
+# make sure the field name contains no spaces
+args.name = re.sub('\s', '_', args.name)
+
 shp = Shape.load(args.input)
 pdata = shp.toVTKPolyData()
 points = pdata.GetPoints()
 numPoints = points.GetNumberOfPoints()
 data = vtk.vtkDoubleArray()
+data.SetName(args.name)
 times = eval(args.times)
 numTimes = len(times)
 data.SetNumberOfComponents(numTimes)
