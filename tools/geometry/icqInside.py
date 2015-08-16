@@ -127,21 +127,23 @@ class Inside:
                 #  in order to avoid issues with ray hitting exactly a node
                 normal = 100 * self.eps * numpy.random.rand( self.ndims )
                 normal[axis] = pm
-                distance = pls*(self.domainMaxs[axis] - point[axis]) + mns*(point[axis] - self.domainMins[axis])
+                distance = pls*(self.domainMaxs[axis] - \
+                    point[axis]) + mns*(point[axis] - self.domainMins[axis])
                 if distance < minDistance:
                     # expand a little beyond the domain (1.1)
-                    self.direction = normal * (1.1* distance)
+                    self.direction = normal * (1.1 * distance)
                     minDistance = distance
-    
+
     def computeIntersection(self, point, poly):
-        self.b = self.points[poly[0]] - point
+        ip0 = poly[0]
+        self.b = self.points[ip0] - point
         for i in range(self.ndims - 1):
-            self.mat[:, 1 + i] = self.points[poly[0]] - self.points[poly[1 + i]]
+            self.mat[:, 1 + i] = self.points[ip0] - self.points[poly[1 + i]]
         solution = numpy.linalg.solve(self.mat, self.b)
         return solution[0], solution[1:]
 
 
-#################################################################################
+##############################################################################
 
 def test2d():
     points = [numpy.array([0., 0.]),
