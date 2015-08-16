@@ -199,7 +199,7 @@ class Shape:
 
     def debug(self):
         """
-        Debug output of this object
+        Print/Debug output of this object
         """
         points, polys, count = self.csg.toVerticesAndPolygons()
 
