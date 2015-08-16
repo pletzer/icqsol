@@ -9,7 +9,6 @@ import time
 import sys
 import re
 
-from icqsol.tools.geometry.icqShape import Shape
 import vtk
 
 # time stamp
