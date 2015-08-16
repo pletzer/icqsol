@@ -33,7 +33,7 @@ class Inside:
 
         # the optimal direction for shooting the ray
         self.direction = float('inf') * \
-                            numpy.ones((self.ndims,), numpy.float64)
+            numpy.ones((self.ndims,), numpy.float64)
 
         # find the box corners
         self.xmins = +float('inf') * numpy.ones(self.ndims, numpy.float64)
@@ -53,8 +53,8 @@ class Inside:
 
         # quick check, point must be inside box
         outsideBox = reduce(lambda x, y: x or y,
-                      [(point[i] < self.xmins[i] - self.eps) or 
-                       (point[i] > self.xmaxs[i] + self.eps)
+                            [(point[i] < self.xmins[i] - self.eps) or
+                             (point[i] > self.xmaxs[i] + self.eps)
                              for i in range(self.ndims)])
 
         if outsideBox:
@@ -84,39 +84,39 @@ class Inside:
                 rayIntersects = True
                 for i in range(len(xis)):
                     rayIntersects &= (xis[i] > self.eps) and \
-                                (xis[i] < 1 - sums - self.eps)
+                        (xis[i] < 1 - sums - self.eps)
                     sums += xis[i]
                     if rayIntersects:
                         numberOfIntersections += 1
 
         # even number is outside (False), odd number means inside (True)
         return (numberOfIntersections % 2)
-    
+
     def areBoxesOverlapping(self, point, poly):
 
         for i in range(self.ndims):
 
-            xminFace = min( [self.points[j][i] for j in poly] )
-            xmaxFace = max( [self.points[j][i] for j in poly] )
+            xminFace = min([self.points[j][i] for j in poly])
+            xmaxFace = max([self.points[j][i] for j in poly])
 
             p, d = point[i], self.direction[i]
             xminRay = min(p, p + d)
             xmaxRay = max(p, p + d)
 
             if (xmaxRay < xminFace + self.eps) or \
-                (xmaxFace < xminRay + self.eps):
+                    (xmaxFace < xminRay + self.eps):
                     # no overlap
                     return False
         return True
-    
+
     def computeOptimalDirection(self, point):
         """
         Compute the direction of the ray to to the nearest
         domain box face. This will update self.direction
         @param point starting point of the ray
         """
-        # iterate over the faces of the box then find the minimum distance between
-        # the point and the face.
+        # iterate over the faces of the box then find the minimum
+        # distance between the point and the face.
         minDistance = float('inf')
         for pm in (-1, 1):
             pls = (1 + pm)/2.
@@ -124,13 +124,13 @@ class Inside:
             for axis in range(self.ndims):
                 # the normal vector contains very small values in place of
                 # zero elements
-                
+
                 #  in order to avoid issues with ray hitting exactly a node
-                normal = 100 * self.eps * numpy.random.rand( self.ndims )
+                normal = 100 * self.eps * numpy.random.rand(self.ndims)
                 normal[axis] = pm
-                distance = pls*(self.domainMaxs[axis] - \
-                           point[axis]) + mns*(point[axis] - 
-                            self.domainMins[axis])
+                distance = pls*(self.domainMaxs[axis] -
+                                point[axis]) + mns*(point[axis] -
+                                                    self.domainMins[axis])
                 if distance < minDistance:
                     # expand a little beyond the domain (1.1)
                     self.direction = normal * (1.1 * distance)
