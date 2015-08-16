@@ -151,19 +151,19 @@ def test2d():
     inside = Inside(points, polys,
                     domainMins=numpy.array([0., 0.]),
                     domainMaxs=numpy.array([1., 1.]))
-                              
+
     # really outside
-    assert(inside.isInside(numpy.array([-0.1, -0.2])) == False)
-                              
+    assert(not inside.isInside(numpy.array([-0.1, -0.2])))
+
     # inside
-    assert(inside.isInside(numpy.array([+0.1, +0.2])) == True)
-                              
+    assert(inside.isInside(numpy.array([+0.1, +0.2])))
+
     # outside
-    assert(inside.isInside(numpy.array([-0.1, +0.2])) == False)
-    assert(inside.isInside(numpy.array([+0.1, -0.2])) == False)
-                              
+    assert(not inside.isInside(numpy.array([-0.1, +0.2])))
+    assert(not inside.isInside(numpy.array([+0.1, -0.2])))
+
     # on the face
-    assert(inside.isInside(numpy.array([-0.000001, +0.2])) == False)
+    assert(not inside.isInside(numpy.array([-0.000001, +0.2])))
 
 if __name__ == '__main__':
     test2d()
