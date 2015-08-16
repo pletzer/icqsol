@@ -5,6 +5,10 @@ import numpy
 class FiniteElementIntegrals:
 
 	def __init__(self, vertices):
+		"""
+		Constructor
+		@param vertices list of vertices
+		"""
 
 		# distance along each edge of the tettrahedron's vertices
 		rEdge = [numpy.array(vertices[1]) - numpy.array(vertices[0]), 
@@ -32,6 +36,10 @@ class FiniteElementIntegrals:
 		self.grads = numpy.dot(self.dBasisOverDXi, self.invDxMat)
 
 	def integrateBasisBasis(self):
+		"""
+		Compute the basis function times basis function cell integral
+		@return a 4x4, contribution matrix containing the coupling between nodes
+		"""
 		res = numpy.zeros( (4, 4), numpy.float64)
 		for i in range(4):
 			res[i, i] = self.jac / 60.0
@@ -40,6 +48,11 @@ class FiniteElementIntegrals:
 		return res
 
 	def integrateGradientDotGradient(self):
+		"""
+		Compute the cell integral of the gradient of the basis function 
+		dotted with the gradient of another gradient basis function
+		@return a 4x4, contribution matrix containing the coupling between nodes
+		"""
 		integral = 1. / 6.
 		res = numpy.zeros( (4, 4), numpy.float64 )
 		# iterate over basis functions
@@ -59,8 +72,8 @@ def test():
 	v3 = (0., 0., 1.)
 	verts = (v0, v1, v2, v3)
 	fei = FiniteElementIntegrals(verts)
-	print 'basis, basis = ', fei.integrateBasisBasis()
-	print 'grad dot grad = ', fei. integrateGradientDotGradient()
+	print 'basis basis = ', fei.integrateBasisBasis()
+	print 'grad dot grad = ', fei.integrateGradientDotGradient()
 
 if __name__ == '__main__':
 	test()
