@@ -10,22 +10,24 @@ import numpy
 
 class Inside:
 
-    def __init__(self, points, polys, domainMins, domainMaxs):
+    def __init__(self, shape):
         """
         Constructor
-        @param points list of points
+        @param shape instance of Shape
         @param polys connectivty
         """
-
-        self.eps = 1.23456789e-14
-
-        self.polys = polys
-        self.points = points
-        self.domainMins = domainMins
-        self.domainMaxs = domainMaxs
-
+        points, polys, count = shape.csg.toVerticesAndPolygons()
         # must have at least one point
         self.ndims = len(points[0])
+
+        # find the box corners
+        self.xmins = numpy.array([min([p[i] for p in points]) for i in range(self.ndims)])
+        self.xmaxs = numpy.array([max([p[i] for p in points]) for i in range(self.ndims)])
+
+        self.eps = 1.23456789e-10 #14
+
+        self.polys = polys
+        self.points = [numpy.array(p) for p in points]
 
         # matrix and right and side vector
         self.mat = numpy.zeros((self.ndims, self.ndims), numpy.float64)
@@ -34,15 +36,6 @@ class Inside:
         # the optimal direction for shooting the ray
         self.direction = float('inf') * \
             numpy.ones((self.ndims,), numpy.float64)
-
-        # find the box corners
-        self.xmins = +float('inf') * numpy.ones(self.ndims, numpy.float64)
-        self.xmaxs = -float('inf') * numpy.ones(self.ndims, numpy.float64)
-        for i in range(self.ndims):
-            xmin = min([p[i] for p in points])
-            xmax = max([p[i] for p in points])
-            self.xmins[i] = min(self.xmins[i], xmin)
-            self.xmaxs[i] = max(self.xmaxs[i], xmax)
 
     def isInside(self, point):
         """
@@ -72,22 +65,34 @@ class Inside:
         numberOfIntersections = 0
         for poly in self.polys:
 
+            triangle = 1
+            numPoints = len(poly)
+            if numPoints == 4:
+                triangle = 0
             # compute the overlap betwen the ray box and the face box
             if not self.areBoxesOverlapping(point, poly):
                 # intersection is impossible, don't bother...
                 continue
 
-            lmbda, xis = self.computeIntersection(point, poly)
-            if lmbda > 0.0 + self.eps:
+            lmbda, xis = 0.0, []
+            if triangle: 
+                lmbda, xis = self.computeIntersectionTriangle(point, poly)
+            else:
+                lmbda, xis = self.computeIntersectionQuad(point, poly)
+
+            if lmbda > -self.eps:
+
                 # the direction is ok
+
+                numPoints = len(poly)
                 sums = 0.0
                 rayIntersects = True
                 for i in range(len(xis)):
-                    rayIntersects &= (xis[i] > self.eps) and \
-                        (xis[i] < 1 - sums - self.eps)
+                    rayIntersects &= (xis[i] > -self.eps)
+                    rayIntersects &= (xis[i] < 1 - triangle*sums - self.eps)
                     sums += xis[i]
-                    if rayIntersects:
-                        numberOfIntersections += 1
+                if rayIntersects:
+                    numberOfIntersections += 1
 
         # even number is outside (False), odd number means inside (True)
         return (numberOfIntersections % 2)
@@ -111,7 +116,7 @@ class Inside:
 
     def computeOptimalDirection(self, point):
         """
-        Compute the direction of the ray to to the nearest
+        Compute the direction of the ray to the nearest
         domain box face. This will update self.direction
         @param point starting point of the ray
         """
@@ -123,51 +128,42 @@ class Inside:
             mns = (1 - pm)/2.
             for axis in range(self.ndims):
                 # the normal vector contains very small values in place of
-                # zero elements
-
-                #  in order to avoid issues with ray hitting exactly a node
-                normal = 100 * self.eps * numpy.random.rand(self.ndims)
+                # zeros in order to avoid issues with ray hitting 
+                # exactly a node
+                normal = 100 * self.eps * numpy.array([1 for i in range(self.ndims)])
                 normal[axis] = pm
-                distance = pls*(self.domainMaxs[axis] -
+                distance = pls*(self.xmaxs[axis] -
                                 point[axis]) + mns*(point[axis] -
-                                                    self.domainMins[axis])
+                                                    self.xmins[axis])
                 if distance < minDistance:
                     # expand a little beyond the domain (1.1)
                     self.direction = normal * (1.1 * distance)
                     minDistance = distance
 
-    def computeIntersection(self, point, poly):
+    def computeIntersectionTriangle(self, point, poly):
         ip0 = poly[0]
         self.b = self.points[ip0] - point
-        for i in range(self.ndims - 1):
-            self.mat[:, 1 + i] = self.points[ip0] - self.points[poly[1 + i]]
+        self.mat[:, 1] = self.points[ip0] - self.points[poly[1]]
+        self.mat[:, 2] = self.points[ip0] - self.points[poly[2]]
         solution = numpy.linalg.solve(self.mat, self.b)
         return solution[0], solution[1:]
 
+    def computeIntersectionQuad(self, point, poly):
+        ip0 = poly[0]
+        self.b = self.points[ip0] - point
+        self.mat[:, 1] = self.points[ip0] - self.points[poly[1]]
+        self.mat[:, 2] = self.points[ip0] - self.points[poly[3]]
+        solution = numpy.linalg.solve(self.mat, self.b)
+        return solution[0], solution[1:]
 
 ##############################################################################
+def test():
+    from icqsol.tools.geometry.icqSphere import Sphere
+    shp = Sphere(origin=(0., 0., 0.), radius=1.0, n_theta=6, n_phi=3)
+    inside = Inside(shp)
+    pt = numpy.array([0., 0., 0.])
+    assert(inside.isInside(pt))
 
-def test2d():
-    points = [numpy.array([0., 0.]),
-              numpy.array([1., 0.]),
-              numpy.array([0., 1.])]
-    polys = [(0, 1), (1, 2), (2, 0)]
-    inside = Inside(points, polys,
-                    domainMins=numpy.array([0., 0.]),
-                    domainMaxs=numpy.array([1., 1.]))
-
-    # really outside
-    assert(not inside.isInside(numpy.array([-0.1, -0.2])))
-
-    # inside
-    assert(inside.isInside(numpy.array([+0.1, +0.2])))
-
-    # outside
-    assert(not inside.isInside(numpy.array([-0.1, +0.2])))
-    assert(not inside.isInside(numpy.array([+0.1, -0.2])))
-
-    # on the face
-    assert(not inside.isInside(numpy.array([-0.000001, +0.2])))
 
 if __name__ == '__main__':
-    test2d()
+    test()
