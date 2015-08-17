@@ -74,11 +74,7 @@ class Inside:
                 # intersection is impossible, don't bother...
                 continue
 
-            lmbda, xis = 0.0, []
-            if triangle: 
-                lmbda, xis = self.computeIntersectionTriangle(point, poly)
-            else:
-                lmbda, xis = self.computeIntersectionQuad(point, poly)
+            lmbda, xis = self.computeIntersection(point, poly)
 
             if lmbda > -self.eps:
 
@@ -140,19 +136,16 @@ class Inside:
                     self.direction = normal * (1.1 * distance)
                     minDistance = distance
 
-    def computeIntersectionTriangle(self, point, poly):
+    def computeIntersection(self, point, poly):
+        """
+        Compute the intersection with either a triangle or a quadrilateral
+        @param point starting point of the ray
+        @param poly either a triangle or quad
+        """
         ip0 = poly[0]
         self.b = self.points[ip0] - point
         self.mat[:, 1] = self.points[ip0] - self.points[poly[1]]
-        self.mat[:, 2] = self.points[ip0] - self.points[poly[2]]
-        solution = numpy.linalg.solve(self.mat, self.b)
-        return solution[0], solution[1:]
-
-    def computeIntersectionQuad(self, point, poly):
-        ip0 = poly[0]
-        self.b = self.points[ip0] - point
-        self.mat[:, 1] = self.points[ip0] - self.points[poly[1]]
-        self.mat[:, 2] = self.points[ip0] - self.points[poly[3]]
+        self.mat[:, 2] = self.points[ip0] - self.points[poly[-1]]
         solution = numpy.linalg.solve(self.mat, self.b)
         return solution[0], solution[1:]
 
