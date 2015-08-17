@@ -41,7 +41,7 @@ class Inside:
         """
         Determine if a point is inside the shape
         @param point point
-        @return True if inside, False otherwise
+        @return +1 if inside, -1 if outside, and 0 if indefinite
         """
 
         # quick check, point must be inside box
@@ -51,7 +51,7 @@ class Inside:
                              for i in range(self.ndims)])
 
         if outsideBox:
-            return False
+            return -1
 
         # any direction will do but things will run faster if the direction
         # points to the nearest domain box face (fewer intersections to
@@ -75,6 +75,7 @@ class Inside:
                 continue
 
             lmbda, xis = self.computeIntersection(point, poly)
+            print '*** lmbda, xis = ', lmbda, xis
 
             if lmbda > -self.eps:
 
@@ -88,10 +89,15 @@ class Inside:
                     rayIntersects &= (xis[i] < 1 - triangle*sums - self.eps)
                     sums += xis[i]
                 if rayIntersects:
-                    numberOfIntersections += 1
+                    if abs(lmbda) <= self.eps:
+                        # marginal, cannot say
+                        return 0
+                    else:
+                        numberOfIntersections += 1
 
-        # even number is outside (False), odd number means inside (True)
-        return (numberOfIntersections % 2)
+        # even number is outside, odd number means inside
+        print '*** number if intersections = ', numberOfIntersections
+        return 2*(numberOfIntersections % 2) - 1
 
     def areBoxesOverlapping(self, point, poly):
 
@@ -151,11 +157,24 @@ class Inside:
 
 ##############################################################################
 def test():
+
     from icqsol.tools.geometry.icqSphere import Sphere
     shp = Sphere(origin=(0., 0., 0.), radius=1.0, n_theta=6, n_phi=3)
+    shp.debug()
+
     inside = Inside(shp)
-    pt = numpy.array([0., 0., 0.])
-    assert(inside.isInside(pt))
+
+    #pt = numpy.array([0., 0., 0.])
+    #assert(inside.isInside(pt) == 1)
+
+    #pt = numpy.array([1.01, 0., 0.])
+    #assert(inside.isInside(pt) == -1)
+
+    #pt = numpy.array([0., 0.975, 0.])
+    pt = numpy.array([0., 0.98, 0.])
+    res = inside.isInside(pt)
+    print '*** res = ', res
+    #assert(inside.isInside(pt) == 0)
 
 
 if __name__ == '__main__':
