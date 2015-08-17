@@ -24,7 +24,7 @@ class Inside:
         self.xmins = numpy.array([min([p[i] for p in points]) for i in range(self.ndims)])
         self.xmaxs = numpy.array([max([p[i] for p in points]) for i in range(self.ndims)])
 
-        self.eps = 1.23456789e-10 #14
+        self.eps = 1.23456789e-14
 
         self.polys = polys
         self.points = [numpy.array(p) for p in points]
