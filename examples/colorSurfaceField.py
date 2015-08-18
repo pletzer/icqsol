@@ -61,7 +61,7 @@ if not args.name and numArrays > 1:
     sys.exit(1)
 
 # min/max field values
-array = pointData.GetArray(args.name)
+array = pointData.GetScalars(args.name)
 fmin, fmax = array.GetRange()
 
 # build the colormap
@@ -91,17 +91,16 @@ for i in range(numPoints):
     fs = array.GetTuple(i)
     for j in range(numComps):
         rs[j], gs[j], bs[j] = colrMethod(fs[j])
-    print '*** fs, rs, gs, bs = ', fs, rs, gs, bs
     rArray.SetTuple(i, rs)
     gArray.SetTuple(i, gs)
     bArray.SetTuple(i, bs)
 
-pointData = pdataOutput.GetPointData()
-for arrName, arr in ('red', rArray), \
-                    ('green', gArray), \
-                    ('blue', bArray):
-    pointData.SetActiveScalars(arrName)
-    pointData.SetScalars(arr)
+pointDataOut = pdataOutput.GetPointData()
+for arr in rArray, gArray, bArray:
+    pointDataOut.AddArray(arr)
+pointDataOut.GetArray(0).SetName('red')
+pointDataOut.GetArray(1).SetName('green')
+pointDataOut.GetArray(2).SetName('blue')
 
 if args.output:
     writer = vtk.vtkPolyDataWriter()
