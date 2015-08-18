@@ -93,7 +93,7 @@ class Inside:
                 rayIntersects = True
                 for i in range(len(xis)):
                     rayIntersects &= (xis[i] >= 0.0)
-                    rayIntersects &= (xis[i] < 1 - triangle*sums)
+                    rayIntersects &= (xis[i] < 1.0 - triangle*sums)
                     sums += xis[i]
 
                 if rayIntersects:
@@ -134,28 +134,32 @@ class Inside:
     def computeOptimalDirection(self, point):
         """
         Compute the direction of the ray to the nearest
-        domain box face. This will update self.direction
+        domain box face
         @param point starting point of the ray
+        @note this will update self.direction
         """
         # iterate over the faces of the box then find the minimum
         # distance between the point and the face.
         minDistance = float('inf')
+
+        # high/low side of the box
         for pm in (-1, 1):
-            pls = (1 + pm)/2.
-            mns = (1 - pm)/2.
+            pls = (1 + pm)/2. # 0 on the low side, 1 on the high side
+            mns = (1 - pm)/2. # 1 on the low side, 0 on the high side
+
+            # iterate over the axes
             for axis in range(self.ndims):
                 # the normal vector contains very small values in place of
                 # zeros in order to avoid issues with rays hitting the exact
                 # location of a node
-                normal = numpy.array([self.eps*(100. + i) for i
+                normal = numpy.array([i*1.23456789e-10 for i
                                       in range(self.ndims)])
                 normal[axis] = pm
-                distance = pls*(self.xmaxs[axis] -
-                                point[axis]) + mns*(point[axis] -
-                                                    self.xmins[axis])
+
+                distance = pls*(self.xmaxs[axis] - point[axis]) + \
+                           mns*(point[axis] - self.xmins[axis])
                 if distance < minDistance:
-                    # expand a little beyond the domain (1.1)
-                    self.direction = normal * (1.1 * distance)
+                    self.direction = normal * max(distance, minDistance)
                     minDistance = distance
 
         for i in range(self.ndims):
