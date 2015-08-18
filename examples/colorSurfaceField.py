@@ -22,6 +22,9 @@ parser = argparse.ArgumentParser(description='Color surface field')
 parser.add_argument('--input', dest='input', default='',
                     help='VTK input file')
 
+parser.add_argument('--colormap', dest='colormap', default='hot',
+                    help='Colormap ("hot", "cold", or "blackbody")')
+
 parser.add_argument('--name', dest='name',
                     help='Set the name of the field')
 
