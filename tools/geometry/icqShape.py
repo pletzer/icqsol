@@ -6,6 +6,7 @@
 """
 
 # standard python modules
+import os
 
 # extensions
 import vtk
@@ -154,6 +155,9 @@ class Shape:
         @param file_name file name, suffix should be .ply or .vtk
         @return a Shape object
         """
+
+        if not os.path.exists(file_name):
+            raise IOError, 'File {} not found'.format(file_name)
 
         reader = None
         # select the reader according to the suffix
