@@ -6,18 +6,18 @@ Color a surface field
 
 import argparse
 import time
-import math
 import os
 import re
 import sys
 
+import numpy
 import vtk
 from icqsol.tools.color.icqColorMap import ColorMap
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
 
-parser = argparse.ArgumentParser(description='Apply a surface field to a shape')
+parser = argparse.ArgumentParser(description='Color surface field')
 
 parser.add_argument('--input', dest='input', default='',
                     help='VTK input file')
@@ -29,10 +29,10 @@ parser.add_argument('--ascii', dest='ascii', action='store_true',
                     help='Save data in ASCII format (default is binary)')
 
 parser.add_argument('--output', dest='output',
-                    default='createSurfaceFieldFromExpression-{0}.vtk'.format(tid),
+                    default='colorSurfaceField-{0}.vtk'.format(tid),
                     help='VTK Output file.')
 
-args = parser.parse_args() 
+args = parser.parse_args()
 
 if not args.input:
     print 'ERROR: must specify input file: --input <file>'
@@ -49,7 +49,7 @@ reader.Update()
 
 pdataInput = reader.GetOutput()
 numComps = pdataInput.GetPointData().GetNumberOfComponents()
-numPoints = pdata.GetPoints().GetNumberOfPoints()
+numPoints = pdataInput.GetPoints().GetNumberOfPoints()
 
 # min/max field values
 fmin, fmax = pdataInput.GetPointData().GetRange()
@@ -95,11 +95,10 @@ if args.output:
     if args.ascii:
         writer.SetFileTypeToASCII()
     else:
-        writer.SetFileTypeToBinary()       
+        writer.SetFileTypeToBinary()
     if vtk.VTK_MAJOR_VERSION >= 6:
         writer.SetInputData(pdataOutput)
     else:
         writer.SetInput(pdataOutput)
     writer.Write()
     writer.Update()
-
