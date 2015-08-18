@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 
 """
-Apply a surface field to a shape
+Color a surface field
 """
 
 import argparse
 import time
 import math
 import os
-from icqsol.tools.color.icqColorMap import ColorMap
+import re
+import sys
 
 import vtk
+from icqsol.tools.color.icqColorMap import ColorMap
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -54,7 +56,7 @@ fmin, fmax = pdataInput.GetPointData().GetRange()
 
 # build the colormap
 colormap = ColorMap(fmin, fmax)
-colrMethod = eval('colormap.' + args.colormap
+colrMethod = eval('colormap.' + args.colormap)
 
 # create another poly data with the same points/cells
 pdataOutput = vtk.vtkPolyData()
