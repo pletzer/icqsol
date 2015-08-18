@@ -22,8 +22,10 @@ class Inside:
         self.ndims = len(points[0])
 
         # find the box corners
-        self.xmins = numpy.array([min([p[i] for p in points]) for i in range(self.ndims)])
-        self.xmaxs = numpy.array([max([p[i] for p in points]) for i in range(self.ndims)])
+        self.xmins = numpy.array([min([p[i] for p in points]) for
+                                 i in range(self.ndims)])
+        self.xmaxs = numpy.array([max([p[i] for p in points]) for
+                                 i in range(self.ndims)])
 
         self.eps = 1.23456789e-14
 
@@ -46,16 +48,16 @@ class Inside:
         """
         Determine if a point is inside the shape
         @param point point
-        @param minDistance a point is declaed inside if is at least minDistance 
+        @param minDistance a point is declaed inside if is at least minDistance
                away from the face
         @return +1 if inside, -1 if outside, and 0 if indefinite
         """
 
         # quick check, point must be inside box
         if reduce(lambda x, y: x or y,
-                [(point[i] < self.xmins[i] - minDistance) or
-                    (point[i] > self.xmaxs[i] + minDistance)
-                        for i in range(self.ndims)]): 
+                  [(point[i] < self.xmins[i] - minDistance) or
+                   (point[i] > self.xmaxs[i] + minDistance)
+                   for i in range(self.ndims)]):
             # outside box
             return -1
 
@@ -90,8 +92,8 @@ class Inside:
                 sums = 0.0
                 rayIntersects = True
                 for i in range(len(xis)):
-                    rayIntersects &= (xis[i] >= 0.0) #-self.eps)
-                    rayIntersects &= (xis[i] < 1 - triangle*sums) # - self.eps)
+                    rayIntersects &= (xis[i] >= 0.0)
+                    rayIntersects &= (xis[i] < 1 - triangle*sums)
                     sums += xis[i]
 
                 if rayIntersects:
@@ -109,11 +111,11 @@ class Inside:
 
     def areBoxesOverlapping(self, point, poly, minDistance):
         """
-        Determine if there is overlap between the ray and the poly min/max 
+        Determine if there is overlap between the ray and the poly min/max
         coordinates
         @param point starting point of the ray
         @param poly the face
-        @param minDistance the distance below which we cannot say for sure 
+        @param minDistance the distance below which we cannot say for sure
                whether there is an overlap or not
         """
 
@@ -123,9 +125,9 @@ class Inside:
             xmaxFace = max([self.points[j][i] for j in poly])
 
             if (self.xmaxRay[i] < xminFace - minDistance) or \
-                (self.xminRay[i] > xmaxFace + minDistance):
-                    # no overlap possible
-                    return False
+               (self.xminRay[i] > xmaxFace + minDistance):
+                # no overlap possible
+                return False
         # there is a strong possibility og overlap
         return True
 
@@ -145,7 +147,8 @@ class Inside:
                 # the normal vector contains very small values in place of
                 # zeros in order to avoid issues with rays hitting the exact
                 # location of a node
-                normal = numpy.array([self.eps*(100. + i) for i in range(self.ndims)])
+                normal = numpy.array([self.eps*(100. + i) for i
+                                      in range(self.ndims)])
                 normal[axis] = pm
                 distance = pls*(self.xmaxs[axis] -
                                 point[axis]) + mns*(point[axis] -
@@ -160,7 +163,6 @@ class Inside:
             self.xminRay[i] = min(p, p + d)
             self.xmaxRay[i] = max(p, p + d)
 
-
     def computeIntersection(self, point, poly):
         """
         Compute the intersection with either a triangle or a quadrilateral
@@ -174,12 +176,12 @@ class Inside:
         solution = numpy.linalg.solve(self.mat, self.b)
         return solution[0], solution[1:]
 
+
 ##############################################################################
 def test():
 
     from icqsol.tools.geometry.icqSphere import Sphere
     shp = Sphere(origin=(0., 0., 0.), radius=1.0, n_theta=6, n_phi=3)
-    #shp.debug()
 
     inside = Inside(shp)
 
@@ -192,7 +194,6 @@ def test():
     pt = numpy.array([0., 0.9999999999, 0.])
     assert(inside.isInside(pt, 0.0) == 1)
     assert(inside.isInside(pt, 0.01) == 0)
-
 
     pt = numpy.array([0., 1.0000000001, 0.])
     assert(inside.isInside(pt, 0.) == -1)
