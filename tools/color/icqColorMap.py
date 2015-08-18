@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import math
+
 
 class ColorMap:
 
@@ -21,9 +23,9 @@ class ColorMap:
 	    @return red, green, blue components in range 0 to 255
 	    """
     	    x = (f - self.fmin)/(self.fmax - self.fmin)
-    	    r = 255*math.floor(math.cos((1. - x)*math.pi)**2 + 0.5)
-    	    g = 255*math.floor(math.sin(x*math.pi)**2 + 0.5)
-    	    b = 255*math.floor(math.cos(x*math.pi)**2 + 0.5)
+    	    r = 255*int(math.cos((1. - x)*math.pi)**2 + 0.5)
+    	    g = 255*int(math.sin(x*math.pi)**2 + 0.5)
+    	    b = 255*int(math.cos(x*math.pi)**2 + 0.5)
     	    return r, g, b
 
 	def cold(self, f):
@@ -43,7 +45,7 @@ class ColorMap:
 	    @return red, green, blue components in range 0 to 255
 		"""
     	    x = (f - self.fmin)/(self.fmax - self.fmin)
-    	    r = 255*math.floor(min(1., 2*math.cos(x*math.pi/2.)**2) + 0.5)
-    	    g = 255*math.floor(math.sin(x*math.pi)**2 + 0.5)
-    	    b = 255*math.floor(min(1., 2*math.cos((1. - x)*math.pi/2.)**2) + 0.5)
+    	    r = 255*int(min(1., 2*math.cos(x*math.pi/2.)**2) + 0.5)
+    	    g = 255*int(math.sin(x*math.pi)**2 + 0.5)
+    	    b = 255*int(min(1., 2*math.cos((1. - x)*math.pi/2.)**2) + 0.5)
     	    return r, g, b
