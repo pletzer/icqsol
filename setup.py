@@ -16,6 +16,7 @@ setup(name='ICQSol',
       package_dir = {'icqsol': ''}, # the present working directory maps to icqsol below
       packages=['icqsol', 'icqsol.tools', 
                 'icqsol.tools.geometry',
-                'icqsol.tools.discretization',],
+                'icqsol.tools.discretization',
+                'icqsol.tools.color'],
       requires = ['numpy', 'vtk'],
      )
