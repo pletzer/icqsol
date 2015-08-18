@@ -6,6 +6,7 @@
 """
 
 import numpy
+import math
 
 
 class Inside:
@@ -41,20 +42,21 @@ class Inside:
         self.xminRay = float('inf') * numpy.ones((self.ndims,), numpy.float64)
         self.xmaxRay = float('inf') * numpy.ones((self.ndims,), numpy.float64)
 
-    def isInside(self, point):
+    def isInside(self, point, minDistance):
         """
         Determine if a point is inside the shape
         @param point point
+        @param minDistance a point is declaed inside if is at least minDistance 
+               away from the face
         @return +1 if inside, -1 if outside, and 0 if indefinite
         """
 
         # quick check, point must be inside box
-        outsideBox = reduce(lambda x, y: x or y,
-                            [(point[i] < self.xmins[i] - self.eps) or
-                             (point[i] > self.xmaxs[i] + self.eps)
-                             for i in range(self.ndims)])
-
-        if outsideBox:
+        if reduce(lambda x, y: x or y,
+                [(point[i] < self.xmins[i] - minDistance) or
+                    (point[i] > self.xmaxs[i] + minDistance)
+                        for i in range(self.ndims)]): 
+            # outside box
             return -1
 
         # any direction will do but things will run faster if the direction
@@ -75,7 +77,7 @@ class Inside:
                 triangle = 0
 
             # compute the overlap betwen the ray and face boxes
-            if not self.areBoxesOverlapping(point, poly):
+            if not self.areBoxesOverlapping(point, poly, minDistance):
                 # intersection is impossible, don't bother...
                 continue
 
@@ -94,7 +96,9 @@ class Inside:
 
                 if rayIntersects:
 
-                    if abs(lmbda) <= self.eps:
+                    target = lmbda * self.direction
+                    distancePointToFace = math.sqrt(numpy.dot(target, target))
+                    if distancePointToFace <= minDistance:
                         # marginal, cannot say
                         return 0
                     else:
@@ -103,17 +107,26 @@ class Inside:
         # even number is outside, odd number means inside
         return 2*(numberOfIntersections % 2) - 1
 
-    def areBoxesOverlapping(self, point, poly):
+    def areBoxesOverlapping(self, point, poly, minDistance):
+        """
+        Determine if there is overlap between the ray and the poly min/max 
+        coordinates
+        @param point starting point of the ray
+        @param poly the face
+        @param minDistance the distance below which we cannot say for sure 
+               whether there is an overlap or not
+        """
 
         for i in range(self.ndims):
 
             xminFace = min([self.points[j][i] for j in poly])
             xmaxFace = max([self.points[j][i] for j in poly])
 
-            if (self.xmaxRay[i] < xminFace - self.eps) or \
-                (self.xminRay[i] > xmaxFace + self.eps):
-                    # no overlap
+            if (self.xmaxRay[i] < xminFace - minDistance) or \
+                (self.xminRay[i] > xmaxFace + minDistance):
+                    # no overlap possible
                     return False
+        # there is a strong possibility og overlap
         return True
 
     def computeOptimalDirection(self, point):
@@ -171,17 +184,19 @@ def test():
     inside = Inside(shp)
 
     pt = numpy.array([0., 0., 0.])
-    assert(inside.isInside(pt) == 1)
+    assert(inside.isInside(pt, 0.) == 1)
 
     pt = numpy.array([1.01, 0., 0.])
-    assert(inside.isInside(pt) == -1)
+    assert(inside.isInside(pt, 0.) == -1)
 
     pt = numpy.array([0., 0.9999999999, 0.])
-    assert(inside.isInside(pt) == 1)
+    assert(inside.isInside(pt, 0.0) == 1)
+    assert(inside.isInside(pt, 0.01) == 0)
+
 
     pt = numpy.array([0., 1.0000000001, 0.])
-    assert(inside.isInside(pt) == -1)
-
+    assert(inside.isInside(pt, 0.) == -1)
+    assert(inside.isInside(pt, 0.01) == 0)
 
 
 if __name__ == '__main__':
