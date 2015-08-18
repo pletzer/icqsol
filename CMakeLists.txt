@@ -131,7 +131,7 @@ add_test(NAME testAddSurfaceFieldFromExpression
          --output testPrimitiveSphereWithField.vtk
          --ascii)
 add_test(NAME testColorSurfaceFieldHot
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/colorSurfaceField.py"
          --colormap "hot"
          --name "my_field"
          --input testPrimitiveSphereWithField.vtk
