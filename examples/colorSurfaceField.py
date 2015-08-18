@@ -25,7 +25,7 @@ parser.add_argument('--input', dest='input', default='',
 parser.add_argument('--colormap', dest='colormap', default='hot',
                     help='Colormap ("hot", "cold", or "blackbody")')
 
-parser.add_argument('--name', dest='name',
+parser.add_argument('--name', dest='name', default='',
                     help='Set the name of the field')
 
 parser.add_argument('--ascii', dest='ascii', action='store_true',
@@ -51,11 +51,18 @@ reader.SetFileName(args.input)
 reader.Update()
 
 pdataInput = reader.GetOutput()
-numComps = pdataInput.GetPointData().GetNumberOfComponents()
+pointData = pdataInput.GetPointData()
+numComps = pointData.GetNumberOfComponents()
 numPoints = pdataInput.GetPoints().GetNumberOfPoints()
+numArrays = pointData.GetNumberOfArrays()
+
+if not args.name and numArrays > 1: 
+    print 'ERROR: more than one array, must specify --name NAME'
+    sys.exit(1)
 
 # min/max field values
-fmin, fmax = pdataInput.GetPointData().GetRange()
+array = pointData.GetArray(args.name)
+fmin, fmax = array.GetRange()
 
 # build the colormap
 colormap = ColorMap(fmin, fmax)
@@ -67,30 +74,34 @@ pdataOutput.SetPoints(pdataInput.GetPoints())
 pdataOutput.SetPolys(pdataInput.GetPolys())
 
 # color the points
-rArray = vtk.vtkCharArray()
-gArray = vtk.vtkCharArray()
-bArray = vtk.vtkCharArray()
+rArray = vtk.vtkUnsignedCharArray()
+gArray = vtk.vtkUnsignedCharArray()
+bArray = vtk.vtkUnsignedCharArray()
 rArray.SetNumberOfComponents(numComps)
 gArray.SetNumberOfComponents(numComps)
 bArray.SetNumberOfComponents(numComps)
 rArray.SetNumberOfTuples(numPoints)
 gArray.SetNumberOfTuples(numPoints)
 bArray.SetNumberOfTuples(numPoints)
-rs = numpy.zeros((numComps,), numpy.int8)
-gs = numpy.zeros((numComps,), numpy.int8)
-bs = numpy.zeros((numComps,), numpy.int8)
+rs = numpy.zeros((numComps,), numpy.uint8)
+gs = numpy.zeros((numComps,), numpy.uint8)
+bs = numpy.zeros((numComps,), numpy.uint8)
 
 for i in range(numPoints):
+    fs = array.GetTuple(i)
     for j in range(numComps):
-        f = pdataInput.GetPointData().GetValue(i, j)
-        rs[j], gs[j], bs[j] = colrMethod(f)
+        rs[j], gs[j], bs[j] = colrMethod(fs[j])
+    print '*** fs, rs, gs, bs = ', fs, rs, gs, bs
     rArray.SetTuple(i, rs)
     gArray.SetTuple(i, gs)
     bArray.SetTuple(i, bs)
 
-pdataOutput.GetPointData().SetArray('red', rArray)
-pdataOutput.GetPointData().SetArray('green', gArray)
-pdataOutput.GetPointData().SetArray('blue', bArray)
+pointData = pdataOutput.GetPointData()
+for arrName, arr in ('red', rArray), \
+                    ('green', gArray), \
+                    ('blue', bArray):
+    pointData.SetActiveScalars(arrName)
+    pointData.SetScalars(arr)
 
 if args.output:
     writer = vtk.vtkPolyDataWriter()
