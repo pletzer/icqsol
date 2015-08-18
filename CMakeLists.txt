@@ -57,8 +57,7 @@ add_test(NAME testRing COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/tes
 add_test(NAME testBolt COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testBolt.py")
 add_test(NAME testSurfaceInsideOtherShape COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testSurfaceInsideOtherShape.py")
 add_test(NAME testPointInsideShape COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testPointInsideShape.py" --n_theta 6 --n_phi 4)
-add_test(NAME testPointInsideShape2 COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testPointInsideShape.py" --n_theta 18 --n_phi 7)
-add_test(NAME testPointInsideShape3 COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testPointInsideShape.py" --n_theta 32 --n_phi 16)
+add_test(NAME testPointInsideShape2 COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testPointInsideShape.py" --n_theta 32 --n_phi 16)
 
 add_test(NAME testPrimitiveSphere 
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
@@ -110,6 +109,11 @@ add_test(NAME testRotate
          --input testPrimitiveBox.vtk
          --angle 45.0 --axis "1,0,0"
          --output testRotatedBox.vtk)
+add_test(NAME testRotate2
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/rotateShape.py" 
+         --input testPrimitiveCylinder.vtk
+         --angle 45.0 --axis "1,0,0"
+         --output testRotatedCylinder.vtk)
 add_test(NAME testRefine
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/refineShape.py"
          --input testPrimitiveSphere4x4.vtk
