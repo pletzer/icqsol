@@ -37,6 +37,10 @@ class Inside:
         self.direction = float('inf') * \
             numpy.ones((self.ndims,), numpy.float64)
 
+        # min/max box corners of the ray
+        self.xminRay = float('inf') * numpy.ones((self.ndims,), numpy.float64)
+        self.xmaxRay = float('inf') * numpy.ones((self.ndims,), numpy.float64)
+
     def isInside(self, point):
         """
         Determine if a point is inside the shape
@@ -69,26 +73,27 @@ class Inside:
             numPoints = len(poly)
             if numPoints == 4:
                 triangle = 0
-            # compute the overlap betwen the ray box and the face box
+
+            # compute the overlap betwen the ray and face boxes
             if not self.areBoxesOverlapping(point, poly):
                 # intersection is impossible, don't bother...
                 continue
 
             lmbda, xis = self.computeIntersection(point, poly)
-            print '*** lmbda, xis = ', lmbda, xis
 
             if lmbda > -self.eps:
 
                 # the direction is ok
 
-                numPoints = len(poly)
                 sums = 0.0
                 rayIntersects = True
                 for i in range(len(xis)):
-                    rayIntersects &= (xis[i] > -self.eps)
-                    rayIntersects &= (xis[i] < 1 - triangle*sums - self.eps)
+                    rayIntersects &= (xis[i] >= 0.0) #-self.eps)
+                    rayIntersects &= (xis[i] < 1 - triangle*sums) # - self.eps)
                     sums += xis[i]
+
                 if rayIntersects:
+
                     if abs(lmbda) <= self.eps:
                         # marginal, cannot say
                         return 0
@@ -96,7 +101,6 @@ class Inside:
                         numberOfIntersections += 1
 
         # even number is outside, odd number means inside
-        print '*** number if intersections = ', numberOfIntersections
         return 2*(numberOfIntersections % 2) - 1
 
     def areBoxesOverlapping(self, point, poly):
@@ -106,12 +110,8 @@ class Inside:
             xminFace = min([self.points[j][i] for j in poly])
             xmaxFace = max([self.points[j][i] for j in poly])
 
-            p, d = point[i], self.direction[i]
-            xminRay = min(p, p + d)
-            xmaxRay = max(p, p + d)
-
-            if (xmaxRay < xminFace + self.eps) or \
-                    (xmaxFace < xminRay + self.eps):
+            if (self.xmaxRay[i] < xminFace - self.eps) or \
+                (self.xminRay[i] > xmaxFace + self.eps):
                     # no overlap
                     return False
         return True
@@ -130,9 +130,9 @@ class Inside:
             mns = (1 - pm)/2.
             for axis in range(self.ndims):
                 # the normal vector contains very small values in place of
-                # zeros in order to avoid issues with ray hitting 
-                # exactly a node
-                normal = 100 * self.eps * numpy.array([1 for i in range(self.ndims)])
+                # zeros in order to avoid issues with rays hitting the exact
+                # location of a node
+                normal = numpy.array([self.eps*(100. + i) for i in range(self.ndims)])
                 normal[axis] = pm
                 distance = pls*(self.xmaxs[axis] -
                                 point[axis]) + mns*(point[axis] -
@@ -141,6 +141,12 @@ class Inside:
                     # expand a little beyond the domain (1.1)
                     self.direction = normal * (1.1 * distance)
                     minDistance = distance
+
+        for i in range(self.ndims):
+            p, d = point[i], self.direction[i]
+            self.xminRay[i] = min(p, p + d)
+            self.xmaxRay[i] = max(p, p + d)
+
 
     def computeIntersection(self, point, poly):
         """
@@ -160,21 +166,22 @@ def test():
 
     from icqsol.tools.geometry.icqSphere import Sphere
     shp = Sphere(origin=(0., 0., 0.), radius=1.0, n_theta=6, n_phi=3)
-    shp.debug()
+    #shp.debug()
 
     inside = Inside(shp)
 
-    #pt = numpy.array([0., 0., 0.])
-    #assert(inside.isInside(pt) == 1)
+    pt = numpy.array([0., 0., 0.])
+    assert(inside.isInside(pt) == 1)
 
-    #pt = numpy.array([1.01, 0., 0.])
-    #assert(inside.isInside(pt) == -1)
+    pt = numpy.array([1.01, 0., 0.])
+    assert(inside.isInside(pt) == -1)
 
-    #pt = numpy.array([0., 0.975, 0.])
-    pt = numpy.array([0., 0.98, 0.])
-    res = inside.isInside(pt)
-    print '*** res = ', res
-    #assert(inside.isInside(pt) == 0)
+    pt = numpy.array([0., 0.9999999999, 0.])
+    assert(inside.isInside(pt) == 1)
+
+    pt = numpy.array([0., 1.0000000001, 0.])
+    assert(inside.isInside(pt) == -1)
+
 
 
 if __name__ == '__main__':
