@@ -61,9 +61,9 @@ class ColorMap:
         @return red, green, blue components in range 0 to 255
         """
         x = (f - self.fmin)/(self.fmax - self.fmin)
-        r = self.hatFunc(x, 3./8., 5./8., 7./8., 9./8.)
-        g = self.hatFunc(x, 1./8., 3./8., 5./8., 7./8.)
-        b = self.hatFunc(x, -1./8., 1./8., 3./8., 5./8.)
+        r = int(255*self.hatFunc(x, 3./8., 5./8., 7./8., 9./8.) + 0.5)
+        g = int(255*self.hatFunc(x, 1./8., 3./8., 5./8., 7./8.) + 0.5)
+        b = int(255*self.hatFunc(x, -1./8., 1./8., 3./8., 5./8.) + 0.5)
         return r, g, b
 
     def blackbody(self, f):
@@ -89,5 +89,15 @@ def testHat():
         x = i * dx
         print 'x = {} y = {}'.format(x, ColorMap.hatFunc(x, x0, x1, x2, x3))
 
+def testGnu():
+    fmin, fmax = 0., 1.
+    cm = ColorMap(fmin, fmax)
+    n = 10
+    df = (fmax - fmin)/float(10)
+    for i in range(n + 1):
+        f = fmin + i * df
+        print 'f = {} rgb = {}'.format(f, cm.gnu(f))
+
 if __name__ == '__main__': 
     testHat()
+    testGnu()
