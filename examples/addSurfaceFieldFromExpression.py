@@ -84,4 +84,3 @@ if args.output:
         writer.SetInput(pdata)
     writer.Write()
     writer.Update()
-

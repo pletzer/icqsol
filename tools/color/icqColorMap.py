@@ -16,6 +16,7 @@ class ColorMap:
         self.fmin = fmin
         self.fmax = fmax
 
+    @classmethod
     def hatFunc(self, x, x0, x1, x2, x3):
         """
         Hat function
@@ -29,9 +30,7 @@ class ColorMap:
         slope01 = 1./(x1 - x0)
         slope23 = 1./(x3 - x2)
         return min(1., max(0., slope01*(x - x0))) \
-             - min(1., max(0., slope01*(x - x1))) \
-             - min(1., max(0., slope23*(x - x2))) \
-             + min(1., max(0., slope23*(x - x3)))
+             - min(1., max(0., slope23*(x - x2)))
 
     def hot(self, f):
         """
@@ -78,3 +77,17 @@ class ColorMap:
         g = int(255*math.sin(x*math.pi)**2 + 0.5)
         b = int(255*min(1., 2*math.cos((1. - x)*math.pi/2.)**2) + 0.5)
         return r, g, b
+
+##############################################################################
+
+
+def testHat():
+    n = 10
+    dx = 1.0/float(10)
+    x0, x1, x2, x3 = 0.1, 0.3, 0.4, 0.8
+    for i in range(n + 1):
+        x = i * dx
+        print 'x = {} y = {}'.format(x, ColorMap.hatFunc(x, x0, x1, x2, x3))
+
+if __name__ == '__main__': 
+    testHat()
