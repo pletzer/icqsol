@@ -60,82 +60,111 @@ add_test(NAME testPointInsideShape COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/
 add_test(NAME testPointInsideShape2 COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testPointInsideShape.py" --n_theta 32 --n_phi 16)
 
 add_test(NAME testColorMap
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/color/testColorMap.py")
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/tools/color/testColorMap.py")
 add_test(NAME testPrimitiveSphere 
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
          --output testPrimitiveSphere.vtk 
          --type "sphere" --ascii 
          --options "radius=1" "origin=(0, 1, 2)")
 add_test(NAME testPrimitiveSphere2x4 
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
          --output testPrimitiveSphere4x4.vtk 
          --type "sphere" --ascii 
          --options "radius=1.0" "origin=(0., 0., 0.)" "n_theta=4" "n_phi=4")
 add_test(NAME testPrimitiveCylinder
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
          --output testPrimitiveCylinder.ply 
          --type "cylinder"  
-         --options "radius=0.5" "origin=(0.5, 0.2, 0.3)" "lengths=(0.35, 0., 0.)")
+         --options "radius=0.5" 
+                   "origin=(0.5, 0.2, 0.3)" 
+                   "lengths=(0.35, 0., 0.)"
+                   "n_theta=16")
 add_test(NAME testPrimitiveCone
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
          --output testPrimitiveCone.vtk 
          --type "cone" --ascii 
-         --options "radius=0.5" "origin=(0.5, 0.2, 0.3)" "lengths=(0.35, 0.0, 0.0)")
+         --options "radius=0.5" 
+                   "origin=(0.5, 0.2, 0.3)" 
+                   "lengths=(0.35, 0.0, 0.0)")
 add_test(NAME testPrimitiveBox
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
          --output testPrimitiveBox.vtk 
          --type "box" --ascii 
-         --options "origin=(0.5, 0.2, 0.3)" "lengths=(0.7, 0.8, 0.9)")
+         --options "origin=(0.5, 0.2, 0.3)" 
+                   "lengths=(0.7, 0.8, 0.9)")
 add_test(NAME testCompositeUnion
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
          --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
          --compose "$0 + $1"
          --output testCompositeUnion.vtk)
 add_test(NAME testCompositeIntersection
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
          --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
          --compose "$0 * $1"
          --output testCompositeIntersection.vtk)
 add_test(NAME testCompositeRemoval
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
          --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
          --compose "$0 - $1"
          --output testCompositeRemoval.vtk)
 add_test(NAME testTranslate
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/translateShape.py" 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/translateShape.py" 
          --input testPrimitiveBox.vtk
          --translate "1, 2, 3"
          --output testTranslatedBox.vtk)
 add_test(NAME testRotate
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/rotateShape.py" 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/rotateShape.py" 
          --input testPrimitiveBox.vtk
          --angle 45.0 --axis "1,0,0"
          --output testRotatedBox.vtk)
 add_test(NAME testRotate2
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/rotateShape.py" 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/rotateShape.py" 
          --input testPrimitiveCylinder.ply
          --angle 45.0 --axis "1,0,0"
          --output testRotatedCylinder.ply)
 add_test(NAME testRefine
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/refineShape.py"
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/refineShape.py"
          --input testPrimitiveSphere4x4.vtk
          --refine 2
          --output testPrimitiveSphere8x8.vtk
          --ascii)
 add_test(NAME testAddSurfaceFieldFromExpression
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
-         --expression "1 + x**2*sin(-log(0.1+abs(x*y)*pi))*sin(pi*t + 0.3)"
-         --name "my field"
-         --times "linspace(0, 1., 4)"
-         --input testPrimitiveSphere4x4.vtk
-         --output testPrimitiveSphereWithField.vtk
-         --ascii)
-add_test(NAME testColorSurfaceFieldHot
-         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/colorSurfaceField.py"
-         --colormap "hot"
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
+         --expression "1 + x**2*sin(-log(0.1+abs(x*y)*pi))"
          --name "my_field"
-         --input testPrimitiveSphereWithField.vtk
-         --output testPrimitiveSphereHot.vtk
+         --input testPrimitiveCylinder.ply
+         --output testPrimitiveCylinderWithField.vtk
+         --ascii)
+add_test(NAME testAddSurfaceFieldFromExpressionTimeDependent
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
+         --expression "1 + x**2*sin(-log(0.1+abs(x*y)*pi))*sin(pi*t + 0.3)"
+         --name "my_field"
+         --times "linspace(0, 1., 4)"
+         --input testPrimitiveCylinder.ply
+         --output testPrimitiveCylinderWithTimeDependentField.vtk
+         --ascii)
+add_test(NAME testColorSurfaceFieldGnu
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/colorSurfaceField.py"
+         --colormap "gnu"
+         --name "my_field"
+         --input testPrimitiveCylinderWithField.vtk
+         --output testPrimitiveCylinderWithFieldColored.vtk
          --ascii)
 
 

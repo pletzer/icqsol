@@ -28,7 +28,7 @@ parser.add_argument('--expression', dest='expression', default='scalar_field',
 parser.add_argument('--name', dest='name',
                     help='Set the name of the field')
 
-parser.add_argument('--times', dest='times', default='0.0',
+parser.add_argument('--times', dest='times', default='',
                     help='Comma separated list of time values')
 
 parser.add_argument('--ascii', dest='ascii', action='store_true',
@@ -57,7 +57,9 @@ points = pdata.GetPoints()
 numPoints = points.GetNumberOfPoints()
 data = vtk.vtkDoubleArray()
 data.SetName(args.name)
-times = eval(args.times)
+times = [0.0]
+if args.times:
+    times = eval(args.times)
 numTimes = len(times)
 data.SetNumberOfComponents(numTimes)
 data.SetNumberOfTuples(numPoints)
