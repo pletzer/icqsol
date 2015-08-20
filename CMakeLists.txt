@@ -74,10 +74,28 @@ add_test(NAME testPrimitiveSphere2x4
          --output testPrimitiveSphere4x4.vtk 
          --type "sphere" --ascii 
          --options "radius=1.0" "origin=(0., 0., 0.)" "n_theta=4" "n_phi=4")
+add_test(NAME testCylOuter
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
+         --output cylOuter.ply 
+         --type "cylinder"  
+         --options "radius=1.0" 
+                   "origin=(0., 0., 0.)" 
+                   "lengths=(1., 0., 0.)"
+                   "n_theta=4")
+add_test(NAME testCylInner
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
+         --output cylInner.ply 
+         --type "cylinder"  
+         --options "radius=0.5" 
+                   "origin=(-0.1, 0., 0.)" 
+                   "lengths=(2., 0., 0.)"
+                   "n_theta=3")
 add_test(NAME testPrimitiveCylinder
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
-         --output testPrimitiveCylinder.ply 
+         --output testPrimitiveCylinder.ply
          --type "cylinder"  
          --options "radius=0.5" 
                    "origin=(0.5, 0.2, 0.3)" 
@@ -110,6 +128,12 @@ add_test(NAME testCompositeIntersection
          --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
          --compose "$0 * $1"
          --output testCompositeIntersection.vtk)
+add_test(NAME testRingCoarse
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
+         --input cylOuter.ply cylInner.ply
+         --compose "$0 - $1"
+         --output ringCoarse.vtk)
 add_test(NAME testCompositeRemoval
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
