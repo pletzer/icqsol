@@ -82,7 +82,7 @@ add_test(NAME testCylOuter
          --options "radius=1.0" 
                    "origin=(0., 0., 0.)" 
                    "lengths=(1., 0., 0.)"
-                   "n_theta=4")
+                   "n_theta=8")
 add_test(NAME testCylInner
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
@@ -133,6 +133,7 @@ add_test(NAME testRingCoarse
          "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
          --input cylOuter.ply cylInner.ply
          --compose "$0 - $1"
+         --ascii
          --output ringCoarse.vtk)
 add_test(NAME testCompositeRemoval
          COMMAND "${PYTHON_EXECUTABLE}" 
