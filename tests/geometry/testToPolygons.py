@@ -13,7 +13,7 @@ shp.debug()
 polys = shape_mgr.shapeToPolygons(shp)
 
 # check whether each polygon can be cloned
-map(lambda p: shape_mgr.cloneShape(p), polys)
+map(lambda p: p.clone(), polys)
 
 # check that we can load the polygons
 a = CSG.fromPolygons(polys)
