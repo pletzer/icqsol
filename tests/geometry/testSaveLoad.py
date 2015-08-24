@@ -3,7 +3,7 @@ Test save/load methods
 @author pletzer@psu.edu
 """
 
-from icqsol.shapes.shape_manager import ShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 shape_mgr = ShapeManager()
 shp = shape_mgr.createShape('box', origin=[0., 0., 0.], lengths=[1., 1., 1.])

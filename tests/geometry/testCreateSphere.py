@@ -6,7 +6,7 @@ Test creation of sphere
 """
 
 import argparse
-from icqsol.shapes.shape_manager import ShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 parser = argparse.ArgumentParser(description='Create sphere')
 

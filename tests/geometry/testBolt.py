@@ -5,7 +5,7 @@ Test creation of a bolt object
 @author pletzer@psu.edu
 """
 
-from icqsol.shapes.shape_manager import ShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 shape_mgr = ShapeManager()
 shaft = shape_mgr.createShape('cylinder', origin=[0., 0., 0.],

@@ -184,7 +184,7 @@ class Inside:
 ##############################################################################
 def test():
 
-    from icqsol.shapes.shape_manager import ShapeManager
+    from icqsol.shapes.ShapeManager import ShapeManager
 
     shape_mgr = ShapeManager()
     shp = shape_mgr.createShape('sphere', origin=(0., 0., 0.),

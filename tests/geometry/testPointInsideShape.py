@@ -8,7 +8,7 @@ Test for determining whether a point is inside a shape.
 import numpy
 import argparse
 from icqsol.shapes.icqInside import Inside
-from icqsol.shapes.shape_manager import ShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 parser = argparse.ArgumentParser(description='Test point inside shape')
 

@@ -3,7 +3,7 @@
 Test intersection operation
 @author pletzer@psu.edu
 """
-from icqsol.shapes.shape_manager import ShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 shape_mgr = ShapeManager()
 # box-box containment

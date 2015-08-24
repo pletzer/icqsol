@@ -7,7 +7,7 @@ import time
 import sys
 import re
 import numpy
-from icqsol.shapes.shape_manager import ShapeManager
+from icqsol.shapes.ShapeManager import ShapeManager
 
 options = {
     'sphere': {

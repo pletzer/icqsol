@@ -5,7 +5,7 @@ Test creation of simple ring object
 @author pletzer@psu.edu
 """
 
-from icqsol.shapes.shape_manager import ShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 shape_mgr = ShapeManager()
 c1 = shape_mgr.createShape('cylinder', radius=0.4, origin=(0., 0., 0.),
