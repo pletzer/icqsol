@@ -9,7 +9,7 @@ import time
 import sys
 import re
 
-from icqsol.tools.geometry.icqShape import Shape
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -40,8 +40,9 @@ if len(args.input) == 0:
     sys.exit(3)
 
 argShapes = []
+shape_mgr = ShapeManager()
 for inputFile in args.input:
-    s = Shape.load(inputFile)
+    s = shape_mgr.load(inputFile)
     argShapes.append(s)
 
 expr = args.expression
@@ -56,5 +57,4 @@ if args.output:
         fileType = 'ascii'
     if args.output.lower().find('.ply') >= 0:
         fileFormat = 'ply'
-    compositeShape.save(args.output, file_format=fileFormat,
-                        file_type=fileType)
+    shape_mgr.save(args.output, file_format=fileFormat, file_type=fileType)

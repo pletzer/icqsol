@@ -144,8 +144,8 @@ class Inside:
 
         # high/low side of the box
         for pm in (-1, 1):
-            pls = (1 + pm)/2. # 0 on the low side, 1 on the high side
-            mns = (1 - pm)/2. # 1 on the low side, 0 on the high side
+            pls = (1 + pm)/2.  # 0 on the low side, 1 on the high side
+            mns = (1 - pm)/2.  # 1 on the low side, 0 on the high side
 
             # iterate over the axes
             for axis in range(self.ndims):
@@ -157,7 +157,7 @@ class Inside:
                 normal[axis] = pm
 
                 distance = pls*(self.xmaxs[axis] - point[axis]) + \
-                           mns*(point[axis] - self.xmins[axis])
+                    mns*(point[axis] - self.xmins[axis])
                 if distance < minDistance:
                     self.direction = normal * max(distance, minDistance)
                     minDistance = distance
@@ -184,8 +184,11 @@ class Inside:
 ##############################################################################
 def test():
 
-    from icqsol.tools.geometry.icqSphere import Sphere
-    shp = Sphere(origin=(0., 0., 0.), radius=1.0, n_theta=6, n_phi=3)
+    from icqsol.shapes.shape_manager import ShapeManager
+
+    shape_mgr = ShapeManager()
+    shp = shape_mgr.createShape('sphere', origin=(0., 0., 0.),
+                                radius=1.0, n_theta=6, n_phi=3)
 
     inside = Inside(shp)
 
@@ -202,7 +205,6 @@ def test():
     pt = numpy.array([0., 1.0000000001, 0.])
     assert(inside.isInside(pt, 0.) == -1)
     assert(inside.isInside(pt, 0.01) == 0)
-
 
 if __name__ == '__main__':
     test()

@@ -5,20 +5,19 @@ Test creation of a bolt object
 @author pletzer@psu.edu
 """
 
-from icqsol.tools.geometry.icqCone import Cone
-from icqsol.tools.geometry.icqCylinder import Cylinder
-from icqsol.tools.geometry.icqBox import Box
+from icqsol.shapes.shape_manager import ShapeManager
 
-shaft = Cylinder(origin=[0., 0., 0.], lengths=[1., 0., 0.],
-                 radius=0.1, n_theta=32)
-head = Cone(origin=[-0.06, 0., 0.],
-            lengths=[0.14, 0., 0.], radius=0.25)
-notch1 = Box(origin=[-0.06, -0.015, -0.15],
-             lengths=[0.03, 0.03, 0.30])
-notch2 = notch1.clone()
-notch2.rotate(axis=(1., 0., 0.), angleDeg=90.0)
+shape_mgr = ShapeManager()
+shaft = shape_mgr.createShape('cylinder', origin=[0., 0., 0.],
+                              lengths=[1., 0., 0.], radius=0.1, n_theta=32)
+head = shape_mgr.createShape('cone', origin=[-0.06, 0., 0.],
+                             lengths=[0.14, 0., 0.], radius=0.25)
+notch1 = shape_mgr.createShape('box', origin=[-0.06, -0.015, -0.15],
+                               lengths=[0.03, 0.03, 0.30])
+notch2 = shape_mgr.cloneShape(notch1)
+shape_mgr.rotateShape(notch2, axis=(1., 0., 0.), angleDeg=90.0)
 
 geom = head + shaft - notch1 - notch2
 
-geom.save('testBolt.vtk', file_format='vtk', file_type='ascii')
-geom.show(filename='testBolt.png')
+shape_mgr.save(geom, 'testBolt.vtk', file_format='vtk', file_type='ascii')
+shape_mgr.show(geom, filename='testBolt.png')

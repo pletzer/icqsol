@@ -1,99 +1,119 @@
 #!/usr/bin/env python
-
 """
 @brief A base class for constructing shapes
-@author pletzer@psu.edu
 """
-
-# standard python modules
 import os
-
-# extensions
 import vtk
 import numpy
 from csg.geom import Vector, Vertex, Polygon, BSPNode
 from csg.core import CSG
+from icqShape import Box, Cone, Cylinder, Sphere
+from icqShape import DEFAULTS, CompositeShape, Shape
 
 
-class Shape:
+class ShapeManager(object):
 
-    """
-    Base class for shapes
-    """
+    def createShape(self, type, origin=None, lengths=None, radius=None,
+                    angle=None, n_theta=None, n_phi=None):
+        origin = origin or DEFAULTS.get('origin', [0.0, 0.0, 0.0])
+        lengths = lengths or DEFAULTS.get('lengths', [1.0, 1.0, 1.0])
+        radius = radius or DEFAULTS.get('radius', [0.5, 0.5, 0.5])
+        angle = angle or DEFAULTS.get('angle', 90.0)
+        n_theta = n_theta or DEFAULTS.get('n_theta', 16)
+        n_phi = n_phi or DEFAULTS.get('n_phi', 8)
+        if type == 'box':
+            return Box(origin, lengths)
+        if type == 'cone':
+            return Cone(radius, origin, lengths, n_theta)
+        if type == 'cylinder':
+            return Cylinder(radius, origin, lengths, n_theta)
+        if type == 'sphere':
+            return Sphere(radius, origin, n_theta, n_phi)
+        return None
 
-    def __init__(self, csg=None):
+    def cloneShape(self, shape):
         """
-        Constructor
-        @param csg instance of csg.core.CSG
+        Clone shape
+        @param shape
+        @return new shape
         """
-        self.csg = csg
+        return Shape(shape.csg.clone())
 
-    def toPolygons(self):
-        return self.csg.toPolygons()
-
-    def fromPolygons(self, polys):
-        return Shape(csg=CSG.fromPolygons(polys))
-
-    def getBoundarySurfaceInside(self, other):
+    def getBoundarySurfaceInsideShape(self, shape, other):
         """
         Return the portion of the surface that is inside another shape
+        @param shape
         @param other other shape
         @return shape
         """
-        a = BSPNode(self.csg.clone().polygons)
+        a = BSPNode(shape.csg.clone().polygons)
         b = BSPNode(other.csg.clone().polygons)
         b.invert()
         a.clipTo(b)
         return Shape(CSG.fromPolygons(a.allPolygons()))
 
-    def clone(self):
+    def load(self, file_name):
         """
-        Clone shape
-        @return new shape
+        Load geometry from file
+        @param file_name file name, suffix should be .ply or .vtk
+        @return a Shape object
         """
-        return Shape(self.csg.clone())
+        if not os.path.exists(file_name):
+            raise IOError, 'File {} not found'.format(file_name)
+        reader = None
+        # select the reader according to the suffix
+        if file_name.lower().find('.ply') >= 0:
+            reader = vtk.vtkPLYReader()
+        else:
+            reader = vtk.vtkPolyDataReader()
+        reader.SetFileName(file_name)
+        # read
+        reader.Update()
+        # vtkPolyData
+        pdata = reader.GetOutput()
+        return self.shapeFromVTKPolyData(pdata)
 
-    def rotate(self, axis=(1., 0., 0.), angleDeg=0.0):
+    def rotateShape(self, shape, axis=(1., 0., 0.), angleDeg=0.0):
         """
         Rotate along axis
+        @param shape
         @param axis rotation axis
         @param angleDeg angle in degrees
         """
-        self.csg.rotate(axis, angleDeg)
+        return shape.csg.rotate(axis, angleDeg)
 
-    def translate(self, disp=(0., 0., 0.)):
+    def save(self, shape, file_name, file_format, file_type):
         """
-        Translate
-        @param disp displacement
+        Save the shape in file
+        @param file_name file name
+        @param file_format file format, currently either VTK or PLY
+        @param file_type either 'ascii' or 'binary'
         """
-        self.csg.translate(disp)
+        writer = None
+        if file_format.lower() == 'ply':
+            writer = vtk.vtkPLYWriter()
+        else:
+            writer = vtk.vtkPolyDataWriter()
+        writer.SetFileName(file_name)
+        if file_type.lower() == 'ascii':
+            writer.SetFileTypeToASCII()
+        else:
+            writer.SetFileTypeToBinary()
+        pdata = self.shapeToVTKPolyData(shape)
+        if vtk.VTK_MAJOR_VERSION >= 6:
+            writer.SetInputData(pdata)
+        else:
+            writer.SetInput(pdata)
+        writer.Write()
+        writer.Update()
 
-    def __add__(self, other):
-        """
-        Union
-        @param other Shape instance
-        @return composite shape
-        """
-        return Shape(self.csg + other.csg)
+    def shapeFromPolygons(self, polys):
+        return Shape(csg=CSG.fromPolygons(polys))
 
-    def __sub__(self, other):
-        """
-        Removal
-        @param other Shape instance
-        @return composite shape
-        """
-        return Shape(self.csg - other.csg)
+    def shapeToPolygons(self, shape):
+        return shape.csg.toPolygons()
 
-    def __mul__(self, other):
-        """
-        Intersection
-        @param other Shape instance
-        @return composite shape
-        """
-        return Shape(self.csg * other.csg)
-    
-    @classmethod
-    def fromVTKPolyData(self, pdata):
+    def shapeFromVTKPolyData(self, pdata):
         """
         Create a shape from a VTK PolyData object
         @param pdata vtkPolyData instance
@@ -116,26 +136,22 @@ class Shape:
                 v = Vertex(Vector(pt[0], pt[1], pt[2]))
                 verts.append(v)
             polygons.append(Polygon(verts))
-        
         # instantiate the shape
         csg = CSG.fromPolygons(polygons)
         return Shape(csg=csg)
 
-    def toVTKPolyData(self):
+    def shapeToVTKPolyData(self, shape):
         """
-        Convert the data to a VTK polydata object
+        Convert shape to a VTK polydata object
         """
-
-        verts, polys, count = self.csg.toVerticesAndPolygons()
-
-        self.points = vtk.vtkPoints()
+        verts, polys, count = shape.csg.toVerticesAndPolygons()
+        shape.points = vtk.vtkPoints()
         numPoints = len(verts)
-        self.points.SetNumberOfPoints(numPoints)
+        shape.points.SetNumberOfPoints(numPoints)
         for i in range(numPoints):
-            self.points.SetPoint(i, verts[i])
-
+            shape.points.SetPoint(i, verts[i])
         pdata = vtk.vtkPolyData()
-        pdata.SetPoints(self.points)
+        pdata.SetPoints(shape.points)
         numCells = len(polys)
         pdata.Allocate(numCells, 1)
         ptIds = vtk.vtkIdList()
@@ -145,95 +161,17 @@ class Shape:
             for j in range(npts):
                 ptIds.SetId(j, polys[i][j])
             pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
-
         return pdata
 
-    @classmethod
-    def load(self, file_name):
-        """
-        Load geometry from file
-        @param file_name file name, suffix should be .ply or .vtk
-        @return a Shape object
-        """
-
-        if not os.path.exists(file_name):
-            raise IOError, 'File {} not found'.format(file_name)
-
-        reader = None
-        # select the reader according to the suffix
-        if file_name.lower().find('.ply') >= 0:
-            reader = vtk.vtkPLYReader()
-        else:
-            reader = vtk.vtkPolyDataReader()
-        reader.SetFileName(file_name)
-        # read
-        reader.Update()
-
-        # vtkPolyData
-        pdata = reader.GetOutput()
-        return self.fromVTKPolyData(pdata)
-
-    def save(self, file_name, file_format, file_type):
-        """
-        Save the shape in file
-        @param file_name file name
-        @param file_format file format, currently either VTK or PLY
-        @param file_type either 'ascii' or 'binary'
-        """
-        writer = None
-        if file_format.lower() == 'ply':
-            writer = vtk.vtkPLYWriter()
-        else:
-            writer = vtk.vtkPolyDataWriter()
-
-        writer.SetFileName(file_name)
-        if file_type.lower() == 'ascii':
-            writer.SetFileTypeToASCII()
-        else:
-            writer.SetFileTypeToBinary()
-
-        pdata = self.toVTKPolyData()
-        if vtk.VTK_MAJOR_VERSION >= 6:
-            writer.SetInputData(pdata)
-        else:
-            writer.SetInput(pdata)
-
-        writer.Write()
-        writer.Update()
-
-    def debug(self):
-        """
-        Print/Debug output of this object
-        """
-        points, polys, count = self.csg.toVerticesAndPolygons()
-
-        numPoints = len(points)
-        numCells = len(polys)
-
-        print 'Number of points: ', numPoints
-        for i in range(numPoints):
-            p = points[i]
-            print '{} {:>20} {:>20} {:>20}'.format(i, p[0], p[1], p[2])
-
-        print 'Number of cells: ', numCells
-        for i in range(numCells):
-            c = polys[i]
-            np = len(c)
-            print 'cell: {:>4} num points: {:>3} point: '.format(i, np),
-            for j in range(np):
-                print '{:>8} '.format(c[j]),
-            print
-
-    def show(self, windowSizeX=600, windowSizeY=400, filename=''):
+    def show(self, shape, windowSizeX=600, windowSizeY=400, filename=''):
         """
         Show the boundary surface or write image to file
         @param windowSizeX number of pixels in x
         @param windowSizeY number of pixels in y
-        @param filename write to a file if this keyword is present and a
-                                        non-empty string
+        @param filename write to a file if this keyword
+               is present and a non-empty string
         """
-
-        pdata = self.toVTKPolyData()
+        pdata = self.shapeToVTKPolyData(shape)
 
         # create a rendering window and renderer
         try:
@@ -278,7 +216,6 @@ class Shape:
         center = 0.5*(lo + hi)
         camera.SetPosition(center + hi - lo)
         camera.Zoom(1.0)
-
         ren.SetActiveCamera(camera)
 
         # mapper
@@ -292,10 +229,7 @@ class Shape:
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(1, 1, 1)
 
-        #
         # add axes
-        #
-
         axesColrs = [(1., 0., 0.,), (0., 1., 0.,), (0., 0., 1.,)]
 
         for a in axes:
@@ -354,40 +288,81 @@ class Shape:
             renWin.Render()
             iren.Start()
 
+    def translateShape(self, shape, disp=(0., 0., 0.)):
+        """
+        Translate
+        @param shape
+        @param disp displacement
+        """
+        shape.csg.translate(disp)
+
+
 ###############################################################################
+def testPrimitiveShapes():
+    shape_mgr = ShapeManager()
+
+    # Box
+    box = shape_mgr.createShape('box', origin=(0.,  0.,  0.),
+                                lengths=(0.5,  1.,  2.))
+    shape_mgr.save(box, 'box.vtk', file_format='vtk', file_type='ascii')
+    shape_mgr.show(box)
+
+    # Cone
+    con = shape_mgr.createShape('cone', radius=1.0, origin=(0.,  0.,  0.),
+                                lengths=[1., 0., 0.], n_theta=8)
+    shape_mgr.save(con, 'con.vtk', file_format='vtk', file_type='ascii')
+    shape_mgr.show(con)
+
+    # Cylinder
+    cyl = shape_mgr.createShape('cylinder', radius=1.0, origin=(0., 0., 0.),
+                                lengths=(1., 0., 0.), n_theta=8)
+    shape_mgr.save(cyl, 'cyl.vtk', file_format='vtk', file_type='ascii')
+    shape_mgr.show(cyl)
+
+    # Sphere
+    sph = shape_mgr.createShape('shpere', radius=1.0, origin=(0., 0., 0.),
+                                n_theta=8, n_phi=4)
+    shape_mgr.save(sph, 'sph.vtk', file_format='vtk', file_type='ascii')
+    shape_mgr.show(sph)
 
 
 def testSaveLoad():
-
-    from icqSphere import Sphere
-    from icqBox import Box
-    s = Sphere(radius=0.7, origin=(0., 0., 0.), n_theta=8, n_phi=4)
-    s.save(file_name='t.vtk', file_format='vtk', file_type='ascii')
-    s2 = Shape.load('t.vtk')
-    s3 = Box(origin=(0.1, 0.2, 0.3), lengths=(1.1, 1.2, 1.3))
+    shape_mgr = ShapeManager()
+    s = shape_mgr.createShape('shpere', radius=0.7, origin=(0., 0., 0.),
+                              n_theta=8, n_phi=4)
+    shape_mgr.save(s, file_name='t.vtk', file_format='vtk', file_type='ascii')
+    s2 = shape_mgr.load('t.vtk')
+    s3 = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3),
+                               lengths=(1.1, 1.2, 1.3))
     s4 = s2 + s3
     s4.debug()
 
 
 def testConstructiveGeometry():
-
-    from icqSphere import Sphere
-    from icqBox import Box
-    from icqCylinder import Cylinder
-
-    s1 = Sphere(radius=0.7, origin=(0., 0., 0.))
-    s2 = Sphere(radius=0.2, origin=(0.1, 0.2, 0.3))
-    b = Box(origin=(0.1, 0.2, 0.3), lengths=(1.1, 1.2, 1.3))
-    c = Cylinder(radius=0.5, origin=(0.3, 0.4, 0.5), lengths=(1.0, 0.0, 0.0))
+    shape_mgr = ShapeManager()
+    s1 = shape_mgr.createShape('sphere', radius=0.7, origin=(0., 0., 0.))
+    s2 = shape_mgr.createShape('sphere', radius=0.2, origin=(0.1, 0.2, 0.3))
+    b = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3),
+                              lengths=(1.1, 1.2, 1.3))
+    c = shape_mgr.createShape('cylinder', radius=0.5, origin=(0.3, 0.4, 0.5),
+                              lengths=(1.0, 0.0, 0.0))
 
     geom = c*b - s2 - s1
+    shape_mgr.save(geom, 'geom.ply', file_format='ply', file_type='binary')
+    geom2 = shape_mgr.load('geom.ply')
+    shape_mgr.show(geom2)
 
-    geom.save('geom.ply', file_format='ply', file_type='binary')
 
-    geom2 = Shape.load('geom.ply')
+def testShapeComposition():
+    shape_mgr = ShapeManager()
+    s1 = shape_mgr.createShape('sphere', radius=1, origin=(0., 0., 0.))
+    s2 = shape_mgr.createShape('sphere', radius=1.2, origin=(0.8, 0., 0.))
+    s3 = CompositeShape([('s1', s1), ('s2', s2)], 's1 + s2')
+    shape_mgr.save(s3, 's3.vtk', file_format='vtk', file_type='ascii')
 
-    geom2.show()
 
 if __name__ == '__main__':
+    testPrimitiveShapes()
     testSaveLoad()
     testConstructiveGeometry()
+    testShapeComposition()

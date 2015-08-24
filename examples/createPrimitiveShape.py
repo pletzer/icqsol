@@ -1,19 +1,13 @@
 #!/usr/bin/env python
-
 """
-Create a primitive shape of a certain type
+Create a primitive shapes
 """
-
 import argparse
 import time
 import sys
 import re
 import numpy
-
-from icqsol.tools.geometry.icqBox import Box
-from icqsol.tools.geometry.icqCone import Cone
-from icqsol.tools.geometry.icqCylinder import Cylinder
-from icqsol.tools.geometry.icqSphere import Sphere
+from icqsol.shapes.shape_manager import ShapeManager
 
 options = {
     'sphere': {
@@ -81,6 +75,8 @@ for optNameValue in args.options:
         sys.exit(3)
     options[args.type][optName] = eval(optValue)
 
+shape_mgr = ShapeManager()
+
 # set the surface and volume function
 surfaceFunctions = []
 evalFunction = None
@@ -91,8 +87,8 @@ if args.type == 'sphere':
     origin = optDic['origin']
     n_theta = optDic['n_theta']
     n_phi = optDic['n_phi']
-    shp = Sphere(radius=radius, origin=origin,
-                 n_theta=n_theta, n_phi=n_phi)
+    shp = shape_mgr.createShape('sphere', radius=radius, origin=origin,
+                                n_theta=n_theta, n_phi=n_phi)
 
 elif args.type == 'cylinder':
     radius = optDic['radius']
@@ -100,8 +96,8 @@ elif args.type == 'cylinder':
     lengths = optDic['lengths']
     n_theta = optDic['n_theta']
     # the cylindrical side followed by the two end disks
-    shp = Cylinder(origin=origin, radius=radius,
-                   lengths=lengths, n_theta=n_theta)
+    shp = shape_mgr.createShape('cylinder', origin=origin, radius=radius,
+                                lengths=lengths, n_theta=n_theta)
 
 elif args.type == 'cone':
     radius = optDic['radius']
@@ -109,13 +105,13 @@ elif args.type == 'cone':
     lengths = optDic['lengths']
     n_theta = optDic['n_theta']
     # origin is axis location where radius is max
-    shp = Cone(origin=origin, radius=radius,
-               lengths=lengths, n_theta=n_theta)
+    shp = shape_mgr.createShape('cone', origin=origin, radius=radius,
+                                lengths=lengths, n_theta=n_theta)
 
 elif args.type == 'box':
     origin = numpy.array(optDic['origin'])
     lengths = numpy.array(optDic['lengths'])
-    shp = Box(origin=origin, lengths=lengths)
+    shp = shape_mgr.createShape('box', origin=origin, lengths=lengths)
 
 else:
     print 'ERROR: unknown shape'

@@ -12,7 +12,7 @@ import sys
 
 import numpy
 import vtk
-from icqsol.tools.color.icqColorMap import ColorMap
+from icqsol.color.icqColorMap import ColorMap
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -56,7 +56,7 @@ numComps = pointData.GetNumberOfComponents()
 numPoints = pdataInput.GetPoints().GetNumberOfPoints()
 numArrays = pointData.GetNumberOfArrays()
 
-if not args.name and numArrays > 1: 
+if not args.name and numArrays > 1:
     print 'ERROR: more than one array, must specify --name NAME'
     sys.exit(1)
 

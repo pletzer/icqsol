@@ -8,16 +8,15 @@ import argparse
 import time
 import sys
 import re
-from math import exp, log, sin, cos, pi, tan, acos, asin, atan2, atan, pi
-from numpy import linspace
 
 import vtk
-from icqsol.tools.geometry.icqShape import Shape
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
 
-parser = argparse.ArgumentParser(description='Apply a surface field to a shape')
+description = 'Apply a surface field to a shape'
+parser = argparse.ArgumentParser(description=description)
 
 parser.add_argument('--input', dest='input', default='',
                     help='Input file (PLY or VTK)')
@@ -38,7 +37,7 @@ parser.add_argument('--output', dest='output',
                     default='addSurfaceFieldFromExpression-{0}.vtk'.format(tid),
                     help='VTK Output file.')
 
-args = parser.parse_args() 
+args = parser.parse_args()
 
 if not args.expression:
     print 'ERROR: must specify --expression <expression>'
@@ -51,8 +50,9 @@ if not args.input:
 # make sure the field name contains no spaces
 args.name = re.sub('\s', '_', args.name)
 
-shp = Shape.load(args.input)
-pdata = shp.toVTKPolyData()
+shape_mgr = ShapeManager()
+shp = shape_mgr.load(args.input)
+pdata = shape_mgr.shapeToVTKPolyData()
 points = pdata.GetPoints()
 numPoints = points.GetNumberOfPoints()
 data = vtk.vtkDoubleArray()
@@ -77,7 +77,7 @@ if args.output:
     if args.ascii:
         writer.SetFileTypeToASCII()
     else:
-        writer.SetFileTypeToBinary()       
+        writer.SetFileTypeToBinary()
     if vtk.VTK_MAJOR_VERSION >= 6:
         writer.SetInputData(pdata)
     else:
