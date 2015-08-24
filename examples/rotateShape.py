@@ -9,7 +9,7 @@ import time
 import sys
 import re
 
-from icqsol.tools.geometry.icqShape import Shape
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -39,9 +39,10 @@ if not args.input:
     print 'ERROR: must specify one input file with --input <file>'
     sys.exit(3)
 
-shp = Shape.load(args.input)
+shape_mgr = ShapeManager()
+shp = shape_mgr.load(args.input)
 axis = eval(args.axis)
-shp.rotate(angleDeg=args.angle, axis=axis)
+shape_mgr.rotateShape(shp, angleDeg=args.angle, axis=axis)
 if args.output:
     file_format = 'vtk'
     file_type = 'binary'
@@ -49,4 +50,4 @@ if args.output:
         file_type = 'ascii'
     if args.output.lower().find('.ply') >= 0:
         file_format = 'ply'
-    shp.save(args.output, file_format=file_format, file_type=file_type)
+    shape_mgr.save(args.output, file_format=file_format, file_type=file_type)

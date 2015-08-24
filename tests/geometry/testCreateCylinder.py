@@ -6,7 +6,7 @@ Test creation of cylinders
 """
 
 import argparse
-from icqsol.tools.geometry.icqCylinder import Cylinder
+from icqsol.shapes.shape_manager import ShapeManager
 
 parser = argparse.ArgumentParser(description='Create cylinder')
 
@@ -23,14 +23,18 @@ parser.add_argument('--n_theta', type=int, dest='n_theta', default=32,
                     help='Set number of poloidal cells')
 args = parser.parse_args()
 
-s = Cylinder(radius=args.radius, origin=eval(args.origin),
-             lengths=eval(args.lengths), n_theta=args.n_theta)
+shape_mgr = ShapeManager()
+s = shape_mgr.createShape('cylinder',
+                          radius=args.radius,
+                          origin=eval(args.origin),
+                          lengths=eval(args.lengths),
+                          n_theta=args.n_theta)
 
 if args.output:
     file_format = 'vtk'
     file_type = 'ascii'
     if args.output.find('.ply') > 0:
         file_format = 'ply'
-    s.save(args.output, file_format, file_type)
+    shape_mgr.save(s, args.output, file_format, file_type)
 else:
-    s.show()
+    shape_mgr.show(s)

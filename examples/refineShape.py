@@ -44,7 +44,7 @@ if args.input.lower().find('.ply') >= 0:
     reader = vtk.vtkPLYReader()
 reader.SetFileName(args.input)
 reader.Update()
-    
+
 # vtkPolyData
 pdata = reader.GetOutput()
 

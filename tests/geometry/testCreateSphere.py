@@ -6,7 +6,7 @@ Test creation of sphere
 """
 
 import argparse
-from icqsol.tools.geometry.icqSphere import Sphere
+from icqsol.shapes.shape_manager import ShapeManager
 
 parser = argparse.ArgumentParser(description='Create sphere')
 
@@ -22,14 +22,18 @@ parser.add_argument('--n_phi', type=int, dest='n_phi', default=4,
                     help='Set number of azimuthal cells')
 args = parser.parse_args()
 
-s = Sphere(radius=args.radius, origin=eval(args.origin),
-           n_theta=args.n_theta, n_phi=args.n_phi)
+shape_mgr = ShapeManager()
+s = shape_mgr.createShape('sphere',
+                          radius=args.radius,
+                          origin=eval(args.origin),
+                          n_theta=args.n_theta,
+                          n_phi=args.n_phi)
 
 if args.output:
     file_format = 'vtk'
     file_type = 'ascii'
     if args.output.find('.ply') > 0:
         file_format = 'ply'
-    s.save(args.output, file_format, file_type)
+    shape_mgr.save(s, args.output, file_format, file_type)
 else:
-    s.show()
+    shape_mgr.show(s)
