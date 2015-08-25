@@ -16,11 +16,11 @@ tid = re.sub(r'\.', '', str(time.time()))
 
 parser = argparse.ArgumentParser(description='Compose shapes.')
 
-parser.add_argument('--input', dest='input', nargs='+', default=[],
-                    help='List of input files (PLY or VTK)')
+parser.add_argument('--shapeTuples', dest='shapeTuples', nargs='+', default=[],
+                    help='List of tuples <expression var>, <input file>')
 
 parser.add_argument('--compose', dest='expression',
-                    help='Expression with +, -,, and * on shapes $0, $1...')
+                    help='Expression with +, -,, and * on shapes A, B...')
 
 parser.add_argument('--ascii', dest='ascii', action='store_true',
                     help='Save data in ASCII format (default is binary)')
@@ -35,20 +35,19 @@ if not args.expression:
     print 'ERROR: must specify --compose <expression>'
     sys.exit(2)
 
-if len(args.input) == 0:
-    print 'ERROR: must specify input files: --input <file1> <file2> ...'
+if len(args.shapeTuples) == 0:
+    print 'ERROR: must specify shape tuples: --shapeTuples <var, file>...'
     sys.exit(3)
 
-argShapes = []
+shape_tuples = []
 shape_mgr = ShapeManager()
-for inputFile in args.input:
-    s = shape_mgr.load(inputFile)
-    argShapes.append(s)
 
-expr = args.expression
-for i in range(len(argShapes)):
-    expr = re.sub(r'\${}'.format(i), 'argShapes[{}]'.format(i), expr)
-compositeShape = eval(expr)
+for shapeTuple in args.shapeTuples:
+    expression_var, input_file = shapeTuple
+    s = shape_mgr.load(input_file)
+    shape_tuples.append((expression_var, s))
+
+compositeShape = shape_mgr.compose_shapes( shape_tuples, args.expression )
 
 if args.output:
     fileFormat = 'vtk'

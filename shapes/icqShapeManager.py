@@ -39,6 +39,15 @@ class ShapeManager(object):
         """
         return Shape(shape.csg.clone())
 
+    def composeShapes(self, shape_tuples=[], expression=''):
+        """
+        Compose shapes into a more complex shape.
+        @param shape_tuples list of (variable_name, shape) pairs
+        @param expression expression involving +, -, and * operations.
+        @return new shape
+        """
+        return CompositeShape(shape_tuples, expression)
+
     def getBoundarySurfaceInsideShape(self, shape, other):
         """
         Return the portion of the surface that is inside another shape
@@ -346,7 +355,6 @@ def testConstructiveGeometry():
                               lengths=(1.1, 1.2, 1.3))
     c = shape_mgr.createShape('cylinder', radius=0.5, origin=(0.3, 0.4, 0.5),
                               lengths=(1.0, 0.0, 0.0))
-
     geom = c*b - s2 - s1
     shape_mgr.save(geom, 'geom.ply', file_format='ply', file_type='binary')
     geom2 = shape_mgr.load('geom.ply')
@@ -357,7 +365,7 @@ def testShapeComposition():
     shape_mgr = ShapeManager()
     s1 = shape_mgr.createShape('sphere', radius=1, origin=(0., 0., 0.))
     s2 = shape_mgr.createShape('sphere', radius=1.2, origin=(0.8, 0., 0.))
-    s3 = CompositeShape([('s1', s1), ('s2', s2)], 's1 + s2')
+    s3 = shape_mgr.composeShapes([('s1', s1), ('s2', s2)], 's1 + s2')
     shape_mgr.save(s3, 's3.vtk', file_format='vtk', file_type='ascii')
 
 
