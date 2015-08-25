@@ -50,4 +50,4 @@ if args.output:
         file_type = 'ascii'
     if args.output.lower().find('.ply') >= 0:
         file_format = 'ply'
-    shape_mgr.save(args.output, file_format=file_format, file_type=file_type)
+    shape_mgr.save(shp, args.output, file_format=file_format, file_type=file_type)
