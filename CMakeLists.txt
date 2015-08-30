@@ -61,7 +61,7 @@ add_test(NAME testPointInsideShape2 COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}
 
 add_test(NAME testColorMap
          COMMAND "${PYTHON_EXECUTABLE}" 
-         "${CMAKE_SOURCE_DIR}/tools/color/testColorMap.py")
+         "${CMAKE_SOURCE_DIR}/color/testColorMap.py")
 add_test(NAME testPrimitiveSphere 
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 

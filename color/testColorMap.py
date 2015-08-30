@@ -1,4 +1,4 @@
-from icqsol.tools.color.icqColorMap import ColorMap
+from icqsol.color.icqColorMap import ColorMap
 
 fmin = 0.0
 fmax = 1.0
