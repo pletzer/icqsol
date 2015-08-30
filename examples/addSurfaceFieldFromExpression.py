@@ -8,6 +8,8 @@ import argparse
 import time
 import sys
 import re
+from numpy import linspace
+from math import sin, cos, tan, log, exp, pi, asin, acos, atan, atan2, e
 
 import vtk
 from icqsol.shapes.icqShapeManager import ShapeManager
@@ -52,7 +54,7 @@ args.name = re.sub('\s', '_', args.name)
 
 shape_mgr = ShapeManager()
 shp = shape_mgr.load(args.input)
-pdata = shape_mgr.shapeToVTKPolyData()
+pdata = shape_mgr.shapeToVTKPolyData(shp)
 points = pdata.GetPoints()
 numPoints = points.GetNumberOfPoints()
 data = vtk.vtkDoubleArray()
