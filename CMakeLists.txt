@@ -119,27 +119,27 @@ add_test(NAME testPrimitiveBox
 add_test(NAME testCompositeUnion
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
-         --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
-         --compose "$0 + $1"
+         --shapeTuples "s1,testPrimitiveSphere.vtk" "s2,testPrimitiveCylinder.ply"
+         --compose "s1 + s2"
          --output testCompositeUnion.vtk)
 add_test(NAME testCompositeIntersection
          COMMAND "${PYTHON_EXECUTABLE}" 
-         "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
-         --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
-         --compose "$0 * $1"
+         "${CMAKE_SOURCE_DIR}/examples/composeShapes.py"
+         --shapeTuples "s1,testPrimitiveSphere.vtk" "s2,testPrimitiveCylinder.ply"
+         --compose "s1 * s2"
          --output testCompositeIntersection.vtk)
 add_test(NAME testRingCoarse
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
-         --input cylOuter.ply cylInner.ply
-         --compose "$0 - $1"
+         --shapeTuples "s1, cylOuter.ply" "s2, cylInner.ply"
+         --compose "s1 - s2"
          --ascii
          --output ringCoarse.vtk)
 add_test(NAME testCompositeRemoval
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/composeShapes.py" 
-         --input testPrimitiveSphere.vtk testPrimitiveCylinder.ply
-         --compose "$0 - $1"
+         --shapeTuples "a, testPrimitiveSphere.vtk" "b, testPrimitiveCylinder.ply"
+         --compose "a - b"
          --output testCompositeRemoval.vtk)
 add_test(NAME testTranslate
          COMMAND "${PYTHON_EXECUTABLE}" 

@@ -43,11 +43,11 @@ shape_tuples = []
 shape_mgr = ShapeManager()
 
 for shapeTuple in args.shapeTuples:
-    expression_var, input_file = shapeTuple
+    expression_var, input_file = re.sub(r'\s*', '', shapeTuple).split(',')
     s = shape_mgr.load(input_file)
     shape_tuples.append((expression_var, s))
 
-compositeShape = shape_mgr.compose_shapes( shape_tuples, args.expression )
+compositeShape = shape_mgr.composeShapes(shape_tuples, args.expression)
 
 if args.output:
     fileFormat = 'vtk'
