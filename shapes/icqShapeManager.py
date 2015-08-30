@@ -8,19 +8,19 @@ import numpy
 from csg.geom import Vector, Vertex, Polygon, BSPNode
 from csg.core import CSG
 from icqShape import Box, Cone, Cylinder, Sphere
-from icqShape import DEFAULTS, CompositeShape, Shape
+from icqShape import DEFAULTS, CompositeShape
 
 
 class ShapeManager(object):
 
     def createShape(self, type, origin=None, lengths=None, radius=None,
                     angle=None, n_theta=None, n_phi=None):
-        origin = origin or DEFAULTS.get('origin', [0.0, 0.0, 0.0])
-        lengths = lengths or DEFAULTS.get('lengths', [1.0, 1.0, 1.0])
-        radius = radius or DEFAULTS.get('radius', [0.5, 0.5, 0.5])
-        angle = angle or DEFAULTS.get('angle', 90.0)
-        n_theta = n_theta or DEFAULTS.get('n_theta', 16)
-        n_phi = n_phi or DEFAULTS.get('n_phi', 8)
+        origin = DEFAULTS['origin']
+        lengths = DEFAULTS['lengths']
+        radius = DEFAULTS['radius']
+        angle = DEFAULTS['angle']
+        n_theta = DEFAULTS['n_theta']
+        n_phi = DEFAULTS['n_phi']
         if type == 'box':
             return Box(origin, lengths)
         if type == 'cone':
@@ -37,7 +37,7 @@ class ShapeManager(object):
         @param shape
         @return new shape
         """
-        return Shape(shape.csg.clone())
+        return shape.clone()
 
     def composeShapes(self, shape_tuples=[], expression=''):
         """
@@ -55,11 +55,11 @@ class ShapeManager(object):
         @param other other shape
         @return shape
         """
-        a = BSPNode(shape.csg.clone().polygons)
-        b = BSPNode(other.csg.clone().polygons)
+        a = BSPNode(shape.clone().polygons)
+        b = BSPNode(other.clone().polygons)
         b.invert()
         a.clipTo(b)
-        return Shape(CSG.fromPolygons(a.allPolygons()))
+        return CSG.fromPolygons(a.allPolygons())
 
     def load(self, file_name):
         """
@@ -89,7 +89,7 @@ class ShapeManager(object):
         @param axis rotation axis
         @param angleDeg angle in degrees
         """
-        return shape.csg.rotate(axis, angleDeg)
+        return shape.rotate(axis, angleDeg)
 
     def save(self, shape, file_name, file_format, file_type):
         """
@@ -117,10 +117,10 @@ class ShapeManager(object):
         writer.Update()
 
     def shapeFromPolygons(self, polys):
-        return Shape(csg=CSG.fromPolygons(polys))
+        return CSG.fromPolygons(polys)
 
     def shapeToPolygons(self, shape):
-        return shape.csg.toPolygons()
+        return shape.toPolygons()
 
     def shapeFromVTKPolyData(self, pdata):
         """
@@ -146,14 +146,13 @@ class ShapeManager(object):
                 verts.append(v)
             polygons.append(Polygon(verts))
         # instantiate the shape
-        csg = CSG.fromPolygons(polygons)
-        return Shape(csg=csg)
+        return CSG.fromPolygons(polygons)
 
     def shapeToVTKPolyData(self, shape):
         """
         Convert shape to a VTK polydata object
         """
-        verts, polys, count = shape.csg.toVerticesAndPolygons()
+        verts, polys, count = shape.toVerticesAndPolygons()
         shape.points = vtk.vtkPoints()
         numPoints = len(verts)
         shape.points.SetNumberOfPoints(numPoints)
@@ -303,7 +302,7 @@ class ShapeManager(object):
         @param shape
         @param disp displacement
         """
-        shape.csg.translate(disp)
+        shape.translate(disp)
 
 
 ###############################################################################

@@ -7,7 +7,6 @@ Test conversion from a shape to a list of polygons
 """
 shape_mgr = ShapeManager()
 shp = shape_mgr.createShape('box', origin=[0., 0., 0.], lengths=[1., 1., 1.],)
-shp.debug()
 
 # check whether one can convert to a list of polygons
 polys = shape_mgr.shapeToPolygons(shp)
@@ -20,6 +19,5 @@ a = CSG.fromPolygons(polys)
 
 shp2 = shape_mgr.createShape('sphere', radius=1.0, origin=(0., 0., 0.),
                              n_theta=5, n_phi=2)
-shp2.debug()
 polys2 = shape_mgr.shapeToPolygons(shp2)
 a2 = CSG.fromPolygons(polys2)
