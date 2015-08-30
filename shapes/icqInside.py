@@ -17,7 +17,7 @@ class Inside:
         @param shape instance of Shape
         @param polys connectivty
         """
-        points, polys, count = shape.csg.toVerticesAndPolygons()
+        points, polys, count = shape.toVerticesAndPolygons()
         # must have at least one point
         self.ndims = len(points[0])
 
