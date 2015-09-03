@@ -31,6 +31,47 @@ class ShapeManager(object):
             return Sphere(radius, origin, n_theta, n_phi)
         return None
 
+    def add_surface_field_from_expression(self, shape, field_name, expression, time_points):
+        """
+        Add a surface field to a shape using an expression consisting of
+        legal variables x,y,z (shape point coordinates) and t (time).
+        @param shape
+        @param field_name the name of the surface field
+        @expression Expression consisting of legal variables x, y, z, and t
+        @param time_points list of floating point values defining
+               snapshots in a time sequence
+        @return pdata VTKPolyData converted from shape with added surface field
+        """
+        # This class incorporates features from 2 primary classes: CSG
+        # and vtkPolyData.  It uses CSG to assemble shapes which have no
+        # knowledge of fields.  VtkPolyData objects are grids with fields
+        # typically attached to them, but not always.  So when we attach
+        # a surface field, we can no longer use CSG objects, and so this
+        # method returns just the data.  The save() method will accept
+        # either a shape or a VtkPolyData object, so all is well.
+        valid_field_name = field_name.replace( ' ', '_' )
+        # Get the points from the shape.
+        pdata = self.shapeToVTKPolyData(shape)
+        points = pdata.GetPoints()
+        num_points = points.GetNumberOfPoints()
+        # Define the data.
+        data = vtk.vtkDoubleArray()
+        data.SetName(valid_field_name)
+        # Handle time points.
+        num_time_points = len(time_points)
+        # Update the data.
+        data.SetNumberOfComponents(num_time_points)
+        data.SetNumberOfTuples(num_points)
+        # Add the surface field.
+        for i in range(num_points):
+            x, y, z = points.GetPoint(i)
+            for j in range(num_time_points):
+                t = time_points[ j ]
+                field_value = eval(expression)
+                data.SetComponent(i, j, field_value)
+        pdata.GetPointData().SetScalars(data)
+        return pdata
+
     def cloneShape(self, shape):
         """
         Clone shape
@@ -91,13 +132,16 @@ class ShapeManager(object):
         """
         return shape.rotate(axis, angleDeg)
 
-    def save(self, shape, file_name, file_format, file_type):
+    def save(self, file_name, file_format, file_type, shape=None, vtk_poly_data=None):
         """
         Save the shape in file
         @param file_name file name
         @param file_format file format, currently either VTK or PLY
         @param file_type either 'ascii' or 'binary'
+        @param (optional) shape for saving
+        @param (optional) vtk_poly_data for saving
         """
+        assert shape is not None or vtk_poly_data is not None, "Missing required value for shape or vtk_poly_data"
         writer = None
         if file_format.lower() == 'ply':
             writer = vtk.vtkPLYWriter()
@@ -108,11 +152,12 @@ class ShapeManager(object):
             writer.SetFileTypeToASCII()
         else:
             writer.SetFileTypeToBinary()
-        pdata = self.shapeToVTKPolyData(shape)
+        if vtk_poly_data is None:
+            vtk_poly_data = self.shapeToVTKPolyData(shape)
         if vtk.VTK_MAJOR_VERSION >= 6:
-            writer.SetInputData(pdata)
+            writer.SetInputData(vtk_poly_data)
         else:
-            writer.SetInput(pdata)
+            writer.SetInput(vtk_poly_data)
         writer.Write()
         writer.Update()
 
@@ -312,25 +357,25 @@ def testPrimitiveShapes():
     # Box
     box = shape_mgr.createShape('box', origin=(0.,  0.,  0.),
                                 lengths=(0.5,  1.,  2.))
-    shape_mgr.save(box, 'box.vtk', file_format='vtk', file_type='ascii')
+    shape_mgr.save('box.vtk', file_format='vtk', file_type='ascii', shape=box)
     shape_mgr.show(box)
 
     # Cone
     con = shape_mgr.createShape('cone', radius=1.0, origin=(0.,  0.,  0.),
                                 lengths=[1., 0., 0.], n_theta=8)
-    shape_mgr.save(con, 'con.vtk', file_format='vtk', file_type='ascii')
+    shape_mgr.save('con.vtk', file_format='vtk', file_type='ascii', shape=con)
     shape_mgr.show(con)
 
     # Cylinder
     cyl = shape_mgr.createShape('cylinder', radius=1.0, origin=(0., 0., 0.),
                                 lengths=(1., 0., 0.), n_theta=8)
-    shape_mgr.save(cyl, 'cyl.vtk', file_format='vtk', file_type='ascii')
+    shape_mgr.save('cyl.vtk', file_format='vtk', file_type='ascii', shape=cyl)
     shape_mgr.show(cyl)
 
     # Sphere
     sph = shape_mgr.createShape('shpere', radius=1.0, origin=(0., 0., 0.),
                                 n_theta=8, n_phi=4)
-    shape_mgr.save(sph, 'sph.vtk', file_format='vtk', file_type='ascii')
+    shape_mgr.save('sph.vtk', file_format='vtk', file_type='ascii', shape=sph)
     shape_mgr.show(sph)
 
 
@@ -338,7 +383,7 @@ def testSaveLoad():
     shape_mgr = ShapeManager()
     s = shape_mgr.createShape('shpere', radius=0.7, origin=(0., 0., 0.),
                               n_theta=8, n_phi=4)
-    shape_mgr.save(s, file_name='t.vtk', file_format='vtk', file_type='ascii')
+    shape_mgr.save(file_name='t.vtk', file_format='vtk', file_type='ascii', shape=s)
     s2 = shape_mgr.load('t.vtk')
     s3 = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3),
                                lengths=(1.1, 1.2, 1.3))
@@ -355,7 +400,7 @@ def testConstructiveGeometry():
     c = shape_mgr.createShape('cylinder', radius=0.5, origin=(0.3, 0.4, 0.5),
                               lengths=(1.0, 0.0, 0.0))
     geom = c*b - s2 - s1
-    shape_mgr.save(geom, 'geom.ply', file_format='ply', file_type='binary')
+    shape_mgr.save('geom.ply', file_format='ply', file_type='binary', shape=geom)
     geom2 = shape_mgr.load('geom.ply')
     shape_mgr.show(geom2)
 
@@ -365,7 +410,7 @@ def testShapeComposition():
     s1 = shape_mgr.createShape('sphere', radius=1, origin=(0., 0., 0.))
     s2 = shape_mgr.createShape('sphere', radius=1.2, origin=(0.8, 0., 0.))
     s3 = shape_mgr.composeShapes([('s1', s1), ('s2', s2)], 's1 + s2')
-    shape_mgr.save(s3, 's3.vtk', file_format='vtk', file_type='ascii')
+    shape_mgr.save('s3.vtk', file_format='vtk', file_type='ascii', shape=s3)
 
 
 if __name__ == '__main__':
