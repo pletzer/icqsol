@@ -56,5 +56,4 @@ if args.output:
         fileType = 'ascii'
     if args.output.lower().find('.ply') >= 0:
         fileFormat = 'ply'
-    shape_mgr.save(compositeShape,
-                   args.output, file_format=fileFormat, file_type=fileType)
+    shape_mgr.save(args.output, file_format=fileFormat, file_type=fileType, shape=compositeShape)

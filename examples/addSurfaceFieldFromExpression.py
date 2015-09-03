@@ -54,35 +54,14 @@ args.name = re.sub('\s', '_', args.name)
 
 shape_mgr = ShapeManager()
 shp = shape_mgr.load(args.input)
-pdata = shape_mgr.shapeToVTKPolyData(shp)
-points = pdata.GetPoints()
-numPoints = points.GetNumberOfPoints()
-data = vtk.vtkDoubleArray()
-data.SetName(args.name)
 times = [0.0]
 if args.times:
     times = eval(args.times)
-numTimes = len(times)
-data.SetNumberOfComponents(numTimes)
-data.SetNumberOfTuples(numPoints)
-for i in range(numPoints):
-    x, y, z = points.GetPoint(i)
-    for j in range(numTimes):
-        t = times[j]
-        fieldValue = eval(args.expression)
-        data.SetComponent(i, j, fieldValue)
-pdata.GetPointData().SetScalars(data)
+pdata = shape_mgr.add_surface_field_from_expression(shp, args.name, args.expression, times)
 
 if args.output:
-    writer = vtk.vtkPolyDataWriter()
-    writer.SetFileName(args.output)
     if args.ascii:
-        writer.SetFileTypeToASCII()
+        file_type = 'ascii'
     else:
-        writer.SetFileTypeToBinary()
-    if vtk.VTK_MAJOR_VERSION >= 6:
-        writer.SetInputData(pdata)
-    else:
-        writer.SetInput(pdata)
-    writer.Write()
-    writer.Update()
+        file_type = 'binary'
+    shape_mgr.save(file_name=args.output, file_format='vtk', file_type=file_type, vtk_poly_data=pdata)
