@@ -128,7 +128,7 @@ class ShapeManager(object):
         colored_vtk_poly_data.GetArray(0).SetName('red')
         colored_vtk_poly_data.GetArray(1).SetName('green')
         colored_vtk_poly_data.GetArray(2).SetName('blue')
-        return colored_vtk_poly_data
+        return vtk_poly_data_copy
 
     def cloneShape(self, shape):
         """
