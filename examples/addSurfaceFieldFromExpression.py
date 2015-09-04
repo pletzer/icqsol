@@ -3,15 +3,11 @@
 """
 Apply a surface field to a shape
 """
-
 import argparse
 import time
 import sys
 import re
-from numpy import linspace
-from math import sin, cos, tan, log, exp, pi, asin, acos, atan, atan2, e
 
-import vtk
 from icqsol.shapes.icqShapeManager import ShapeManager
 
 # time stamp
@@ -57,7 +53,7 @@ shp = shape_mgr.load(args.input)
 times = [0.0]
 if args.times:
     times = eval(args.times)
-pdata = shape_mgr.add_surface_field_from_expression(shp, args.name, args.expression, times)
+pdata = shape_mgr.addSurfaceFieldFromExpression(shp, args.name, args.expression, times)
 
 if args.output:
     if args.ascii:

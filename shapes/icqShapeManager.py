@@ -5,10 +5,14 @@
 import os
 import vtk
 import numpy
+# We need the following to handle expressions received from callers.
+from numpy import linspace
+from math import sin, cos, tan, log, exp, pi, asin, acos, atan, atan2, e
 from csg.geom import Vector, Vertex, Polygon, BSPNode
 from csg.core import CSG
 from icqShape import Box, Cone, Cylinder, Sphere
 from icqShape import DEFAULTS, CompositeShape
+from icqsol.color.icqColorMap import ColorMap
 
 
 class ShapeManager(object):
@@ -31,16 +35,16 @@ class ShapeManager(object):
             return Sphere(radius, origin, n_theta, n_phi)
         return None
 
-    def add_surface_field_from_expression(self, shape, field_name, expression, time_points):
+    def addSurfaceFieldFromExpression(self, shape, field_name, expression, time_points):
         """
         Add a surface field to a shape using an expression consisting of
         legal variables x,y,z (shape point coordinates) and t (time).
         @param shape
-        @param field_name the name of the surface field
-        @expression Expression consisting of legal variables x, y, z, and t
-        @param time_points list of floating point values defining
+        @param field_name, the name of the surface field
+        @param expression, expression consisting of legal variables x, y, z, and t
+        @param time_points, list of floating point values defining
                snapshots in a time sequence
-        @return pdata VTKPolyData converted from shape with added surface field
+        @return pdata, VTKPolyData converted from shape with added surface field
         """
         # This class incorporates features from 2 primary classes: CSG
         # and vtkPolyData.  It uses CSG to assemble shapes which have no
@@ -72,6 +76,60 @@ class ShapeManager(object):
         pdata.GetPointData().SetScalars(data)
         return pdata
 
+    def colorSurfaceField(self, vtk_poly_data, color_map, field_name=None):
+        """
+        Color a selected surface field of a shape.
+        @param vtk_poly_data, data defining the shape with surface field information
+        @param field_name, the name of the surface field to color
+        @param color_map, name of the color map to use
+        @return colored_vtk_poly_data, color applied to vtk_poly_data
+        """
+        # Copy the received vtk_poly_data, creating another
+        # vtkPolyData object with the same points and cells.
+        vtk_poly_data_copy = vtk.vtkPolyData()
+        vtk_poly_data_copy.SetPoints(vtk_poly_data.GetPoints())
+        vtk_poly_data_copy.SetPolys(vtk_poly_data.GetPolys())
+        # Get information from the data.
+        pointData = vtk_poly_data.GetPointData()
+        numComps = pointData.GetNumberOfComponents()
+        numPoints = vtk_poly_data.GetPoints().GetNumberOfPoints()
+        numArrays = pointData.GetNumberOfArrays()
+        assert field_name is not None or numArrays == 1, "Field name must be specified since data has %d arrays" % numArrays
+        # Get the min/max field values.
+        array = pointData.GetScalars(args.name)
+        fmin, fmax = array.GetRange()
+        # Prepare for coloring the points.
+        redArray = vtk.vtkUnsignedCharArray()
+        greenArray = vtk.vtkUnsignedCharArray()
+        blueArray = vtk.vtkUnsignedCharArray()
+        redArray.SetNumberOfComponents(numComps)
+        greenArray.SetNumberOfComponents(numComps)
+        blueArray.SetNumberOfComponents(numComps)
+        redArray.SetNumberOfTuples(numPoints)
+        greenArray.SetNumberOfTuples(numPoints)
+        blueArray.SetNumberOfTuples(numPoints)
+        rs = numpy.zeros((numComps,), numpy.uint8)
+        gs = numpy.zeros((numComps,), numpy.uint8)
+        bs = numpy.zeros((numComps,), numpy.uint8)
+        # Build the color map.
+        colorMap = ColorMap(fmin, fmax)
+        colorMethod = eval('colormap.' + color_map)
+        # Color the points.
+        for i in range(numPoints):
+            fs = array.GetTuple(i)
+            for j in range(numComps):
+                rs[j], gs[j], bs[j] = colorMethod(fs[j])
+            redArray.SetTuple(i, rs)
+            greenArray.SetTuple(i, gs)
+            blueArray.SetTuple(i, bs)
+        colored_vtk_poly_data = vtk_poly_data_copy.GetPointData()
+        for arr in redArray, greenArray, blueArray:
+            colored_vtk_poly_data.AddArray(arr)
+        colored_vtk_poly_data.GetArray(0).SetName('red')
+        colored_vtk_poly_data.GetArray(1).SetName('green')
+        colored_vtk_poly_data.GetArray(2).SetName('blue')
+        return colored_vtk_poly_data
+
     def cloneShape(self, shape):
         """
         Clone shape
@@ -102,11 +160,13 @@ class ShapeManager(object):
         a.clipTo(b)
         return CSG.fromPolygons(a.allPolygons())
 
-    def load(self, file_name):
+    def load(self, file_name, as_shape=True, as_vtk_poly_data=False):
         """
         Load geometry from file
-        @param file_name file name, suffix should be .ply or .vtk
-        @return a Shape object
+        @param file_name suffix should be .ply or .vtk
+        @param as_shape boolean if True, return shape
+        @param as_vtk_poly_data boolean if True, return vtk_poly_data
+        @return a Shape object or vtkPolyData object
         """
         if not os.path.exists(file_name):
             raise IOError, 'File {} not found'.format(file_name)
@@ -120,8 +180,10 @@ class ShapeManager(object):
         # read
         reader.Update()
         # vtkPolyData
-        pdata = reader.GetOutput()
-        return self.shapeFromVTKPolyData(pdata)
+        vtk_poly_data = reader.GetOutput()
+        if as_vtk_poly_data:
+            return vtk_poly_data
+        return self.shapeFromVTKPolyData(vtk_poly_data)
 
     def rotateShape(self, shape, axis=(1., 0., 0.), angleDeg=0.0):
         """
