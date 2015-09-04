@@ -10,9 +10,7 @@ import os
 import re
 import sys
 
-import numpy
-import vtk
-from icqsol.color.icqColorMap import ColorMap
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -45,73 +43,13 @@ if not os.path.exists(args.input):
     print 'ERROR: file {} does not exist'.format(args.input)
     sys.exit(2)
 
-# read the data
-reader = vtk.vtkPolyDataReader()
-reader.SetFileName(args.input)
-reader.Update()
-
-pdataInput = reader.GetOutput()
-pointData = pdataInput.GetPointData()
-numComps = pointData.GetNumberOfComponents()
-numPoints = pdataInput.GetPoints().GetNumberOfPoints()
-numArrays = pointData.GetNumberOfArrays()
-
-if not args.name and numArrays > 1:
-    print 'ERROR: more than one array, must specify --name NAME'
-    sys.exit(1)
-
-# min/max field values
-array = pointData.GetScalars(args.name)
-fmin, fmax = array.GetRange()
-
-# build the colormap
-colormap = ColorMap(fmin, fmax)
-colrMethod = eval('colormap.' + args.colormap)
-
-# create another poly data with the same points/cells
-pdataOutput = vtk.vtkPolyData()
-pdataOutput.SetPoints(pdataInput.GetPoints())
-pdataOutput.SetPolys(pdataInput.GetPolys())
-
-# color the points
-rArray = vtk.vtkUnsignedCharArray()
-gArray = vtk.vtkUnsignedCharArray()
-bArray = vtk.vtkUnsignedCharArray()
-rArray.SetNumberOfComponents(numComps)
-gArray.SetNumberOfComponents(numComps)
-bArray.SetNumberOfComponents(numComps)
-rArray.SetNumberOfTuples(numPoints)
-gArray.SetNumberOfTuples(numPoints)
-bArray.SetNumberOfTuples(numPoints)
-rs = numpy.zeros((numComps,), numpy.uint8)
-gs = numpy.zeros((numComps,), numpy.uint8)
-bs = numpy.zeros((numComps,), numpy.uint8)
-
-for i in range(numPoints):
-    fs = array.GetTuple(i)
-    for j in range(numComps):
-        rs[j], gs[j], bs[j] = colrMethod(fs[j])
-    rArray.SetTuple(i, rs)
-    gArray.SetTuple(i, gs)
-    bArray.SetTuple(i, bs)
-
-pointDataOut = pdataOutput.GetPointData()
-for arr in rArray, gArray, bArray:
-    pointDataOut.AddArray(arr)
-pointDataOut.GetArray(0).SetName('red')
-pointDataOut.GetArray(1).SetName('green')
-pointDataOut.GetArray(2).SetName('blue')
+shape_mgr = ShapeManager()
+pDataInput = shape_mgr.load(args.input, as_vtk_poly_data=True)
+pDataColored = shape_mgr.colorSurfaceField(pDataInput, args.colormap, field_name=args.name)
 
 if args.output:
-    writer = vtk.vtkPolyDataWriter()
-    writer.SetFileName(args.output)
     if args.ascii:
-        writer.SetFileTypeToASCII()
+        file_type = 'ascii'
     else:
-        writer.SetFileTypeToBinary()
-    if vtk.VTK_MAJOR_VERSION >= 6:
-        writer.SetInputData(pdataOutput)
-    else:
-        writer.SetInput(pdataOutput)
-    writer.Write()
-    writer.Update()
+        file_type = 'binary'
+    shape_mgr.save(file_name=args.output, file_format='vtk', file_type=file_type, vtk_poly_data=pDataColored)
