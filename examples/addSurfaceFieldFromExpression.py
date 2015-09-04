@@ -7,6 +7,7 @@ import argparse
 import time
 import sys
 import re
+from numpy import linspace
 
 from icqsol.shapes.icqShapeManager import ShapeManager
 
