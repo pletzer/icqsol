@@ -8,8 +8,6 @@ import argparse
 import time
 import sys
 import re
-from numpy import linspace
-from math import sin, cos, tan, log, exp, pi, asin, acos, atan, atan2, e
 
 import vtk
 from icqsol.shapes.icqShapeManager import ShapeManager

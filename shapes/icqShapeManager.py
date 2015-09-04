@@ -5,6 +5,9 @@
 import os
 import vtk
 import numpy
+# We need the following to handle expressions received from callers.
+from numpy import linspace
+from math import sin, cos, tan, log, exp, pi, asin, acos, atan, atan2, e
 from csg.geom import Vector, Vertex, Polygon, BSPNode
 from csg.core import CSG
 from icqShape import Box, Cone, Cylinder, Sphere
@@ -31,7 +34,7 @@ class ShapeManager(object):
             return Sphere(radius, origin, n_theta, n_phi)
         return None
 
-    def add_surface_field_from_expression(self, shape, field_name, expression, time_points):
+    def addSurfaceFieldFromExpression(self, shape, field_name, expression, time_points):
         """
         Add a surface field to a shape using an expression consisting of
         legal variables x,y,z (shape point coordinates) and t (time).
