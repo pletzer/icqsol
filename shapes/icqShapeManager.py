@@ -12,6 +12,7 @@ from csg.geom import Vector, Vertex, Polygon, BSPNode
 from csg.core import CSG
 from icqShape import Box, Cone, Cylinder, Sphere
 from icqShape import DEFAULTS, CompositeShape
+from icqsol.color.icqColorMap import ColorMap
 
 
 class ShapeManager(object):
@@ -105,11 +106,13 @@ class ShapeManager(object):
         a.clipTo(b)
         return CSG.fromPolygons(a.allPolygons())
 
-    def load(self, file_name):
+    def load(self, file_name, as_shape=True, as_vtk_poly_data=False):
         """
         Load geometry from file
-        @param file_name file name, suffix should be .ply or .vtk
-        @return a Shape object
+        @param file_name suffix should be .ply or .vtk
+        @param as_shape boolean if True, return shape
+        @param as_vtk_poly_data boolean if True, return vtk_poly_data
+        @return a Shape object or vtkPolyData object
         """
         if not os.path.exists(file_name):
             raise IOError, 'File {} not found'.format(file_name)
@@ -123,8 +126,10 @@ class ShapeManager(object):
         # read
         reader.Update()
         # vtkPolyData
-        pdata = reader.GetOutput()
-        return self.shapeFromVTKPolyData(pdata)
+        vtk_poly_data = reader.GetOutput()
+        if as_vtk_poly_data:
+            return vtk_poly_data
+        return self.shapeFromVTKPolyData(vtk_poly_data)
 
     def rotateShape(self, shape, axis=(1., 0., 0.), angleDeg=0.0):
         """
