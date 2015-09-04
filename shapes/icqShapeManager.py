@@ -96,7 +96,7 @@ class ShapeManager(object):
         numArrays = pointData.GetNumberOfArrays()
         assert field_name is not None or numArrays == 1, "Field name must be specified since data has %d arrays" % numArrays
         # Get the min/max field values.
-        array = pointData.GetScalars(args.name)
+        array = pointData.GetScalars(field_name)
         fmin, fmax = array.GetRange()
         # Prepare for coloring the points.
         redArray = vtk.vtkUnsignedCharArray()
@@ -113,7 +113,7 @@ class ShapeManager(object):
         bs = numpy.zeros((numComps,), numpy.uint8)
         # Build the color map.
         colorMap = ColorMap(fmin, fmax)
-        colorMethod = eval('colormap.' + color_map)
+        colorMethod = eval('colorMap.' + color_map)
         # Color the points.
         for i in range(numPoints):
             fs = array.GetTuple(i)
