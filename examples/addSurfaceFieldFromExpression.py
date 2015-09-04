@@ -50,7 +50,7 @@ if not args.input:
 args.name = re.sub('\s', '_', args.name)
 
 shape_mgr = ShapeManager()
-shp = shape_mgr.load(args.input)
+shp = shape_mgr.loadAsShape(args.input)
 times = [0.0]
 if args.times:
     times = eval(args.times)
@@ -61,4 +61,4 @@ if args.output:
         file_type = 'ascii'
     else:
         file_type = 'binary'
-    shape_mgr.save(file_name=args.output, file_format='vtk', file_type=file_type, vtk_poly_data=pdata)
+    shape_mgr.saveVtkPolyData(file_name=args.output, file_format='vtk', file_type=file_type, vtk_poly_data=pdata)

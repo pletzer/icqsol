@@ -44,7 +44,7 @@ shape_mgr = ShapeManager()
 
 for shapeTuple in args.shapeTuples:
     expression_var, input_file = re.sub(r'\s*', '', shapeTuple).split(',')
-    s = shape_mgr.load(input_file)
+    s = shape_mgr.loadAsShape(input_file)
     shape_tuples.append((expression_var, s))
 
 compositeShape = shape_mgr.composeShapes(shape_tuples, args.expression)
@@ -56,4 +56,4 @@ if args.output:
         fileType = 'ascii'
     if args.output.lower().find('.ply') >= 0:
         fileFormat = 'ply'
-    shape_mgr.save(args.output, file_format=fileFormat, file_type=fileType, shape=compositeShape)
+    shape_mgr.saveShape(args.output, file_format=fileFormat, file_type=fileType, shape=compositeShape)

@@ -160,13 +160,11 @@ class ShapeManager(object):
         a.clipTo(b)
         return CSG.fromPolygons(a.allPolygons())
 
-    def load(self, file_name, as_shape=True, as_vtk_poly_data=False):
+    def loadAsVtkPolyData(self, file_name):
         """
-        Load geometry from file
+        Load a VtkPolyData object from a file
         @param file_name suffix should be .ply or .vtk
-        @param as_shape boolean if True, return shape
-        @param as_vtk_poly_data boolean if True, return vtk_poly_data
-        @return a Shape object or vtkPolyData object
+        @return a VtkPolyData object
         """
         if not os.path.exists(file_name):
             raise IOError, 'File {} not found'.format(file_name)
@@ -181,8 +179,15 @@ class ShapeManager(object):
         reader.Update()
         # vtkPolyData
         vtk_poly_data = reader.GetOutput()
-        if as_vtk_poly_data:
-            return vtk_poly_data
+        return vtk_poly_data
+
+    def loadAsShape(self, file_name):
+        """
+        Load an in-memory shape from a file
+        @param file_name suffix should be .ply or .vtk
+        @return a Shape object
+        """
+        vtk_poly_data = self.loadAsVtkPolyData(file_name)
         return self.shapeFromVTKPolyData(vtk_poly_data)
 
     def rotateShape(self, shape, axis=(1., 0., 0.), angleDeg=0.0):
@@ -194,17 +199,25 @@ class ShapeManager(object):
         """
         return shape.rotate(axis, angleDeg)
 
-    def save(self, file_name, file_format, file_type, shape=None, vtk_poly_data=None):
+    def saveShape(self, file_name, file_format, file_type, shape):
         """
-        Save the shape in file
+        Save the shape to a file
         @param file_name file name
         @param file_format file format, currently either VTK or PLY
         @param file_type either 'ascii' or 'binary'
-        @param (optional) shape for saving
-        @param (optional) vtk_poly_data for saving
+        @param shape for saving
         """
-        assert shape is not None or vtk_poly_data is not None, "Missing required value for shape or vtk_poly_data"
-        writer = None
+        vtk_poly_data = self.shapeToVTKPolyData(shape)
+        self.saveVtkPolyData(file_name, file_format, file_type, vtk_poly_data)
+
+    def saveVtkPolyData(self, file_name, file_format, file_type, vtk_poly_data):
+        """
+        Save the vtk_poly_data to a file
+        @param file_name file name
+        @param file_format file format, currently either VTK or PLY
+        @param file_type either 'ascii' or 'binary'
+        @param vtk_poly_data for saving
+        """
         if file_format.lower() == 'ply':
             writer = vtk.vtkPLYWriter()
         else:
@@ -214,8 +227,6 @@ class ShapeManager(object):
             writer.SetFileTypeToASCII()
         else:
             writer.SetFileTypeToBinary()
-        if vtk_poly_data is None:
-            vtk_poly_data = self.shapeToVTKPolyData(shape)
         if vtk.VTK_MAJOR_VERSION >= 6:
             writer.SetInputData(vtk_poly_data)
         else:
@@ -419,25 +430,25 @@ def testPrimitiveShapes():
     # Box
     box = shape_mgr.createShape('box', origin=(0.,  0.,  0.),
                                 lengths=(0.5,  1.,  2.))
-    shape_mgr.save('box.vtk', file_format='vtk', file_type='ascii', shape=box)
+    shape_mgr.saveShape('box.vtk', file_format='vtk', file_type='ascii', shape=box)
     shape_mgr.show(box)
 
     # Cone
     con = shape_mgr.createShape('cone', radius=1.0, origin=(0.,  0.,  0.),
                                 lengths=[1., 0., 0.], n_theta=8)
-    shape_mgr.save('con.vtk', file_format='vtk', file_type='ascii', shape=con)
+    shape_mgr.saveShape('con.vtk', file_format='vtk', file_type='ascii', shape=con)
     shape_mgr.show(con)
 
     # Cylinder
     cyl = shape_mgr.createShape('cylinder', radius=1.0, origin=(0., 0., 0.),
                                 lengths=(1., 0., 0.), n_theta=8)
-    shape_mgr.save('cyl.vtk', file_format='vtk', file_type='ascii', shape=cyl)
+    shape_mgr.saveShape('cyl.vtk', file_format='vtk', file_type='ascii', shape=cyl)
     shape_mgr.show(cyl)
 
     # Sphere
     sph = shape_mgr.createShape('shpere', radius=1.0, origin=(0., 0., 0.),
                                 n_theta=8, n_phi=4)
-    shape_mgr.save('sph.vtk', file_format='vtk', file_type='ascii', shape=sph)
+    shape_mgr.saveShape('sph.vtk', file_format='vtk', file_type='ascii', shape=sph)
     shape_mgr.show(sph)
 
 
@@ -445,8 +456,8 @@ def testSaveLoad():
     shape_mgr = ShapeManager()
     s = shape_mgr.createShape('shpere', radius=0.7, origin=(0., 0., 0.),
                               n_theta=8, n_phi=4)
-    shape_mgr.save(file_name='t.vtk', file_format='vtk', file_type='ascii', shape=s)
-    s2 = shape_mgr.load('t.vtk')
+    shape_mgr.saveShape(file_name='t.vtk', file_format='vtk', file_type='ascii', shape=s)
+    s2 = shape_mgr.loadAsShape('t.vtk')
     s3 = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3),
                                lengths=(1.1, 1.2, 1.3))
     s4 = s2 + s3
@@ -462,8 +473,8 @@ def testConstructiveGeometry():
     c = shape_mgr.createShape('cylinder', radius=0.5, origin=(0.3, 0.4, 0.5),
                               lengths=(1.0, 0.0, 0.0))
     geom = c*b - s2 - s1
-    shape_mgr.save('geom.ply', file_format='ply', file_type='binary', shape=geom)
-    geom2 = shape_mgr.load('geom.ply')
+    shape_mgr.saveShape('geom.ply', file_format='ply', file_type='binary', shape=geom)
+    geom2 = shape_mgr.loadAsShape('geom.ply')
     shape_mgr.show(geom2)
 
 
@@ -472,7 +483,7 @@ def testShapeComposition():
     s1 = shape_mgr.createShape('sphere', radius=1, origin=(0., 0., 0.))
     s2 = shape_mgr.createShape('sphere', radius=1.2, origin=(0.8, 0., 0.))
     s3 = shape_mgr.composeShapes([('s1', s1), ('s2', s2)], 's1 + s2')
-    shape_mgr.save('s3.vtk', file_format='vtk', file_type='ascii', shape=s3)
+    shape_mgr.saveShape('s3.vtk', file_format='vtk', file_type='ascii', shape=s3)
 
 
 if __name__ == '__main__':
