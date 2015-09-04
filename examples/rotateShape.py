@@ -40,7 +40,7 @@ if not args.input:
     sys.exit(3)
 
 shape_mgr = ShapeManager()
-shp = shape_mgr.load(args.input)
+shp = shape_mgr.loadAsShape(args.input)
 axis = eval(args.axis)
 shape_mgr.rotateShape(shp, angleDeg=args.angle, axis=axis)
 if args.output:
@@ -50,4 +50,4 @@ if args.output:
         file_type = 'ascii'
     if args.output.lower().find('.ply') >= 0:
         file_format = 'ply'
-    shape_mgr.save(args.output, file_format=file_format, file_type=file_type, shape=shp)
+    shape_mgr.saveShape(args.output, file_format=file_format, file_type=file_type, shape=shp)

@@ -44,7 +44,7 @@ if not os.path.exists(args.input):
     sys.exit(2)
 
 shape_mgr = ShapeManager()
-pDataInput = shape_mgr.load(args.input, as_vtk_poly_data=True)
+pDataInput = shape_mgr.loadAsVtkPolyData(args.input)
 pDataColored = shape_mgr.colorSurfaceField(pDataInput, args.colormap, field_name=args.name)
 
 if args.output:
@@ -52,4 +52,4 @@ if args.output:
         file_type = 'ascii'
     else:
         file_type = 'binary'
-    shape_mgr.save(file_name=args.output, file_format='vtk', file_type=file_type, vtk_poly_data=pDataColored)
+    shape_mgr.saveVtkPolyData(file_name=args.output, file_format='vtk', file_type=file_type, vtk_poly_data=pDataColored)

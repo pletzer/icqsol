@@ -35,6 +35,6 @@ if args.output:
     file_type = 'ascii'
     if args.output.find('.ply') > 0:
         file_format = 'ply'
-    shape_mgr.save(args.output, file_format, file_type, shape=s)
+    shape_mgr.saveShape(args.output, file_format, file_type, shape=s)
 else:
     shape_mgr.show(s)
