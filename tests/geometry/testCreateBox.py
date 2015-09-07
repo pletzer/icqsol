@@ -20,15 +20,16 @@ parser.add_argument('--origin', type=str, dest='origin',
                     help='Set origin, 3 floats')
 args = parser.parse_args()
 
-shape_mgr = ShapeManager()
+file_format = 'vtk'
+file_type = 'ascii'
+if args.output.find('.ply') > 0:
+    file_format = 'ply'
+
+shape_mgr = ShapeManager(file_format)
 s = shape_mgr.createShape('box', origin=eval(args.origin),
                           lengths=eval(args.lengths))
 
 if args.output:
-    file_format = 'vtk'
-    file_type = 'ascii'
-    if args.output.find('.ply') > 0:
-        file_format = 'ply'
-    shape_mgr.saveShape(args.output, file_format, file_type, shape=s)
+    shape_mgr.saveShape(shape=s, args.output, file_type)
 else:
     shape_mgr.show(s)

@@ -43,7 +43,7 @@ if not os.path.exists(args.input):
     print 'ERROR: file {} does not exist'.format(args.input)
     sys.exit(2)
 
-shape_mgr = ShapeManager()
+shape_mgr = ShapeManager(file_format='vtk', dataset_type='POLYDATA')
 pDataInput = shape_mgr.loadAsVtkPolyData(args.input)
 pDataColored = shape_mgr.colorSurfaceField(pDataInput, args.colormap, field_name=args.name)
 
@@ -52,4 +52,4 @@ if args.output:
         file_type = 'ascii'
     else:
         file_type = 'binary'
-    shape_mgr.saveVtkPolyData(file_name=args.output, file_format='vtk', file_type=file_type, vtk_poly_data=pDataColored)
+    shape_mgr.saveVtkPolyData(vtk_poly_data=pDataColored, file_name=args.output, file_type=file_type)

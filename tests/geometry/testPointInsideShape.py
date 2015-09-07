@@ -18,7 +18,7 @@ parser.add_argument('--n_phi', type=int, dest='n_phi', default=4,
                     help='Set number of azimuthal cells')
 args = parser.parse_args()
 
-shape_mgr = ShapeManager()
+shape_mgr = ShapeManager('vtk', 'POLYDATA')
 shp = shape_mgr.createShape('sphere', radius=1.0, origin=(0., 0., 0.),
                             n_theta=args.n_theta, n_phi=args.n_phi)
 

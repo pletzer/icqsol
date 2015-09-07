@@ -7,7 +7,7 @@ Test union operation
 
 from icqsol.shapes.icqShapeManager import ShapeManager
 
-shape_mgr = ShapeManager()
+shape_mgr = ShapeManager('vtk', 'POLYDATA')
 s1 = shape_mgr.createShape('cone', radius=1.0, origin=(0., 0., 0.5),
                            length=0.5, n_rho=100, n_theta=32, n_z=100)
 s2 = shape_mgr.createShape('cone', radius=0.5, origin=(0., 0., 0.),
