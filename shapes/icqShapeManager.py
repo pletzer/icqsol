@@ -197,19 +197,36 @@ class ShapeManager(object):
         a.clipTo(b)
         return CSG.fromPolygons(a.allPolygons())
 
-    def loadAsVtkPolyData(self, file_name):
+    def loadAsVtkData(self, file_name):
         """
-        Load a VtkPolyData object from a file
+        Load a subclass of a vtkData object from a file
+        where a subclass is one of vtkStructuredPoints(),
+        vtkStructuredGrid(), vtkPolyData(), vtkRectilinearGrid()
+        or vtkUnstructuredGrid()
         @param file_name suffix should be .ply or .vtk
-        @return a VtkPolyData object
+        @return a subclass of a VtkData object
         """
         if not os.path.exists(file_name):
             raise IOError, 'File {} not found'.format(file_name)
         self.reader.SetFileName(file_name)
-        # read
         self.reader.Update()
-        # vtkPolyData
-        vtk_poly_data = self.reader.GetOutput()
+        return self.reader.GetOutput()
+
+    def loadAsVtkPolyData(self, file_name):
+        """
+        Load a vtkPolyData object from a file.
+        @param file_name, suffix should be .ply or .vtk
+        @return a vtkPolyData object
+        """
+        vtk_data = self.loadAsVtkData(file_name)
+        if self.file_format == 'vtk':
+            if self.vtk_dataset_type == 'POLYDATA':
+                vtk_poly_date = vtk_data
+            else:
+                vtk_poly_data = self.convertToPolyData( vtk_data )
+        else:
+            # We have a PLY file.
+            vtk_poly_data = vtk_data
         return vtk_poly_data
 
     def loadAsShape(self, file_name):
