@@ -75,7 +75,14 @@ for optNameValue in args.options:
         sys.exit(3)
     options[args.type][optName] = eval(optValue)
 
-shape_mgr = ShapeManager()
+fileFormat = 'vtk'
+fileType = 'binary'
+if args.ascii:
+    fileType = 'ascii'
+if args.output.lower().find('.ply') > 0:
+    fileFormat = 'ply'
+
+shape_mgr = ShapeManager(fileFormat)
 
 # set the surface and volume function
 surfaceFunctions = []
@@ -123,10 +130,4 @@ if args.list:
         print '{:>10} --> {:>20}'.format(optName, optVal)
 
 if args.output:
-    fileFormat = 'vtk'
-    fileType = 'binary'
-    if args.ascii:
-        fileType = 'ascii'
-    if args.output.lower().find('.ply') > 0:
-        fileFormat = 'ply'
-    shape_mgr.saveShape(args.output, file_format=fileFormat, file_type=fileType, shape=shp)
+    shape_mgr.saveShape(shape=shp, args.output, file_type=fileType, file_format=fileFormat)

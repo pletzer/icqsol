@@ -5,7 +5,7 @@ from csg.core import CSG
 Test conversion from a shape to a list of polygons
 @author pletzer@psu.edu
 """
-shape_mgr = ShapeManager()
+shape_mgr = ShapeManager('vtk', 'POLYDATA')
 shp = shape_mgr.createShape('box', origin=[0., 0., 0.], lengths=[1., 1., 1.],)
 
 # check whether one can convert to a list of polygons

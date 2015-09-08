@@ -49,7 +49,7 @@ if not args.input:
 # make sure the field name contains no spaces
 args.name = re.sub('\s', '_', args.name)
 
-shape_mgr = ShapeManager()
+shape_mgr = ShapeManager(file_format='vtk', dataset_type='POLYDATA')
 shp = shape_mgr.loadAsShape(args.input)
 times = [0.0]
 if args.times:
@@ -61,4 +61,4 @@ if args.output:
         file_type = 'ascii'
     else:
         file_type = 'binary'
-    shape_mgr.saveVtkPolyData(file_name=args.output, file_format='vtk', file_type=file_type, vtk_poly_data=pdata)
+    shape_mgr.saveVtkPolyData(vtk_poly_data=pdata, file_name=args.output, file_type=file_type)

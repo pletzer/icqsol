@@ -22,7 +22,12 @@ parser.add_argument('--n_phi', type=int, dest='n_phi', default=4,
                     help='Set number of azimuthal cells')
 args = parser.parse_args()
 
-shape_mgr = ShapeManager()
+file_format = 'vtk'
+file_type = 'ascii'
+if args.output.find('.ply') > 0:
+    file_format = 'ply'
+
+shape_mgr = ShapeManager(file_format)
 s = shape_mgr.createShape('sphere',
                           radius=args.radius,
                           origin=eval(args.origin),
@@ -30,10 +35,6 @@ s = shape_mgr.createShape('sphere',
                           n_phi=args.n_phi)
 
 if args.output:
-    file_format = 'vtk'
-    file_type = 'ascii'
-    if args.output.find('.ply') > 0:
-        file_format = 'ply'
-    shape_mgr.saveShape(args.output, file_format, file_type, shape=s)
+    shape_mgr.saveShape(shape=s, args.output, file_type)
 else:
     shape_mgr.show(s)

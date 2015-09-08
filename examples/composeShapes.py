@@ -39,8 +39,15 @@ if len(args.shapeTuples) == 0:
     print 'ERROR: must specify shape tuples: --shapeTuples <var, file>...'
     sys.exit(3)
 
+fileFormat = 'vtk'
+fileType = 'binary'
+if args.ascii:
+    fileType = 'ascii'
+if args.output.lower().find('.ply') >= 0:
+    fileFormat = 'ply'
+
 shape_tuples = []
-shape_mgr = ShapeManager()
+shape_mgr = ShapeManager(fileFormat)
 
 for shapeTuple in args.shapeTuples:
     expression_var, input_file = re.sub(r'\s*', '', shapeTuple).split(',')
@@ -50,10 +57,5 @@ for shapeTuple in args.shapeTuples:
 compositeShape = shape_mgr.composeShapes(shape_tuples, args.expression)
 
 if args.output:
-    fileFormat = 'vtk'
-    fileType = 'binary'
-    if args.ascii:
-        fileType = 'ascii'
-    if args.output.lower().find('.ply') >= 0:
-        fileFormat = 'ply'
-    shape_mgr.saveShape(args.output, file_format=fileFormat, file_type=fileType, shape=compositeShape)
+
+    shape_mgr.saveShape(shape=compositeShape, args.output, file_type=fileType, file_format=fileFormat)

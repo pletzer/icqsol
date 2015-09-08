@@ -39,15 +39,16 @@ if not args.input:
     print 'ERROR: must specify one input file with --input <file>'
     sys.exit(3)
 
-shape_mgr = ShapeManager()
+file_format = 'vtk'
+file_type = 'binary'
+if args.ascii:
+    file_type = 'ascii'
+if args.output.lower().find('.ply') >= 0:
+    file_format = 'ply'
+
+shape_mgr = ShapeManager(file_format)
 shp = shape_mgr.loadAsShape(args.input)
 transVec = eval(args.translation)
 shape_mgr.translateShape(shp, transVec)
 if args.output:
-    file_format = 'vtk'
-    file_type = 'binary'
-    if args.ascii:
-        file_type = 'ascii'
-    if args.output.lower().find('.ply') >= 0:
-        file_format = 'ply'
-    shape_mgr.saveShape(args.output, file_format=file_format, file_type=file_type, shape=shp)
+    shape_mgr.saveShape(shape=shp, args.output, file_type=file_type, file_format=file_format)

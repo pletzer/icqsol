@@ -186,7 +186,7 @@ def test():
 
     from icqsol.shapes.ShapeManager import ShapeManager
 
-    shape_mgr = ShapeManager()
+    shape_mgr = ShapeManager('vtk', 'POLYDATA')
     shp = shape_mgr.createShape('sphere', origin=(0., 0., 0.),
                                 radius=1.0, n_theta=6, n_phi=3)
 
