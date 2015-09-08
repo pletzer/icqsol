@@ -530,25 +530,25 @@ def testPrimitiveShapes():
     # Box
     box = shape_mgr.createShape('box', origin=(0.,  0.,  0.),
                                 lengths=(0.5,  1.,  2.))
-    shape_mgr.saveShape(shape=box, 'box.vtk', file_type='ascii')
+    shape_mgr.saveShape(shape=box, file_name='box.vtk', file_type='ascii')
     shape_mgr.show(box)
 
     # Cone
     con = shape_mgr.createShape('cone', radius=1.0, origin=(0.,  0.,  0.),
                                 lengths=[1., 0., 0.], n_theta=8)
-    shape_mgr.saveShape(shape=con, 'con.vtk', file_type='ascii')
+    shape_mgr.saveShape(shape=con, file_name='con.vtk', file_type='ascii')
     shape_mgr.show(con)
 
     # Cylinder
     cyl = shape_mgr.createShape('cylinder', radius=1.0, origin=(0., 0., 0.),
                                 lengths=(1., 0., 0.), n_theta=8)
-    shape_mgr.saveShape(shape=cyl, 'cyl.vtk', file_type='ascii')
+    shape_mgr.saveShape(shape=cyl, file_name='cyl.vtk', file_type='ascii')
     shape_mgr.show(cyl)
 
     # Sphere
     sph = shape_mgr.createShape('shpere', radius=1.0, origin=(0., 0., 0.),
                                 n_theta=8, n_phi=4)
-    shape_mgr.saveShape(shape=sph, 'sph.vtk', file_type='ascii')
+    shape_mgr.saveShape(shape=sph, file_name='sph.vtk', file_type='ascii')
     shape_mgr.show(sph)
 
 
@@ -573,7 +573,7 @@ def testConstructiveGeometry():
     c = shape_mgr.createShape('cylinder', radius=0.5, origin=(0.3, 0.4, 0.5),
                               lengths=(1.0, 0.0, 0.0))
     geom = c*b - s2 - s1
-    shape_mgr.saveShape(shape=geom, 'geom.ply', file_type='binary', file_format='ply')
+    shape_mgr.saveShape(shape=geom, file_name='geom.ply', file_type='binary', file_format='ply')
     geom2 = shape_mgr.loadAsShape('geom.ply')
     shape_mgr.show(geom2)
 
@@ -583,7 +583,7 @@ def testShapeComposition():
     s1 = shape_mgr.createShape('sphere', radius=1, origin=(0., 0., 0.))
     s2 = shape_mgr.createShape('sphere', radius=1.2, origin=(0.8, 0., 0.))
     s3 = shape_mgr.composeShapes([('s1', s1), ('s2', s2)], 's1 + s2')
-    shape_mgr.saveShape(shape=s3, 's3.vtk', file_type='ascii')
+    shape_mgr.saveShape(shape=s3, file_name='s3.vtk', file_type='ascii')
 
 
 if __name__ == '__main__':
