@@ -9,7 +9,7 @@ import sys
 import re
 from numpy import linspace
 
-from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol.shapes.icqShapeManager import VtkShapeManager
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -49,7 +49,7 @@ if not args.input:
 # make sure the field name contains no spaces
 args.name = re.sub('\s', '_', args.name)
 
-shape_mgr = ShapeManager(file_format='vtk', dataset_type='POLYDATA')
+shape_mgr = VtkShapeManager('POLYDATA')
 shp = shape_mgr.loadAsShape(args.input)
 times = [0.0]
 if args.times:

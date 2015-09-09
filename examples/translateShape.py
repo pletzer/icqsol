@@ -9,7 +9,7 @@ import time
 import sys
 import re
 
-from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol.shapes.icqShapeManager import PlyShapeManager, VtkShapeManager
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -46,9 +46,13 @@ if args.ascii:
 if args.output.lower().find('.ply') >= 0:
     file_format = 'ply'
 
-shape_mgr = ShapeManager(file_format)
+if file_format == 'vtk':
+    shape_mgr = VtkShapeManager('POLYDATA')
+else:
+    shape_mgr = PlyShapeManager()
+
 shp = shape_mgr.loadAsShape(args.input)
 transVec = eval(args.translation)
 shape_mgr.translateShape(shp, transVec)
 if args.output:
-    shape_mgr.saveShape(shape=shp, args.output, file_type=file_type, file_format=file_format)
+    shape_mgr.saveShape(shape=shp, file_name=args.output, file_type=file_type)

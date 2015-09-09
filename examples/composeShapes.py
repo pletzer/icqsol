@@ -9,7 +9,10 @@ import time
 import sys
 import re
 
-from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol.shapes.icqShapeManager import PlyShapeManager, VtkShapeManager
+
+def isVtkFile(file_name):
+    return file_name.lower().endswith('.vtk')
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -39,23 +42,28 @@ if len(args.shapeTuples) == 0:
     print 'ERROR: must specify shape tuples: --shapeTuples <var, file>...'
     sys.exit(3)
 
-fileFormat = 'vtk'
-fileType = 'binary'
-if args.ascii:
-    fileType = 'ascii'
-if args.output.lower().find('.ply') >= 0:
-    fileFormat = 'ply'
-
 shape_tuples = []
-shape_mgr = ShapeManager(fileFormat)
 
 for shapeTuple in args.shapeTuples:
     expression_var, input_file = re.sub(r'\s*', '', shapeTuple).split(',')
+    if isVtkFile(input_file):
+        shape_mgr = VtkShapeManager('POLYDATA')
+    else:
+        shape_mgr = PlyShapeManager()
     s = shape_mgr.loadAsShape(input_file)
     shape_tuples.append((expression_var, s))
+
+fileType = 'binary'
+if args.ascii:
+    fileType = 'ascii'
+
+if isVtkFile(args.output):
+    shape_mgr = VtkShapeManager('POLYDATA')
+else:
+    shape_mgr = PlyShapeManager()
 
 compositeShape = shape_mgr.composeShapes(shape_tuples, args.expression)
 
 if args.output:
 
-    shape_mgr.saveShape(shape=compositeShape, args.output, file_type=fileType, file_format=fileFormat)
+    shape_mgr.saveShape(shape=compositeShape, file_name=args.output, file_type=fileType)
