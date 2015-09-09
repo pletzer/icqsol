@@ -9,7 +9,7 @@ import sys
 import re
 from numpy import linspace
 
-from icqsol.shapes.icqShapeManager import VtkShapeManager
+from icqsol.shapes.icqShapeManager import VtkShapeManager, PlyShapeManager
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -49,7 +49,15 @@ if not args.input:
 # make sure the field name contains no spaces
 args.name = re.sub('\s', '_', args.name)
 
-shape_mgr = VtkShapeManager('POLYDATA')
+
+
+shape_mgr = None
+if args.input.lower().endswith('.ply'):
+    shape_mgr = PlyShapeManager()
+else:
+    # assume the VTK file stores POLYDATA data
+    shape_mgr = VtkShapeManager('POLYDATA')
+
 shp = shape_mgr.loadAsShape(args.input)
 times = [0.0]
 if args.times:
@@ -57,6 +65,7 @@ if args.times:
 pdata = shape_mgr.addSurfaceFieldFromExpression(shp, args.name, args.expression, times)
 
 if args.output:
+    shape_mgr = VtkShapeManager('POLYDATA')
     if args.ascii:
         file_type = 'ascii'
     else:

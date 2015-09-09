@@ -45,8 +45,12 @@ class ShapeManager(object):
         else:
             self.vtk_geometry_filter = None
 
-    def createShape(self, type, origin=None, lengths=None, radius=None,
-                    angle=None, n_theta=None, n_phi=None):
+    def createShape(self, type, origin=DEFAULTS['origin'], 
+                    lengths=DEFAULTS['lengths'], 
+                    radius=DEFAULTS['radius'],
+                    angle=DEFAULTS['angle'], 
+                    n_theta=DEFAULTS['n_theta'], 
+                    n_phi=DEFAULTS['n_phi']):
         """
         Create a primitive shape which can be one of box, cone, cylinder or
         sphere.
@@ -58,12 +62,6 @@ class ShapeManager(object):
         @param n_theta, float that controls tessellation along longitude
         @param n_phi, float that controls tessellation along latitude
         """
-        origin = DEFAULTS['origin']
-        lengths = DEFAULTS['lengths']
-        radius = DEFAULTS['radius']
-        angle = DEFAULTS['angle']
-        n_theta = DEFAULTS['n_theta']
-        n_phi = DEFAULTS['n_phi']
         if type == 'box':
             return Box(origin, lengths)
         if type == 'cone':
