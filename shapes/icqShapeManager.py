@@ -14,8 +14,7 @@ from icqShape import Box, Cone, Cylinder, Sphere
 from icqShape import DEFAULTS, CompositeShape
 from icqsol.color.icqColorMap import ColorMap
 
-DATASET_TYPES = ['STRUCTURED_POINTS', 'STRUCTURED_GRID', 'POLYDATA',
-                 'RECTILINEAR_GRID', 'UNSTRUCTURED_GRID']
+DATASET_TYPES = ['STRUCTURED_GRID', 'POLYDATA', 'UNSTRUCTURED_GRID']
 FILE_FORMATS = ['ply', 'vtk']
 
 class ShapeManager(object):
@@ -35,10 +34,8 @@ class ShapeManager(object):
         dataset_type, so other types are converted as a first step.
         """
         assert file_format in FILE_FORMATS, "Invalid file_format %s" % str( file_format )
-        if file_format == 'vtk' and vtk_dataset_type is None:
-            # Default to POLYDATA - will cause problems if incorrect.
-            vtk_dataset_type = 'POLYDATA'
-        assert vtk_dataset_type in DATASET_TYPES, "Invalid dataset_type %s" % str( vtk_dataset_type )
+        if file_format == 'vtk':
+            assert vtk_dataset_type in DATASET_TYPES, "Invalid dataset_type %s" % str( vtk_dataset_type )
         self.file_format = file_format
         self.dataset_type = vtk_dataset_type
         self.reader = self.getReader(self.file_format, self.dataset_type)
@@ -220,8 +217,8 @@ class ShapeManager(object):
         """
         vtk_data = self.loadAsVtkData(file_name)
         if self.file_format == 'vtk':
-            if self.vtk_dataset_type == 'POLYDATA':
-                vtk_poly_date = vtk_data
+            if self.dataset_type == 'POLYDATA':
+                vtk_poly_data = vtk_data
             else:
                 vtk_poly_data = self.convertToPolyData( vtk_data )
         else:
@@ -247,22 +244,20 @@ class ShapeManager(object):
         """
         return shape.rotate(axis, angleDeg)
 
-    def saveShape(self, shape, file_name, file_type, file_format=self.file_format):
+    def saveShape(self, shape, file_name, file_type):
         """
         Save the shape to a file
         @param file_name file name
-        @param file_format file format, currently either VTK or PLY
         @param file_type either 'ascii' or 'binary'
         @param shape for saving
         """
         vtk_poly_data = self.shapeToVTKPolyData(shape)
-        self.saveVtkPolyData(vtk_poly_data, file_name, file_type, file_format=file_format)
+        self.saveVtkPolyData(vtk_poly_data, file_name, file_type)
 
-    def saveVtkPolyData(self, vtk_poly_data, file_name, file_type, file_format=self.file_format):
+    def saveVtkPolyData(self, vtk_poly_data, file_name, file_type):
         """
         Save the vtk_poly_data to a file
         @param file_name file name
-        @param file_format file format, currently either VTK or PLY
         @param file_type either 'ascii' or 'binary'
         @param vtk_poly_data for saving
         """
@@ -469,14 +464,10 @@ class ShapeManager(object):
         Return a specific vtk geometry filter based on dataset_type.
         @param dataset_type, one of the DATASET_TYPES
         """
-        if dataset_type == 'STRUCTURED_POINTS':
-            return vtk.vtkStructuredPointsGeometryFilter()
-        elif dataset_type == 'STRUCTURED_GRID':
+        if dataset_type == 'STRUCTURED_GRID':
             return vtk.vtkStructuredGridGeometryFilter()
         elif dataset_type == 'POLYDATA':
             return vtk.vtkGeometryFilter()
-        elif dataset_type == 'RECTILINEAR_GRID':
-            return vtk.vtkRectilinearGridGeometryFilter()
         elif dataset_type == 'UNSTRUCTURED_GRID':
             return vtk.vtkUnstructuredGridGeometryFilter()
 
@@ -489,14 +480,10 @@ class ShapeManager(object):
         if file_format == 'ply':
             return vtk.vtkPLYReader()
         # Handle .vtk files.
-        if dataset_type == 'STRUCTURED_POINTS':
-            return vtk.vtkStructuredPointsReader()
-        elif dataset_type == 'STRUCTURED_GRID':
+        if dataset_type == 'STRUCTURED_GRID':
             return vtk.vtkStructuredGridReader()
         elif dataset_type == 'POLYDATA':
             return vtk.vtkPolyDataReader()
-        elif dataset_type == 'RECTILINEAR_GRID':
-            return vtk.vtkRectilinearGridReader()
         elif dataset_type == 'UNSTRUCTURED_GRID':
             return vtk.vtkUnstructuredGridReader()
 
@@ -511,75 +498,78 @@ class ShapeManager(object):
         # only with that dataset_type.  The rest is here for possible future
         # use.
         return vtk.vtkPolyDataWriter()
-        if dataset_type == 'STRUCTURED_POINTS':
-            return vtk.vtkStructuredPointsWriter()
-        elif dataset_type == 'STRUCTURED_GRID':
+        if dataset_type == 'STRUCTURED_GRID':
             return vtk.vtkStructuredGridWriter()
         elif dataset_type == 'POLYDATA':
             return vtk.vtkPolyDataWriter()
-        elif dataset_type == 'RECTILINEAR_GRID':
-            return vtk.vtkRectilinearGridWriter()
         elif dataset_type == 'UNSTRUCTURED_GRID':
             return vtk.vtkUnstructuredGridWriter()
 
 
+class VtkShapeManager(ShapeManager):
+
+    def __init__(self, dataset_type):
+        self.file_format = 'vtk'
+        self.dataset_type = dataset_type
+        ShapeManager.__init__(self, self.file_format, self.dataset_type)
+
+
+class PlyShapeManager(ShapeManager):
+
+    def __init__(self):
+        self.file_format = 'ply'
+        ShapeManager.__init__(self, self.file_format)
+
+
 ###############################################################################
 def testPrimitiveShapes():
-    shape_mgr = ShapeManager('vtk', 'POLYDATA')
+    shape_mgr = VtkShapeManager('POLYDATA')
 
     # Box
-    box = shape_mgr.createShape('box', origin=(0.,  0.,  0.),
-                                lengths=(0.5,  1.,  2.))
+    box = shape_mgr.createShape('box', origin=(0.,  0.,  0.), lengths=(0.5,  1.,  2.))
     shape_mgr.saveShape(shape=box, file_name='box.vtk', file_type='ascii')
     shape_mgr.show(box)
 
     # Cone
-    con = shape_mgr.createShape('cone', radius=1.0, origin=(0.,  0.,  0.),
-                                lengths=[1., 0., 0.], n_theta=8)
+    con = shape_mgr.createShape('cone', radius=1.0, origin=(0.,  0.,  0.), lengths=[1., 0., 0.], n_theta=8)
     shape_mgr.saveShape(shape=con, file_name='con.vtk', file_type='ascii')
     shape_mgr.show(con)
 
     # Cylinder
-    cyl = shape_mgr.createShape('cylinder', radius=1.0, origin=(0., 0., 0.),
-                                lengths=(1., 0., 0.), n_theta=8)
+    cyl = shape_mgr.createShape('cylinder', radius=1.0, origin=(0., 0., 0.), lengths=(1., 0., 0.), n_theta=8)
     shape_mgr.saveShape(shape=cyl, file_name='cyl.vtk', file_type='ascii')
     shape_mgr.show(cyl)
 
     # Sphere
-    sph = shape_mgr.createShape('shpere', radius=1.0, origin=(0., 0., 0.),
-                                n_theta=8, n_phi=4)
+    sph = shape_mgr.createShape('shpere', radius=1.0, origin=(0., 0., 0.), n_theta=8, n_phi=4)
     shape_mgr.saveShape(shape=sph, file_name='sph.vtk', file_type='ascii')
     shape_mgr.show(sph)
 
 
 def testSaveLoad():
     shape_mgr = ShapeManager('vtk', 'POLYDATA')
-    s = shape_mgr.createShape('shpere', radius=0.7, origin=(0., 0., 0.),
-                              n_theta=8, n_phi=4)
+    s = shape_mgr.createShape('shpere', radius=0.7, origin=(0., 0., 0.), n_theta=8, n_phi=4)
     shape_mgr.saveShape(shape=s, file_name='t.vtk', file_type='ascii')
     s2 = shape_mgr.loadAsShape('t.vtk')
-    s3 = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3),
-                               lengths=(1.1, 1.2, 1.3))
+    s3 = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3), lengths=(1.1, 1.2, 1.3))
     s4 = s2 + s3
     s4.debug()
 
 
 def testConstructiveGeometry():
-    shape_mgr = ShapeManager('ply')
+    shape_mgr = PlyShapeManager()
     s1 = shape_mgr.createShape('sphere', radius=0.7, origin=(0., 0., 0.))
     s2 = shape_mgr.createShape('sphere', radius=0.2, origin=(0.1, 0.2, 0.3))
-    b = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3),
-                              lengths=(1.1, 1.2, 1.3))
-    c = shape_mgr.createShape('cylinder', radius=0.5, origin=(0.3, 0.4, 0.5),
-                              lengths=(1.0, 0.0, 0.0))
+    b = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3), lengths=(1.1, 1.2, 1.3))
+    c = shape_mgr.createShape('cylinder', radius=0.5, origin=(0.3, 0.4, 0.5), lengths=(1.0, 0.0, 0.0))
     geom = c*b - s2 - s1
-    shape_mgr.saveShape(shape=geom, file_name='geom.ply', file_type='binary', file_format='ply')
+    shape_mgr.saveShape(shape=geom, file_name='geom.ply', file_type='binary')
     geom2 = shape_mgr.loadAsShape('geom.ply')
     shape_mgr.show(geom2)
 
 
 def testShapeComposition():
-    shape_mgr = ShapeManager('vtk', 'POLYDATA')
+    shape_mgr = VtkShapeManager('POLYDATA')
     s1 = shape_mgr.createShape('sphere', radius=1, origin=(0., 0., 0.))
     s2 = shape_mgr.createShape('sphere', radius=1.2, origin=(0.8, 0., 0.))
     s3 = shape_mgr.composeShapes([('s1', s1), ('s2', s2)], 's1 + s2')

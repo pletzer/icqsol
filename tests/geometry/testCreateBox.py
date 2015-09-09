@@ -6,7 +6,7 @@ Test creation of box
 """
 
 import argparse
-from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol.shapes.icqShapeManager import PlyShapeManager, VtkShapeManager
 
 parser = argparse.ArgumentParser(description='Create box')
 
@@ -25,11 +25,14 @@ file_type = 'ascii'
 if args.output.find('.ply') > 0:
     file_format = 'ply'
 
-shape_mgr = ShapeManager(file_format)
-s = shape_mgr.createShape('box', origin=eval(args.origin),
-                          lengths=eval(args.lengths))
+if file_format == 'vtk':
+    shape_mgr = VtkShapeManager('POLYDATA')
+else:
+    shape_mgr = PlyShapeManager()
+
+s = shape_mgr.createShape('box', origin=eval(args.origin), lengths=eval(args.lengths))
 
 if args.output:
-    shape_mgr.saveShape(shape=s, args.output, file_type)
+    shape_mgr.saveShape(shape=s, file_name=args.output, file_type=file_type)
 else:
     shape_mgr.show(s)

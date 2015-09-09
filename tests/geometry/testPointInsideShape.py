@@ -8,19 +8,16 @@ Test for determining whether a point is inside a shape.
 import numpy
 import argparse
 from icqsol.shapes.icqInside import Inside
-from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol.shapes.icqShapeManager import VtkShapeManager
 
 parser = argparse.ArgumentParser(description='Test point inside shape')
 
-parser.add_argument('--n_theta', type=int, dest='n_theta', default=8,
-                    help='Set number of poloidal cells')
-parser.add_argument('--n_phi', type=int, dest='n_phi', default=4,
-                    help='Set number of azimuthal cells')
+parser.add_argument('--n_theta', type=int, dest='n_theta', default=8,  help='Set number of poloidal cells')
+parser.add_argument('--n_phi', type=int, dest='n_phi', default=4, help='Set number of azimuthal cells')
 args = parser.parse_args()
 
-shape_mgr = ShapeManager('vtk', 'POLYDATA')
-shp = shape_mgr.createShape('sphere', radius=1.0, origin=(0., 0., 0.),
-                            n_theta=args.n_theta, n_phi=args.n_phi)
+shape_mgr = VtkShapeManager('POLYDATA')
+shp = shape_mgr.createShape('sphere', radius=1.0, origin=(0., 0., 0.), n_theta=args.n_theta, n_phi=args.n_phi)
 
 inside = Inside(shp)
 

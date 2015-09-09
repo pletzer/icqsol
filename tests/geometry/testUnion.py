@@ -5,12 +5,10 @@ Test union operation
 @author pletzer@psu.edu
 """
 
-from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol.shapes.icqShapeManager import VtkShapeManager
 
-shape_mgr = ShapeManager('vtk', 'POLYDATA')
-s1 = shape_mgr.createShape('sphere', radius=1.0, origin=(0., 0., 0.),
-                           n_theta=16, n_phi=8)
-s2 = shape_mgr.createShape('sphere', radius=1.0, origin=(2., 0., 0.),
-                           n_theta=16, n_phi=8)
+shape_mgr = VtkShapeManager('POLYDATA')
+s1 = shape_mgr.createShape('sphere', radius=1.0, origin=(0., 0., 0.), n_theta=16, n_phi=8)
+s2 = shape_mgr.createShape('sphere', radius=1.0, origin=(2., 0., 0.), n_theta=16, n_phi=8)
 geom = s1 + s2
 shape_mgr.show(geom, filename='testUnion.png')
