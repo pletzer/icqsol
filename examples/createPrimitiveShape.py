@@ -7,7 +7,7 @@ import time
 import sys
 import re
 import numpy
-from icqsol.shapes.icqShapeManager import PlyShapeManager, VtkShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 options = {
     'sphere': {
@@ -83,9 +83,10 @@ if args.output.lower().find('.ply') > 0:
     fileFormat = 'ply'
 
 if fileFormat == 'vtk':
-    shape_mgr = VtkShapeManager('POLYDATA')
+    # TODO: Enhance this to read the filoe and discover the vtk_dataset_type.
+    shape_mgr = ShapeManager(file_format=fileFormat, vtk_dataset_type='POLYDATA')
 else:
-    shape_mgr = PlyShapeManager()
+    shape_mgr = ShapeManager(file_format=fileFormat)
 
 # set the surface and volume function
 surfaceFunctions = []

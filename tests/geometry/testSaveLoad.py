@@ -3,9 +3,9 @@ Test save/load methods
 @author pletzer@psu.edu
 """
 
-from icqsol.shapes.icqShapeManager import VtkShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
-shape_mgr = VtkShapeManager('POLYDATA')
+shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
 shp = shape_mgr.createShape('box', origin=[0., 0., 0.], lengths=[1., 1., 1.])
 shape_mgr.saveShape(shape=shp, file_name='testSaveLoad.vtk', file_type='ascii')
 

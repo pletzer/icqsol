@@ -14,54 +14,57 @@ from icqShape import Box, Cone, Cylinder, Sphere
 from icqShape import DEFAULTS, CompositeShape
 from icqsol.color.icqColorMap import ColorMap
 
-DATASET_TYPES = ['STRUCTURED_GRID', 'POLYDATA', 'UNSTRUCTURED_GRID']
+VTK_DATASET_TYPES = ['STRUCTURED_GRID', 'POLYDATA', 'UNSTRUCTURED_GRID']
 FILE_FORMATS = ['ply', 'vtk']
+
 
 class ShapeManager(object):
 
-    def __init__(self, file_format, vtk_dataset_type=None):
+    def __init__(self, file_format=None, vtk_dataset_type=None):
         """
         This class incorporates features from 2 primary classes: CSG and
         VTK.  It uses CSG to assemble shapes, which have no knowledge of
         fields.  VTK data objects are grids with fields typically attached
         to them, but not always.
-        
-        Each instance will be associated with a specified file_format and
-        a specified VTK dataset_type which is one of DATASET_TYPES.  If the
-        file_format is 'ply', the dataset_type value is not currently used.
-        
-        If file_format is 'vtk', most methods work with the POLYDATA
-        dataset_type, so other types are converted as a first step.
+
+        If file_format is 'vtk', this class's methods work with the POLYDATA
+        vtk_dataset_type, so other types are converted as a first step.
         """
-        assert file_format in FILE_FORMATS, "Invalid file_format %s" % str( file_format )
-        if file_format == 'vtk':
-            assert vtk_dataset_type in DATASET_TYPES, "Invalid dataset_type %s" % str( vtk_dataset_type )
         self.file_format = file_format
-        self.dataset_type = vtk_dataset_type
-        self.reader = self.getReader(self.file_format, self.dataset_type)
-        self.writer = self.getWriter(self.file_format, self.dataset_type)
-        if file_format == 'vtk':
-            self.vtk_geometry_filter = self.getVtkGeometryFilter(self.dataset_type)
+        self.vtk_dataset_type = vtk_dataset_type
+        if self.file_format is None:
+            self.reader = None
+            self.writer = None
+            self.vtk_geometry_filter = None
+        elif self.file_format == 'vtk':
+            assert self.vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str( self.vtk_dataset_type )
+            self.vtk_geometry_filter = self.setVtkGeometryFilter(self.vtk_dataset_type)
+            self.setReader(self.file_format, self.vtk_dataset_type)
+            self.setWriter(self.file_format, self.vtk_dataset_type)
         else:
+            # We have a PLY file
+            self.setReader(self.file_format)
+            self.setWriter(self.file_format)
             self.vtk_geometry_filter = None
 
-    def createShape(self, type, origin=DEFAULTS['origin'], 
-                    lengths=DEFAULTS['lengths'], 
-                    radius=DEFAULTS['radius'],
-                    angle=DEFAULTS['angle'], 
-                    n_theta=DEFAULTS['n_theta'], 
-                    n_phi=DEFAULTS['n_phi']):
+    def createShape(self, type, **kwd):
         """
         Create a primitive shape which can be one of box, cone, cylinder or
         sphere.
         @param type, the type of shape: box, cone, cylinder or sphere
         @param origin, an (x,y,z) tuple consisting of float origin coordinates
-        @param lengths, an (x,y,z) tuple consisting of float length coordinates
-        @param radius, float radius
-        @param angle, float angle
-        @param n_theta, float that controls tessellation along longitude
-        @param n_phi, float that controls tessellation along latitude
+        @param lengths, (optional) an (x,y,z) tuple consisting of float length coordinates
+        @param radius, (optional) float radius
+        @param angle, (optional) float angle
+        @param n_theta, (optional) float that controls tessellation along longitude
+        @param n_phi, (optional) float that controls tessellation along latitude
         """
+        origin = kwd.get( 'origin', DEFAULTS['origin'] )
+        lengths = kwd.get( 'lengths', DEFAULTS['lengths'] )
+        radius = kwd.get( 'radius', DEFAULTS['radius'] )
+        angle = kwd.get( 'angle', DEFAULTS['angle'] )
+        n_theta = kwd.get( 'n_theta', DEFAULTS['n_theta'] )
+        n_phi = kwd.get( 'n_phi', DEFAULTS['n_phi'] )
         if type == 'box':
             return Box(origin, lengths)
         if type == 'cone':
@@ -215,7 +218,7 @@ class ShapeManager(object):
         """
         vtk_data = self.loadAsVtkData(file_name)
         if self.file_format == 'vtk':
-            if self.dataset_type == 'POLYDATA':
+            if self.vtk_dataset_type == 'POLYDATA':
                 vtk_poly_data = vtk_data
             else:
                 vtk_poly_data = self.convertToPolyData( vtk_data )
@@ -414,6 +417,7 @@ class ShapeManager(object):
         # assign actor to the renderer
         ren.AddActor(actor)
         # write to file
+        # FIX_ME: set this to self.writer.
         writer = None
         if filename:
             if filename.lower().find('.png') > 0:
@@ -446,7 +450,7 @@ class ShapeManager(object):
     def convertToPolyData(self, vtk_data):
         """
         Convert vtk_data to vtk.vtkPolyData().
-        @param vtk_data, data whose dataset_type one of the DATASET_TYPES
+        @param vtk_data, data whose vtk_dataset_type one of the VTK_DATASET_TYPES
                besides POLYDATA
         """
         if vtk.VTK_MAJOR_VERSION >= 6:
@@ -457,71 +461,102 @@ class ShapeManager(object):
         vtk_poly_data = self.vtk_geometry_filter.GetOutput()
         return vtk_poly_data
 
-    def getVtkGeometryFilter(self, dataset_type):
+    def chooseVtkGeometryFilter(self, vtk_dataset_type):
         """
-        Return a specific vtk geometry filter based on dataset_type.
-        @param dataset_type, one of the DATASET_TYPES
+        Return a specific vtk geometry filter based on vtk_dataset_type.
+        @param vtk_dataset_type, one of the VTK_DATASET_TYPES
         """
-        if dataset_type == 'STRUCTURED_GRID':
+        if vtk_dataset_type == 'STRUCTURED_GRID':
             return vtk.vtkStructuredGridGeometryFilter()
-        elif dataset_type == 'POLYDATA':
+        elif vtk_dataset_type == 'POLYDATA':
             return vtk.vtkGeometryFilter()
-        elif dataset_type == 'UNSTRUCTURED_GRID':
+        elif vtk_dataset_type == 'UNSTRUCTURED_GRID':
             return vtk.vtkUnstructuredGridGeometryFilter()
 
-    def getReader(self, file_format, dataset_type):
+    def getVtkGeometryFilter(self):
+        return self.vtk_geometry_filter
+
+    def setVtkGeometryFilter(self, vtk_dataset_type):
         """
-        Return a reader based on a dataset_type.
-        @param dataset_type, one of the DATASET_TYPES
+        Set the vtk_geometry_filter.
+        @param vtk_dataset_type, one of the VTK_VTK_DATASET_TYPES
+        """
+        self.vtk_geometry_filter = self.chooseVtkGeometryFilter(vtk_dataset_type)
+
+    def chooseReader(self, file_format, vtk_dataset_type=None):
+        """
+        Return a reader based on file_format and possibly vtk_dataset_type.
+        @param vtk_dataset_type, None or one of the VTK_DATASET_TYPES
         """
         # Handle .ply files.
         if file_format == 'ply':
             return vtk.vtkPLYReader()
         # Handle .vtk files.
-        if dataset_type == 'STRUCTURED_GRID':
+        if vtk_dataset_type == 'STRUCTURED_GRID':
             return vtk.vtkStructuredGridReader()
-        elif dataset_type == 'POLYDATA':
+        elif vtk_dataset_type == 'POLYDATA':
             return vtk.vtkPolyDataReader()
-        elif dataset_type == 'UNSTRUCTURED_GRID':
+        elif vtk_dataset_type == 'UNSTRUCTURED_GRID':
             return vtk.vtkUnstructuredGridReader()
 
-    def getWriter(self, file_format, dataset_type):
+    def getReader(self):
+        return self.reader
+
+    def setReader(self, file_format=None, vtk_dataset_type=None ):
         """
-        Return a writer based on a dataset_type.
-        @param dataset_type, one of the DATASET_TYPES
+        Set the reader.
+        @param file_format, one of vtk or ply - defauylt to self.file_format
+        @param vtk_dataset_type, one of the VTK_VTK_DATASET_TYPES
+        """
+        if file_format is None:
+            file_format = self.file_format
+        assert file_format in FILE_FORMATS, "Invalid file_format %s" % str( file_format )
+        if file_format == 'vtk':
+            if vtk_dataset_type is None:
+                vtk_dataset_type = self.vtk_dataset_type
+            assert vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str( vtk_dataset_type )
+        self.reader = self.chooseReader(file_format, vtk_dataset_type)
+
+    def chooseWriter(self, file_format, vtk_dataset_type):
+        """
+        Return a writer based on file_format and possibly vtk_dataset_type.
+        @param vtk_dataset_type, None or one of the VTK_DATASET_TYPES
         """
         if file_format == 'ply':
             return vtk.vtkPLYWriter()
         # For now we'll just return the POLYDATA writer since methods work
-        # only with that dataset_type.  The rest is here for possible future
+        # only with that vtk_dataset_type.  The rest is here for possible future
         # use.
         return vtk.vtkPolyDataWriter()
-        if dataset_type == 'STRUCTURED_GRID':
+        if vtk_dataset_type == 'STRUCTURED_GRID':
             return vtk.vtkStructuredGridWriter()
-        elif dataset_type == 'POLYDATA':
+        elif vtk_dataset_type == 'POLYDATA':
             return vtk.vtkPolyDataWriter()
-        elif dataset_type == 'UNSTRUCTURED_GRID':
+        elif vtk_dataset_type == 'UNSTRUCTURED_GRID':
             return vtk.vtkUnstructuredGridWriter()
 
+    def getWriter(self):
+        return self.writer
 
-class VtkShapeManager(ShapeManager):
-
-    def __init__(self, dataset_type):
-        self.file_format = 'vtk'
-        self.dataset_type = dataset_type
-        ShapeManager.__init__(self, self.file_format, self.dataset_type)
-
-
-class PlyShapeManager(ShapeManager):
-
-    def __init__(self):
-        self.file_format = 'ply'
-        ShapeManager.__init__(self, self.file_format)
+    def setWriter(self, file_format=None, vtk_dataset_type=None):
+        """
+        Set the writer.
+        @param file_format, one of vtk or ply - defaults to self.file_format
+        @param vtk_dataset_type, None or one of the VTK_VTK_DATASET_TYPES
+        """
+        if file_format is None:
+            file_format = self.file_format
+        assert file_format in FILE_FORMATS, "Invalid file_format %s" % str( file_format )
+        if file_format == 'vtk':
+            if vtk_dataset_type is None:
+                vtk_dataset_type = self.vtk_dataset_type
+            assert vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str( vtk_dataset_type )
+        self.writer = self.chooseWriter(file_format, vtk_dataset_type)
 
 
 ###############################################################################
 def testPrimitiveShapes():
-    shape_mgr = VtkShapeManager('POLYDATA')
+    shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
 
     # Box
     box = shape_mgr.createShape('box', origin=(0.,  0.,  0.), lengths=(0.5,  1.,  2.))
@@ -545,7 +580,7 @@ def testPrimitiveShapes():
 
 
 def testSaveLoad():
-    shape_mgr = ShapeManager('vtk', 'POLYDATA')
+    shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
     s = shape_mgr.createShape('shpere', radius=0.7, origin=(0., 0., 0.), n_theta=8, n_phi=4)
     shape_mgr.saveShape(shape=s, file_name='t.vtk', file_type='ascii')
     s2 = shape_mgr.loadAsShape('t.vtk')
@@ -555,7 +590,7 @@ def testSaveLoad():
 
 
 def testConstructiveGeometry():
-    shape_mgr = PlyShapeManager()
+    shape_mgr = ShapeManager(file_format='ply')
     s1 = shape_mgr.createShape('sphere', radius=0.7, origin=(0., 0., 0.))
     s2 = shape_mgr.createShape('sphere', radius=0.2, origin=(0.1, 0.2, 0.3))
     b = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3), lengths=(1.1, 1.2, 1.3))
@@ -567,7 +602,7 @@ def testConstructiveGeometry():
 
 
 def testShapeComposition():
-    shape_mgr = VtkShapeManager('POLYDATA')
+    shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
     s1 = shape_mgr.createShape('sphere', radius=1, origin=(0., 0., 0.))
     s2 = shape_mgr.createShape('sphere', radius=1.2, origin=(0.8, 0., 0.))
     s3 = shape_mgr.composeShapes([('s1', s1), ('s2', s2)], 's1 + s2')

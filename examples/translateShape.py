@@ -9,7 +9,7 @@ import time
 import sys
 import re
 
-from icqsol.shapes.icqShapeManager import PlyShapeManager, VtkShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -40,16 +40,18 @@ if not args.input:
     sys.exit(3)
 
 file_format = 'vtk'
-file_type = 'binary'
-if args.ascii:
-    file_type = 'ascii'
 if args.output.lower().find('.ply') >= 0:
     file_format = 'ply'
 
+file_type = 'binary'
+if args.ascii:
+    file_type = 'ascii'
+
 if file_format == 'vtk':
-    shape_mgr = VtkShapeManager('POLYDATA')
+    # TODO: Enhance this to read the filoe and discover the vtk_dataset_type.
+    shape_mgr = ShapeManager(file_format=file_format, vtk_dataset_type='POLYDATA')
 else:
-    shape_mgr = PlyShapeManager()
+    shape_mgr = ShapeManager(file_format=file_format)
 
 shp = shape_mgr.loadAsShape(args.input)
 transVec = eval(args.translation)
