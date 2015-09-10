@@ -191,6 +191,8 @@ add_test(NAME testColorSurfaceFieldGnu
          --input testPrimitiveCylinderWithField.vtk
          --output testPrimitiveCylinderWithFieldColored.vtk
          --ascii)
+add_test(NAME testOutputFiles
+         COMMAND "sh" "${CMAKE_SOURCE_DIR}/checkOutput.sh")
 
 
 
