@@ -38,7 +38,7 @@ class ShapeManager(object):
             self.vtk_geometry_filter = None
         elif self.file_format == 'vtk':
             assert self.vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str( self.vtk_dataset_type )
-            self.vtk_geometry_filter = self.setVtkGeometryFilter(self.vtk_dataset_type)
+            self.setVtkGeometryFilter(self.vtk_dataset_type)
             self.setReader(self.file_format, self.vtk_dataset_type)
             self.setWriter(self.file_format, self.vtk_dataset_type)
         else:
