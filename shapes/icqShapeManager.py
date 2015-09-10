@@ -32,20 +32,19 @@ class ShapeManager(object):
         """
         self.file_format = file_format
         self.vtk_dataset_type = vtk_dataset_type
+        self.vtk_geometry_filter = None
         if self.file_format is None:
             self.reader = None
             self.writer = None
-            self.vtk_geometry_filter = None
         elif self.file_format == 'vtk':
             assert self.vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str( self.vtk_dataset_type )
-            self.setVtkGeometryFilter(self.vtk_dataset_type)
+            self.setVtkGeometryFilter()
             self.setReader(self.file_format, self.vtk_dataset_type)
             self.setWriter(self.file_format, self.vtk_dataset_type)
         else:
             # We have a PLY file
             self.setReader(self.file_format)
             self.setWriter(self.file_format)
-            self.vtk_geometry_filter = None
 
     def createShape(self, type, origin=None, lengths=None, radius=None,
                     angle=None, n_theta=None, n_phi=None):
@@ -470,27 +469,16 @@ class ShapeManager(object):
         vtk_poly_data = self.vtk_geometry_filter.GetOutput()
         return vtk_poly_data
 
-    def chooseVtkGeometryFilter(self, vtk_dataset_type):
-        """
-        Return a specific vtk geometry filter based on vtk_dataset_type.
-        @param vtk_dataset_type, one of the VTK_DATASET_TYPES
-        """
-        if vtk_dataset_type == 'STRUCTURED_GRID':
-            return vtk.vtkStructuredGridGeometryFilter()
-        elif vtk_dataset_type == 'POLYDATA':
-            return vtk.vtkGeometryFilter()
-        elif vtk_dataset_type == 'UNSTRUCTURED_GRID':
-            return vtk.vtkUnstructuredGridGeometryFilter()
-
     def getVtkGeometryFilter(self):
         return self.vtk_geometry_filter
 
-    def setVtkGeometryFilter(self, vtk_dataset_type):
+    def setVtkGeometryFilter(self):
         """
-        Set the vtk_geometry_filter.
-        @param vtk_dataset_type, one of the VTK_VTK_DATASET_TYPES
+        Set the vtk_geometry_filter.  We coerce STRUCTURED_GRID and
+        UNSTRUCTURED_GRID vtk_dataset_types to be POLYDATA, so we only
+        need a vtk.vtkGeometryFilter().
         """
-        self.vtk_geometry_filter = self.chooseVtkGeometryFilter(vtk_dataset_type)
+        self.vtk_geometry_filter = vtk.vtkGeometryFilter()
 
     def chooseReader(self, file_format, vtk_dataset_type=None):
         """
