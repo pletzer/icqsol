@@ -47,7 +47,8 @@ class ShapeManager(object):
             self.setWriter(self.file_format)
             self.vtk_geometry_filter = None
 
-    def createShape(self, type, **kwd):
+    def createShape(self, type, origin=None, lengths=None, radius=None,
+                    angle=None, n_theta=None, n_phi=None):
         """
         Create a primitive shape which can be one of box, cone, cylinder or
         sphere.
@@ -59,12 +60,20 @@ class ShapeManager(object):
         @param n_theta, (optional) float that controls tessellation along longitude
         @param n_phi, (optional) float that controls tessellation along latitude
         """
-        origin = kwd.get( 'origin', DEFAULTS['origin'] )
-        lengths = kwd.get( 'lengths', DEFAULTS['lengths'] )
-        radius = kwd.get( 'radius', DEFAULTS['radius'] )
-        angle = kwd.get( 'angle', DEFAULTS['angle'] )
-        n_theta = kwd.get( 'n_theta', DEFAULTS['n_theta'] )
-        n_phi = kwd.get( 'n_phi', DEFAULTS['n_phi'] )
+        # Set defaults if necessary.
+        if origin is None:
+            origin = DEFAULTS['origin']
+        if lengths is None:
+            lengths = DEFAULTS['lengths']
+        if radius is None:
+            radius = DEFAULTS['radius']
+        if angle is None:
+            angle = DEFAULTS['angle']
+        if n_theta is None:
+            n_theta = DEFAULTS['n_theta']
+        if n_phi is None:
+            n_phi = DEFAULTS['n_phi']
+        # Create the specified shape.
         if type == 'box':
             return Box(origin, lengths)
         if type == 'cone':
