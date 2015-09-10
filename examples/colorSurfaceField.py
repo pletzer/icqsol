@@ -10,7 +10,7 @@ import os
 import re
 import sys
 
-from icqsol.shapes.icqShapeManager import VtkShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -43,7 +43,8 @@ if not os.path.exists(args.input):
     print 'ERROR: file {} does not exist'.format(args.input)
     sys.exit(2)
 
-shape_mgr = VtkShapeManager('POLYDATA')
+# TODO: Enhance this to read the filoe and discover the vtk_dataset_type.
+shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
 pDataInput = shape_mgr.loadAsVtkPolyData(args.input)
 pDataColored = shape_mgr.colorSurfaceField(pDataInput, args.colormap, field_name=args.name)
 

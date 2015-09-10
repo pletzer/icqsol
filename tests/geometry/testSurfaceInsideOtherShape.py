@@ -3,9 +3,9 @@
 Test intersection operation
 @author pletzer@psu.edu
 """
-from icqsol.shapes.icqShapeManager import VtkShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
-shape_mgr = VtkShapeManager('POLYDATA')
+shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
 # box-box containment
 a = shape_mgr.createShape('box', origin=(0., 0., 0.), lengths=(1., 1., 0.2))
 b = shape_mgr.createShape('box', origin=(0.5, 0.5, 0.), lengths=(1., 1., 0.2))

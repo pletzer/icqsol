@@ -5,9 +5,9 @@ Test creation of a bolt object
 @author pletzer@psu.edu
 """
 
-from icqsol.shapes.icqShapeManager import VtkShapeManager
+from icqsol.shapes.icqShapeManager import ShapeManager
 
-shape_mgr = VtkShapeManager('POLYDATA')
+shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
 shaft = shape_mgr.createShape('cylinder', origin=[0., 0., 0.], lengths=[1., 0., 0.], radius=0.1, n_theta=32)
 head = shape_mgr.createShape('cone', origin=[-0.06, 0., 0.], lengths=[0.14, 0., 0.], radius=0.25)
 notch1 = shape_mgr.createShape('box', origin=[-0.06, -0.015, -0.15], lengths=[0.03, 0.03, 0.30])
