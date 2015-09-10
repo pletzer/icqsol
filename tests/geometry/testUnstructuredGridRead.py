@@ -4,10 +4,9 @@ import vtk
 import math
 from icqsol.shapes.icqShapeManager import ShapeManager
 
-# Create structured grid and save in VTK file
+# Create unstructured grid and save grid in VTK file
 nLon, nLat = 16, 8
 nLon1, nLat1 = nLon + 1, nLat + 1
-
 
 points = vtk.vtkPoints()
 points.SetNumberOfPoints(nLon * nLat1)
@@ -47,6 +46,7 @@ writer.SetFileName('sphereUnstructGrid.vtk')
 writer.SetFileTypeToASCII()
 writer.Write()
 
+# Try reading the grid
 shp_manager = ShapeManager(file_format='vtk', 
                            vtk_dataset_type='UNSTRUCTURED_GRID')
 shp = shp_manager.loadAsShape('sphereUnstructGrid.vtk')

@@ -4,7 +4,7 @@ import vtk
 import math
 from icqsol.shapes.icqShapeManager import ShapeManager
 
-# Create structured grid and save in VTK file
+# Create structured grid and save grid in VTK file
 nLon, nLat = 16, 8
 nLon1, nLat1 = nLon + 1, nLat + 1
 structuredGrid = vtk.vtkStructuredGrid()
@@ -34,6 +34,7 @@ writer.SetFileName('sphereStructGrid.vtk')
 writer.SetFileTypeToASCII()
 writer.Write()
 
+# Try reading the grid
 shp_manager = ShapeManager(file_format='vtk', 
                            vtk_dataset_type='STRUCTURED_GRID')
 shp = shp_manager.loadAsShape('sphereStructGrid.vtk')

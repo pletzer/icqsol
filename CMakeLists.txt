@@ -58,6 +58,12 @@ add_test(NAME testBolt COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/tes
 add_test(NAME testSurfaceInsideOtherShape COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testSurfaceInsideOtherShape.py")
 add_test(NAME testPointInsideShape COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testPointInsideShape.py" --n_theta 6 --n_phi 4)
 add_test(NAME testPointInsideShape2 COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testPointInsideShape.py" --n_theta 32 --n_phi 16)
+add_test(NAME testStructuredGridRead
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/tests/geometry/testStructuredGridRead.py")
+add_test(NAME testUnstructuredGridRead
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/tests/geometry/testunStructuredGridRead.py")
 
 add_test(NAME testColorMap
          COMMAND "${PYTHON_EXECUTABLE}" 
@@ -191,9 +197,6 @@ add_test(NAME testColorSurfaceFieldGnu
          --input testPrimitiveCylinderWithField.vtk
          --output testPrimitiveCylinderWithFieldColored.vtk
          --ascii)
-add_test(NAME testStructuredGridRead
-         COMMAND "${PYTHON_EXECUTABLE}" 
-         "${CMAKE_SOURCE_DIR}/tests/geometry/testStructuredGridRead.py")
 add_test(NAME testOutputFiles
          COMMAND "sh" "${CMAKE_SOURCE_DIR}/checkOutput.sh")
 
