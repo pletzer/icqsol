@@ -191,6 +191,9 @@ add_test(NAME testColorSurfaceFieldGnu
          --input testPrimitiveCylinderWithField.vtk
          --output testPrimitiveCylinderWithFieldColored.vtk
          --ascii)
+add_test(NAME testStructuredGridRead
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/tests/geometry/testStructuredGridRead.py")
 add_test(NAME testOutputFiles
          COMMAND "sh" "${CMAKE_SOURCE_DIR}/checkOutput.sh")
 
