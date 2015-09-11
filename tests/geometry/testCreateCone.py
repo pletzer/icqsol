@@ -7,6 +7,7 @@ Test creation of cone
 
 import argparse
 from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol import util
 
 parser = argparse.ArgumentParser(description='Create cone')
 
@@ -23,14 +24,11 @@ parser.add_argument('--n_theta', type=int, dest='n_theta', default=8,
                     help='Set number of poloidal cells')
 args = parser.parse_args()
 
-file_format = 'vtk'
-if args.output.find('.ply') > 0:
-    file_format = 'ply'
+# Get the format of the input - either vtk or ply.
+file_format = util.getFileFormat(args.output)
 
-file_type = 'ascii'
-
-if file_format == 'vtk':
-    shape_mgr = ShapeManager(file_format=file_format, vtk_dataset_type='POLYDATA')
+if file_format == util.VTK_FORMAT:
+    shape_mgr = ShapeManager(file_format=file_format, vtk_dataset_type=util.POLYDATA)
 else:
     shape_mgr = ShapeManager(file_format=file_format)
 
@@ -41,6 +39,6 @@ s = shape_mgr.createShape('cone',
                           n_theta=args.n_theta)
 
 if args.output:
-    shape_mgr.saveShape(shape=s, file_name=args.output, file_type=file_type)
+    shape_mgr.saveShape(shape=s, file_name=args.output, file_type=util.ASCII)
 else:
     shape_mgr.show(s)

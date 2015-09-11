@@ -8,6 +8,7 @@ import sys
 import re
 import numpy
 from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol import util
 
 options = {
     'sphere': {
@@ -75,21 +76,14 @@ for optNameValue in args.options:
         sys.exit(3)
     options[args.type][optName] = eval(optValue)
 
-fileFormat = 'vtk'
-fileType = 'binary'
-if args.ascii:
-    fileType = 'ascii'
-if args.output.lower().find('.ply') > 0:
-    fileFormat = 'ply'
+fileFormat =  util.getFileFormat(args.output)
 
-if fileFormat == 'vtk':
-    # TODO: Enhance this to read the filoe and discover the vtk_dataset_type.
-    shape_mgr = ShapeManager(file_format=fileFormat, vtk_dataset_type='POLYDATA')
+if fileFormat == util.VTK_FORMAT:
+    # We always produce VTK POLYDATA files.
+    shape_mgr = ShapeManager(file_format=fileFormat, vtk_dataset_type=util.POLYDATA)
 else:
     shape_mgr = ShapeManager(file_format=fileFormat)
 
-# set the surface and volume function
-surfaceFunctions = []
 evalFunction = None
 optDic = options[args.type]
 
@@ -134,4 +128,8 @@ if args.list:
         print '{:>10} --> {:>20}'.format(optName, optVal)
 
 if args.output:
-    shape_mgr.saveShape(shape=shp, file_name=args.output, file_type=fileType)
+    if args.ascii:
+        file_type = util.ASCII
+    else:
+        file_type = util.BINARY
+    shape_mgr.saveShape(shape=shp, file_name=args.output, file_type=file_type)

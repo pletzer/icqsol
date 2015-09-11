@@ -1,11 +1,12 @@
 from icqsol.shapes.icqShapeManager import ShapeManager
 from csg.core import CSG
+from icqsol import util
 
 """
 Test conversion from a shape to a list of polygons
 @author pletzer@psu.edu
 """
-shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
+shape_mgr = ShapeManager(file_format=util.VTK_FORMAT, vtk_dataset_type=util.POLYDATA)
 shp = shape_mgr.createShape('box', origin=[0., 0., 0.], lengths=[1., 1., 1.],)
 
 # check whether one can convert to a list of polygons

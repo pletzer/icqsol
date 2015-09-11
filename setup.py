@@ -17,6 +17,7 @@ setup(name='ICQSol',
       packages=['icqsol',
                 'icqsol.color', 
                 'icqsol.discretization',
-                'icqsol.shapes'],
+                'icqsol.shapes',
+                'icqsol.util'],
       requires = ['numpy', 'vtk'],
      )
