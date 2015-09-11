@@ -173,14 +173,18 @@ class ShapeManager(object):
         colored_vtk_poly_data.GetArray(2).SetName('blue')
         return vtk_poly_data_copy
 
-    def refineShape(self, shape):
+    def refineShape(self, shape, refine=1):
         """
         Refine a shape by inserting one vertex to each edge and one
         vertex to the center of the polygon
         @param shape shape
+        @param refine number of refinements
         @return new shape
         """
-        return shape.refine()
+	s = shape.clone()
+	for i in range(refine):
+            s = s.refine()
+        return s
 
     def cloneShape(self, shape):
         """

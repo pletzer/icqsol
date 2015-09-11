@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Test intersection operation
+Test subtraction operation on cylinders
 @author pletzer@psu.edu
 """
 
