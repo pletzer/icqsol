@@ -42,28 +42,28 @@ enable_testing()
 
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests")
 add_test(NAME testCreateCylinder 
-         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testCreateCylinder.py" --output testCreateCylinder.vtk)
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testCreateCylinder.py" --output testCreateCylinder.vtk)
 add_test(NAME testCreateBox 
-         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testCreateBox.py" --output testCreateBox.vtk)
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testCreateBox.py" --output testCreateBox.vtk)
 add_test(NAME testCreateSphere 
-         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testCreateSphere.py" --output testCreateSphere.vtk)
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testCreateSphere.py" --output testCreateSphere.vtk)
 add_test(NAME testCreateCone
-         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testCreateCone.py" --output testCreateCone.vtk)
-add_test(NAME testSaveLoad COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testSaveLoad.py")
-add_test(NAME testToPolygons COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testToPolygons.py")
-add_test(NAME testFromPolygons COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testFromPolygons.py")
-add_test(NAME testUnion COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testUnion.py")
-add_test(NAME testRing COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testRing.py")
-add_test(NAME testBolt COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testBolt.py")
-add_test(NAME testSurfaceInsideOtherShape COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testSurfaceInsideOtherShape.py")
-add_test(NAME testPointInsideShape COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testPointInsideShape.py" --n_theta 6 --n_phi 4)
-add_test(NAME testPointInsideShape2 COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/geometry/testPointInsideShape.py" --n_theta 32 --n_phi 16)
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testCreateCone.py" --output testCreateCone.vtk)
+add_test(NAME testSaveLoad COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testSaveLoad.py")
+add_test(NAME testToPolygons COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testToPolygons.py")
+add_test(NAME testFromPolygons COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testFromPolygons.py")
+add_test(NAME testUnion COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testUnion.py")
+add_test(NAME testRing COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testRing.py")
+add_test(NAME testBolt COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testBolt.py")
+add_test(NAME testSurfaceInsideOtherShape COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testSurfaceInsideOtherShape.py")
+add_test(NAME testPointInsideShape COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testPointInsideShape.py" --n_theta 6 --n_phi 4)
+add_test(NAME testPointInsideShape2 COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testPointInsideShape.py" --n_theta 32 --n_phi 16)
 add_test(NAME testStructuredGridRead
          COMMAND "${PYTHON_EXECUTABLE}" 
-         "${CMAKE_SOURCE_DIR}/tests/geometry/testStructuredGridRead.py")
+         "${CMAKE_SOURCE_DIR}/tests/testStructuredGridRead.py")
 add_test(NAME testUnstructuredGridRead
          COMMAND "${PYTHON_EXECUTABLE}" 
-         "${CMAKE_SOURCE_DIR}/tests/geometry/testUnstructuredGridRead.py")
+         "${CMAKE_SOURCE_DIR}/tests/testUnstructuredGridRead.py")
 
 add_test(NAME testColorMap
          COMMAND "${PYTHON_EXECUTABLE}" 
