@@ -64,6 +64,9 @@ add_test(NAME testStructuredGridRead
 add_test(NAME testUnstructuredGridRead
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/tests/testUnstructuredGridRead.py")
+add_test(NAME testColormaps
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/tests/testColormaps.py")
 
 add_test(NAME testColorMap
          COMMAND "${PYTHON_EXECUTABLE}" 
