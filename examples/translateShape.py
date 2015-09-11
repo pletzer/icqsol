@@ -10,6 +10,7 @@ import sys
 import re
 
 from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol import util
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -39,17 +40,18 @@ if not args.input:
     print 'ERROR: must specify one input file with --input <file>'
     sys.exit(3)
 
-file_format = 'vtk'
-if args.output.lower().find('.ply') >= 0:
-    file_format = 'ply'
+# Get the format of the input - either vtk or ply.
+file_format = util.getFileFormat(args.input)
 
-file_type = 'binary'
 if args.ascii:
-    file_type = 'ascii'
+    file_type = util.ASCII
+else:
+    file_type = util.BINARY
 
-if file_format == 'vtk':
-    # TODO: Enhance this to read the filoe and discover the vtk_dataset_type.
-    shape_mgr = ShapeManager(file_format=file_format, vtk_dataset_type='POLYDATA')
+if file_format == util.VTK_FORMAT:
+    # We have a VTK file, so Get the dataset type.
+    vtk_dataset_type = util.getVtkDatasetType(args.input)
+    shape_mgr = ShapeManager(file_format=file_format, vtk_dataset_type=vtk_dataset_type)
 else:
     shape_mgr = ShapeManager(file_format=file_format)
 

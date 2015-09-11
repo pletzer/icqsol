@@ -11,6 +11,7 @@ import re
 import sys
 
 from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol import util
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -43,14 +44,25 @@ if not os.path.exists(args.input):
     print 'ERROR: file {} does not exist'.format(args.input)
     sys.exit(2)
 
-# TODO: Enhance this to read the filoe and discover the vtk_dataset_type.
-shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
+file_format = util.getFileFormat(args.input)
+
+if file_format != util.VTK_FORMAT:
+    print 'ERROR: file {} must be VTK format'.format(args.input)
+    sys.exit(2)
+
+vtk_dataset_type = util.getVtkDatasetType(args.input)
+
+if vtk_dataset_type not in util.VTK_DATASET_TYPES:
+    print 'ERROR: invalid VTK dataset type {}'.format(vtk_dataset_type)
+    sys.exit(2)
+
+shape_mgr = ShapeManager(file_format=util.VTK_FORMAT, vtk_dataset_type=vtk_dataset_type)
 pDataInput = shape_mgr.loadAsVtkPolyData(args.input)
 pDataColored = shape_mgr.colorSurfaceField(pDataInput, args.colormap, field_name=args.name)
 
 if args.output:
     if args.ascii:
-        file_type = 'ascii'
+        file_type = util.ASCII
     else:
-        file_type = 'binary'
+        file_type = util.BINARY
     shape_mgr.saveVtkPolyData(vtk_poly_data=pDataColored, file_name=args.output, file_type=file_type)

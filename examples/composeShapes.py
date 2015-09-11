@@ -10,9 +10,7 @@ import sys
 import re
 
 from icqsol.shapes.icqShapeManager import ShapeManager
-
-def isVtkFile(file_name):
-    return file_name.lower().endswith('.vtk')
+from icqsol import util
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -48,23 +46,24 @@ shape_mgr = ShapeManager()
 
 for shapeTuple in args.shapeTuples:
     expression_var, input_file = re.sub(r'\s*', '', shapeTuple).split(',')
-    if isVtkFile(input_file):
-        # TODO: Enhance this to read the filoe and discover the vtk_dataset_type.
-        shape_mgr.setReader(file_format='vtk', vtk_dataset_type='POLYDATA')
+    if util.isVtkFile(input_file):
+        vtk_dataset_type = util.getVtkDatasetType(input_file)
+        shape_mgr.setReader(file_format=util.VTK_FORMAT, vtk_dataset_type=vtk_dataset_type)
     else:
-        shape_mgr.setReader(file_format='ply')
+        shape_mgr.setReader(file_format=util.PLY_FORMAT)
     s = shape_mgr.loadAsShape(input_file)
     shape_tuples.append((expression_var, s))
 
-fileType = 'binary'
 if args.ascii:
-    fileType = 'ascii'
+    fileType = util.ASCII
+else:
+    fileType = util.BINARY
 
 compositeShape = shape_mgr.composeShapes(shape_tuples, args.expression)
 
 if args.output:
-    if isVtkFile(args.output):
-        shape_mgr.setWriter(file_format='vtk', vtk_dataset_type='POLYDATA')
+    if util.isVtkFile(args.output):
+        shape_mgr.setWriter(file_format=util.VTK_FORMAT, vtk_dataset_type=util.POLYDATA)
     else:
-        shape_mgr.setWriter(file_format='ply')
+        shape_mgr.setWriter(file_format=util.PLY_FORMAT)
     shape_mgr.saveShape(shape=compositeShape, file_name=args.output, file_type=fileType)

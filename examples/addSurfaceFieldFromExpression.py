@@ -10,6 +10,7 @@ import re
 from numpy import linspace
 
 from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol import util
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -49,22 +50,28 @@ if not args.input:
 # make sure the field name contains no spaces
 args.name = re.sub('\s', '_', args.name)
 
-if args.input.lower().endswith('.ply'):
-    shape_mgr = ShapeManager(file_format='ply')
+# Get the format of the input - either vtk or ply.
+file_format = util.getFileFormat(args.input)
+
+if file_format == util.PLY_FORMAT:
+    shape_mgr = ShapeManager(file_format=util.PLY_FORMAT)
 else:
-    # TODO: Enhance this to read the filoe and discover the vtk_dataset_type.
-    shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
+    # We have a VTK file, so Get the dataset type.
+    vtk_dataset_type = util.getVtkDatasetType(args.input)
+    shape_mgr = ShapeManager(file_format=util.VTK_FORMAT, vtk_dataset_type=vtk_dataset_type)
 
 shp = shape_mgr.loadAsShape(args.input)
 times = [0.0]
 if args.times:
     times = eval(args.times)
+
 pdata = shape_mgr.addSurfaceFieldFromExpression(shp, args.name, args.expression, times)
 
 if args.output:
-    shape_mgr.setWriter(file_format='vtk', vtk_dataset_type='POLYDATA')
+    # Always produce VTK POLYDATA.
+    shape_mgr.setWriter(file_format=util.VTK_FORMAT, vtk_dataset_type=util.POLYDATA)
     if args.ascii:
-        file_type = 'ascii'
+        file_type = util.ASCII
     else:
-        file_type = 'binary'
+        file_type = util.BINARY
     shape_mgr.saveVtkPolyData(vtk_poly_data=pdata, file_name=args.output, file_type=file_type)

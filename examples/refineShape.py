@@ -10,6 +10,7 @@ import sys
 import re
 
 from icqsol.shapes.icqShapeManager import ShapeManager
+from icqsol import util
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -39,11 +40,17 @@ if not args.input:
     print 'ERROR: must specify input file: --input <file>'
     sys.exit(3)
 
+file_format = util.getFileFormat(args.input)
+
 # Build the shape manager.
 shape_mgr = ShapeManager()
-shape_mgr.setReader(file_format='vtk', vtk_dataset_type='POLYDATA')
-if args.input.lower().find('.ply') >= 0:
-    shape_mgr.setReader(file_format='ply')
+
+if file_format == util.PLY_FORMAT:
+    shape_mgr.setReader(file_format=util.PLY_FORMAT)
+else:
+    # We have a VTK file, so Get the dataset type.
+    vtk_dataset_type = util.getVtkDatasetType(args.input)
+    shape_mgr.setReader(file_format=util.VTK_FORMAT, vtk_dataset_type=vtk_dataset_type)
 
 # Read the file.
 s = shape_mgr.loadAsShape(args.input)
@@ -53,9 +60,12 @@ for i in range(args.refine):
     s = s.refine()
 
 # Save.
-file_type = 'binary'
 if args.ascii:
-    file_type = 'ascii'
-shape_mgr.setWriter(file_format='vtk', vtk_dataset_type='POLYDATA')
+    file_type = util.ASCII
+else:
+    file_type = util.BINARY
+
+# Always produce VYK POLYDATA.
+shape_mgr.setWriter(file_format=util.VTK_FORMAT, vtk_dataset_type=util.POLYDATA)
 shape_mgr.saveShape(shape=s, file_name=args.output, file_type=file_type)
 
