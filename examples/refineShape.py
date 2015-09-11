@@ -9,7 +9,7 @@ import time
 import sys
 import re
 
-import vtk
+from icqsol.shapes.icqShapeManager import ShapeManager
 
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(description='Refine a shape.')
 parser.add_argument('--input', dest='input', default='',
                     help='Input file (PLY or VTK)')
 
-parser.add_argument('--refine', dest='refine', type=int,
+parser.add_argument('--refine', dest='refine', type=int, default=1,
                     help='Number of subdivisions')
 
 parser.add_argument('--ascii', dest='ascii', action='store_true',
@@ -39,36 +39,23 @@ if not args.input:
     print 'ERROR: must specify input file: --input <file>'
     sys.exit(3)
 
-reader = vtk.vtkPolyDataReader()
+# Build the shape manager.
+shape_mgr = ShapeManager()
+shape_mgr.setReader(file_format='vtk', vtk_dataset_type='POLYDATA')
 if args.input.lower().find('.ply') >= 0:
-    reader = vtk.vtkPLYReader()
-reader.SetFileName(args.input)
-reader.Update()
+    shape_mgr.setReader(file_format='ply')
 
-# vtkPolyData
-pdata = reader.GetOutput()
+# Read the file.
+s = shape_mgr.loadAsShape(args.input)
 
-densifyFilter = vtk.vtkDensifyPolyData()
-densifyFilter.SetNumberOfSubdivisions(args.refine)
-if vtk.VTK_MAJOR_VERSION >= 6:
-    densifyFilter.SetInputData(pdata)
-else:
-    densifyFilter.SetInput(pdata)
-densifyFilter.Update()
+# Refine.
+for i in range(args.refine):
+    s = s.refine()
 
-outPdata = densifyFilter.GetOutput()
+# Save.
+file_type = 'binary'
+if args.ascii:
+    file_type = 'ascii'
+shape_mgr.setWriter(file_format='vtk', vtk_dataset_type='POLYDATA')
+shape_mgr.saveShape(shape=s, file_name=args.output, file_type=file_type)
 
-if args.output:
-    writer = vtk.vtkPolyDataWriter()
-    if args.output.lower().find('.ply') >= 0:
-        writer = vtk.vtk.PolyDataWriter()
-    writer.SetFileName(args.output)
-    writer.SetFileTypeToBinary()
-    if args.ascii:
-        writer.SetFileTypeToASCII()
-    if vtk.VTK_MAJOR_VERSION >= 6:
-        writer.SetInputData(outPdata)
-    else:
-        writer.SetInput(outPdata)
-    writer.Write()
-    writer.Update()
