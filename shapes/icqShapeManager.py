@@ -242,7 +242,7 @@ class ShapeManager(object):
             if self.vtk_dataset_type == 'POLYDATA':
                 vtk_poly_data = vtk_data
             else:
-                vtk_poly_data = self.convertToPolyData( vtk_data )
+                vtk_poly_data = self.convertToPolyData(vtk_data)
         else:
             # We have a PLY file.
             vtk_poly_data = vtk_data
@@ -477,7 +477,7 @@ class ShapeManager(object):
         if vtk.VTK_MAJOR_VERSION >= 6:
             self.vtk_geometry_filter.SetInputData(vtk_data)
         else:
-            self.vtk_geometry_filter.SetInput(vtk_poly_data)
+            self.vtk_geometry_filter.SetInput(vtk_data)
         self.vtk_geometry_filter.Update()
         vtk_poly_data = self.vtk_geometry_filter.GetOutput()
         return vtk_poly_data
@@ -524,7 +524,7 @@ class ShapeManager(object):
         if file_format == 'vtk':
             if vtk_dataset_type is None:
                 vtk_dataset_type = self.vtk_dataset_type
-            assert vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str( vtk_dataset_type )
+            assert vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str(vtk_dataset_type)
         self.reader = self.chooseReader(file_format, vtk_dataset_type)
 
     def chooseWriter(self, file_format, vtk_dataset_type):
@@ -560,7 +560,7 @@ class ShapeManager(object):
         if file_format == 'vtk':
             if vtk_dataset_type is None:
                 vtk_dataset_type = self.vtk_dataset_type
-            assert vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str( vtk_dataset_type )
+            assert vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str(vtk_dataset_type)
         self.writer = self.chooseWriter(file_format, vtk_dataset_type)
 
 
