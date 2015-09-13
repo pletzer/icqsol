@@ -18,4 +18,4 @@ shape_mgr.rotateShape(notch2, axis=(1., 0., 0.), angleDeg=90.0)
 geom = head + shaft - notch1 - notch2
 
 shape_mgr.saveShape(shape=geom, file_name='testBolt.vtk', file_type=util.ASCII)
-shape_mgr.show(geom, filename='testBolt.png')
+shape_mgr.showShape(geom, filename='testBolt.png')

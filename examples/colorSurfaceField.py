@@ -27,6 +27,9 @@ parser.add_argument('--colormap', dest='colormap', default='hot',
 parser.add_argument('--name', dest='name', default='',
                     help='Set the name of the field')
 
+parser.add_argument('--component', dest='component', type=int, default=0,
+                    help='Set the component of the field')
+
 parser.add_argument('--ascii', dest='ascii', action='store_true',
                     help='Save data in ASCII format (default is binary)')
 
@@ -58,7 +61,9 @@ if vtk_dataset_type not in util.VTK_DATASET_TYPES:
 
 shape_mgr = ShapeManager(file_format=util.VTK_FORMAT, vtk_dataset_type=vtk_dataset_type)
 pDataInput = shape_mgr.loadAsVtkPolyData(args.input)
-pDataColored = shape_mgr.colorSurfaceField(pDataInput, args.colormap, field_name=args.name)
+pDataColored = shape_mgr.colorSurfaceField(pDataInput, args.colormap,
+                                           field_name=args.name,
+                                           field_component=args.component)
 
 if args.output:
     if args.ascii:

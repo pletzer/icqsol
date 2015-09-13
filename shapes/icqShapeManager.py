@@ -119,12 +119,14 @@ class ShapeManager(object):
         pdata.GetPointData().SetScalars(data)
         return pdata
 
-    def colorSurfaceField(self, vtk_poly_data, color_map, field_name=None):
+    def colorSurfaceField(self, vtk_poly_data, color_map,
+                          field_name=None, field_component=0):
         """
         Color a selected surface field of a shape.
         @param vtk_poly_data, data defining the shape with surface field information
-        @param field_name, the name of the surface field to color
         @param color_map, name of the color map to use
+        @param field_name, the name of the surface field to color
+        @param field_component field component
         @return colored_vtk_poly_data, color applied to vtk_poly_data
         """
         # Copy the received vtk_poly_data, creating another
@@ -135,6 +137,7 @@ class ShapeManager(object):
         # Get information from the data.
         pointData = vtk_poly_data.GetPointData()
         numComps = pointData.GetNumberOfComponents()
+        assert field_component < numComps, "Field component should be < %d" % numComps
         numPoints = vtk_poly_data.GetPoints().GetNumberOfPoints()
         numArrays = pointData.GetNumberOfArrays()
         assert field_name is not None or numArrays == 1, "Field name must be specified since data has %d arrays" % numArrays
@@ -142,35 +145,19 @@ class ShapeManager(object):
         array = pointData.GetScalars(field_name)
         fmin, fmax = array.GetRange()
         # Prepare for coloring the points.
-        redArray = vtk.vtkUnsignedCharArray()
-        greenArray = vtk.vtkUnsignedCharArray()
-        blueArray = vtk.vtkUnsignedCharArray()
-        redArray.SetNumberOfComponents(numComps)
-        greenArray.SetNumberOfComponents(numComps)
-        blueArray.SetNumberOfComponents(numComps)
-        redArray.SetNumberOfTuples(numPoints)
-        greenArray.SetNumberOfTuples(numPoints)
-        blueArray.SetNumberOfTuples(numPoints)
-        rs = numpy.zeros((numComps,), numpy.uint8)
-        gs = numpy.zeros((numComps,), numpy.uint8)
-        bs = numpy.zeros((numComps,), numpy.uint8)
+        rgbArray = vtk.vtkUnsignedCharArray()
+        rgbArray.SetNumberOfComponents(3)
+        rgbArray.SetNumberOfTuples(numPoints)
+        rgbArray.SetName('Colors')
         # Build the color map.
         colorMap = ColorMap(fmin, fmax)
         colorMethod = eval('colorMap.' + color_map)
-        # Color the points.
+        # Set the colors.
         for i in range(numPoints):
-            fs = array.GetTuple(i)
-            for j in range(numComps):
-                rs[j], gs[j], bs[j] = colorMethod(fs[j])
-            redArray.SetTuple(i, rs)
-            greenArray.SetTuple(i, gs)
-            blueArray.SetTuple(i, bs)
-        colored_vtk_poly_data = vtk_poly_data_copy.GetPointData()
-        for arr in redArray, greenArray, blueArray:
-            colored_vtk_poly_data.AddArray(arr)
-        colored_vtk_poly_data.GetArray(0).SetName('red')
-        colored_vtk_poly_data.GetArray(1).SetName('green')
-        colored_vtk_poly_data.GetArray(2).SetName('blue')
+            f = array.GetComponent(i, field_component)
+            rgbArray.SetTuple(i, colorMethod(f))
+        # Attach the array.
+        vtk_poly_data_copy.GetPointData().SetScalars(rgbArray)
         return vtk_poly_data_copy
 
     def refineShape(self, shape, refine=1):
@@ -181,8 +168,8 @@ class ShapeManager(object):
         @param refine number of refinements
         @return new shape
         """
-	s = shape.clone()
-	for i in range(refine):
+        s = shape.clone()
+        for i in range(refine):
             s = s.refine()
         return s
 
@@ -342,25 +329,36 @@ class ShapeManager(object):
         numCells = len(polys)
         pdata.Allocate(numCells, 1)
         ptIds = vtk.vtkIdList()
-        for i in range(numCells):
-            npts = len(polys[i])
+        for poly in polys:
+            npts = len(poly)
             ptIds.SetNumberOfIds(npts)
             for j in range(npts):
-                ptIds.SetId(j, polys[i][j])
+                ptIds.SetId(j, poly[j])
             pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
         return pdata
 
-    def show(self, shape, windowSizeX=600, windowSizeY=400, filename=''):
+    def showShape(self, shape, windowSizeX=600, windowSizeY=400, filename=''):
         """
         Show the boundary surface or write image to file
+        @param shape CSG instance
         @param windowSizeX number of pixels in x
         @param windowSizeY number of pixels in y
         @param filename write to a file if this keyword
                is present and a non-empty string
         """
         pdata = self.shapeToVTKPolyData(shape)
-
-        # create a rendering window and renderer
+        self.showVtkPolyData(pdata, windowSizeX, windowSizeY, filename)
+        
+    def showVtkPolyData(self, pdata, windowSizeX=600, windowSizeY=400, filename=''):
+        """
+        Show the boundary surface or write image to file
+        @param pdata vtkPolyData instance
+        @param windowSizeX number of pixels in x
+        @param windowSizeY number of pixels in y
+        @param filename write to a file if this keyword
+        is present and a non-empty string
+        """
+        # Create a rendering window and renderer.
         try:
             ren = vtk.vtkRenderer()
             renWin = vtk.vtkRenderWindow()
@@ -388,9 +386,9 @@ class ShapeManager(object):
             return
         renWin.AddRenderer(ren)
         renWin.SetSize(windowSizeX, windowSizeY)
-        # create a renderwindowinteractor
+        # Create a renderwindowinteractor.
         iren.SetRenderWindow(renWin)
-        # camera
+        # Camera
         xmin, xmax, ymin, ymax, zmin, zmax = pdata.GetBounds()
         lo = numpy.array([xmin, ymin, zmin])
         hi = numpy.array([xmax, ymax, zmax])
@@ -399,16 +397,15 @@ class ShapeManager(object):
         camera.SetPosition(center + hi - lo)
         camera.Zoom(1.0)
         ren.SetActiveCamera(camera)
-        # mapper
+        # Mapper.
         if vtk.VTK_MAJOR_VERSION >= 6:
             mapper.SetInputData(pdata)
         else:
             mapper.SetInput(pdata)
-        mapper.ScalarVisibilityOff()
-        # actor
+        # Actor.
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(1, 1, 1)
-        # add axes
+        # Add axes.
         axesColrs = [(1., 0., 0.,), (0., 1., 0.,), (0., 0., 1.,)]
         for a in axes:
             a.SetShaftRadius(0.01)
@@ -416,16 +413,16 @@ class ShapeManager(object):
             a.SetTipRadius(0.03)
         for at in axesTransf:
             at.PostMultiply()
-        # rotate the y and z arrows (initially along x)
+        # Rotate the y and z arrows (initially along x).
         axesTransf[1].RotateZ(90.0)
         axesTransf[2].RotateY(-90.0)
-        # scale
+        # Scale.
         for i in range(3):
             factor = hi[i] - lo[i]
             scale = [1., 1., 1.]
             scale[i] = factor
             axesTransf[i].Scale(scale)
-        # translate to loBounds
+        # Translate to loBounds.
         for at in axesTransf:
             at.Translate(lo)
         for i in range(3):
@@ -435,10 +432,9 @@ class ShapeManager(object):
             axesActors[i].SetMapper(axesMappers[i])
             axesActors[i].GetProperty().SetColor(axesColrs[i])
             ren.AddActor(axesActors[i])
-        # assign actor to the renderer
+        # Assign actor to the renderer.
         ren.AddActor(actor)
-        # write to file
-        # FIX_ME: set this to self.writer.
+        # Write to file.
         writer = None
         if filename:
             if filename.lower().find('.png') > 0:
@@ -455,7 +451,7 @@ class ShapeManager(object):
                 writer.SetInputConnection(renderLarge.GetOutputPort())
                 writer.Write()
         else:
-            # fire up interactor
+            # Fire up interactor.
             iren.Initialize()
             renWin.Render()
             iren.Start()

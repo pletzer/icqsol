@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 """
-Set up script for ICQSol
+Set up script for icqsol
 pletzer@psu.edu
 """
 
 from distutils.core import setup
 
-setup(name='ICQSol',
+setup(name='icqsol',
       version='0.1',
       description='Solving engineering problems on the web',
       author='Alex Pletzer',
