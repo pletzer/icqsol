@@ -33,6 +33,9 @@ parser.add_argument('--component', dest='component', type=int, default=0,
 parser.add_argument('--ascii', dest='ascii', action='store_true',
                     help='Save data in ASCII format (default is binary)')
 
+parser.add_argument('--display', dest='display', action='store_true',
+                    help='Display colored geometry')
+
 parser.add_argument('--output', dest='output',
                     default='colorSurfaceField-{0}.vtk'.format(tid),
                     help='VTK Output file.')
@@ -64,6 +67,8 @@ pDataInput = shape_mgr.loadAsVtkPolyData(args.input)
 pDataColored = shape_mgr.colorSurfaceField(pDataInput, args.colormap,
                                            field_name=args.name,
                                            field_component=args.component)
+if args.display:
+    shape_mgr.showVtkPolyData(pDataColored)
 
 if args.output:
     if args.ascii:
