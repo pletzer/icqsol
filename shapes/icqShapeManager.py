@@ -345,7 +345,7 @@ class ShapeManager(object):
                                  points will be added to resolve the feature
         @return new vtkPolyData object
         """
-        normalsFilter = vtk.PolyDataNormals()
+        normalsFilter = vtk.vtkPolyDataNormals()
         normalsFilter.SplittingOn()
         normalsFilter.SetFeatureAngle(min_feature_angle)
         normalsFilter.ComputePointNormalsOn()
@@ -353,7 +353,9 @@ class ShapeManager(object):
             normalsFilter.SetInputData(pdata)
         else:
             normalsFilter.SetInput(pdata)
-        return normalsFilter.GetOutput()
+        pdata_new = normalsFilter.GetOutput()
+        normalsFilter.Update()
+        return pdata_new
 
     def showShape(self, shape, windowSizeX=600, windowSizeY=400, filename=''):
         """

@@ -66,6 +66,7 @@ if args.times:
     times = eval(args.times)
 
 pdata = shape_mgr.addSurfaceFieldFromExpression(shp, args.name, args.expression, times)
+pdata_new = shape_mgr.computeVertexNormals(pdata, min_feature_angle=60.0)
 
 if args.output:
     # Always produce VTK POLYDATA.
@@ -74,4 +75,4 @@ if args.output:
         file_type = util.ASCII
     else:
         file_type = util.BINARY
-    shape_mgr.saveVtkPolyData(vtk_poly_data=pdata, file_name=args.output, file_type=file_type)
+    shape_mgr.saveVtkPolyData(vtk_poly_data=pdata_new, file_name=args.output, file_type=file_type)
