@@ -39,9 +39,9 @@ class ColorMap:
         @return red, green, blue components in range 0 to 255
         """
         x = (f - self.fmin)/(self.fmax - self.fmin)
-        r = int(255*math.cos((1. - x)*math.pi)**2 + 0.5)
+        r = int(255*math.cos((1. - x)*math.pi/2.0)**2 + 0.5)
         g = int(255*math.sin(x*math.pi)**2 + 0.5)
-        b = int(255*math.cos(x*math.pi)**2 + 0.5)
+        b = int(255*math.cos(x*math.pi/2.0)**2 + 0.5)
         return r, g, b
 
     def cold(self, f):
