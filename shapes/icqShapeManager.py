@@ -120,13 +120,15 @@ class ShapeManager(object):
         return pdata
 
     def colorSurfaceField(self, vtk_poly_data, color_map,
-                          field_name=None, field_component=0):
+                          field_name=None, field_component=0, 
+                          compute_normals=True):
         """
         Color a selected surface field of a shape.
         @param vtk_poly_data, data defining the shape with surface field information
         @param color_map, name of the color map to use
         @param field_name, the name of the surface field to color
         @param field_component field component
+        @param compute_normals compute normals by adding vertices near edges
         @return colored_vtk_poly_data, color applied to vtk_poly_data
         """
         # Copy the received vtk_poly_data, creating another
@@ -158,7 +160,10 @@ class ShapeManager(object):
             rgbArray.SetTuple(i, colorMethod(f))
         # Attach the array.
         vtk_poly_data_copy.GetPointData().SetScalars(rgbArray)
-        return vtk_poly_data_copy
+	if compute_normals:
+            return self.computeVertexNormals(vtk_poly_data_copy)
+        else:
+            return vtk_poly_data_copy
 
     def refineShape(self, shape, refine=1):
         """
