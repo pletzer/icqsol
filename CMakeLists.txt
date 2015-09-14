@@ -70,7 +70,7 @@ add_test(NAME testColormaps
 
 add_test(NAME testColorMap
          COMMAND "${PYTHON_EXECUTABLE}" 
-         "${CMAKE_SOURCE_DIR}/color/testColorMap.py")
+         "${CMAKE_SOURCE_DIR}/tests/testColorMap.py")
 add_test(NAME testPrimitiveSphere 
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 

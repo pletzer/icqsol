@@ -337,6 +337,24 @@ class ShapeManager(object):
             pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
         return pdata
 
+    def computeVertexNormals(self, pdata, min_feature_angle=60.0):
+        """
+        Compute the vertex normals
+        @param pdata vtkPolyData instance
+        @param min_feature_angle angle above which a sharp feature is detected. Additional 
+                                 points will be added to resolve the feature
+        @return new vtkPolyData object
+        """
+        normalsFilter = vtk.PolyDataNormals()
+        normalsFilter.SplittingOn()
+        normalsFilter.SetFeatureAngle(min_feature_angle)
+        normalsFilter.ComputePointNormalsOn()
+        if vtk.VTK_MAJOR_VERSION >= 6:
+            normalsFilter.SetInputData(pdata)
+        else:
+            normalsFilter.SetInput(pdata)
+        return normalsFilter.GetOutput()
+
     def showShape(self, shape, windowSizeX=600, windowSizeY=400, filename=''):
         """
         Show the boundary surface or write image to file
