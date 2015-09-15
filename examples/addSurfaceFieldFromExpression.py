@@ -58,21 +58,25 @@ if file_format == util.PLY_FORMAT:
 else:
     # We have a VTK file, so Get the dataset type.
     vtk_dataset_type = util.getVtkDatasetType(args.input)
-    shape_mgr = ShapeManager(file_format=util.VTK_FORMAT, vtk_dataset_type=vtk_dataset_type)
+    shape_mgr = ShapeManager(file_format=util.VTK_FORMAT,
+                             vtk_dataset_type=vtk_dataset_type)
 
 shp = shape_mgr.loadAsShape(args.input)
 times = [0.0]
 if args.times:
     times = eval(args.times)
 
-pdata = shape_mgr.addSurfaceFieldFromExpression(shp, args.name, args.expression, times)
-pdata_new = shape_mgr.computeVertexNormals(pdata, min_feature_angle=60.0)
+pdata = shape_mgr.addSurfaceFieldFromExpression(shp, args.name,
+                                                args.expression, times)
 
 if args.output:
     # Always produce VTK POLYDATA.
-    shape_mgr.setWriter(file_format=util.VTK_FORMAT, vtk_dataset_type=util.POLYDATA)
+    shape_mgr.setWriter(file_format=util.VTK_FORMAT,
+                        vtk_dataset_type=util.POLYDATA)
     if args.ascii:
         file_type = util.ASCII
     else:
         file_type = util.BINARY
-    shape_mgr.saveVtkPolyData(vtk_poly_data=pdata_new, file_name=args.output, file_type=file_type)
+    shape_mgr.saveVtkPolyData(vtk_poly_data=pdata,
+                              file_name=args.output,
+                              file_type=file_type)

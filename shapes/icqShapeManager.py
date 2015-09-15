@@ -120,15 +120,13 @@ class ShapeManager(object):
         return pdata
 
     def colorSurfaceField(self, vtk_poly_data, color_map,
-                          field_name=None, field_component=0, 
-                          compute_normals=True):
+                          field_name=None, field_component=0):
         """
         Color a selected surface field of a shape.
         @param vtk_poly_data, data defining the shape with surface field information
         @param color_map, name of the color map to use
         @param field_name, the name of the surface field to color
         @param field_component field component
-        @param compute_normals compute normals by adding vertices near edges
         @return colored_vtk_poly_data, color applied to vtk_poly_data
         """
         # Copy the received vtk_poly_data, creating another
@@ -160,10 +158,7 @@ class ShapeManager(object):
             rgbArray.SetTuple(i, colorMethod(f))
         # Attach the array.
         vtk_poly_data_copy.GetPointData().SetScalars(rgbArray)
-	if compute_normals:
-            return self.computeVertexNormals(vtk_poly_data_copy)
-        else:
-            return vtk_poly_data_copy
+        return vtk_poly_data_copy
 
     def refineShape(self, shape, refine=1):
         """
@@ -258,32 +253,41 @@ class ShapeManager(object):
         """
         return shape.rotate(axis, angleDeg)
 
-    def saveShape(self, shape, file_name, file_type):
+    def saveShape(self, shape, file_name, file_type, normals=True):
         """
         Save the shape to a file
+        @param shape for saving
         @param file_name file name
         @param file_type either 'ascii' or 'binary'
-        @param shape for saving
+        @param normals resolve features (corners) and save normal vectors if True
         """
         vtk_poly_data = self.shapeToVTKPolyData(shape)
         self.saveVtkPolyData(vtk_poly_data, file_name, file_type)
 
-    def saveVtkPolyData(self, vtk_poly_data, file_name, file_type):
+    def saveVtkPolyData(self, vtk_poly_data, file_name,
+                        file_type, normals=True):
         """
         Save the vtk_poly_data to a file
+        @param vtk_poly_data for saving
         @param file_name file name
         @param file_type either 'ascii' or 'binary'
-        @param vtk_poly_data for saving
+        @param normals resolve features (corners) and save normal vectors if True
         """
+        # compute the vertex nrmals
+        if normals:
+            vtk_pdata_save = self.computeVertexNormals(vtk_poly_data)
+        else:
+            vtk_pdata_save = vtk_poly_data
+
         self.writer.SetFileName(file_name)
         if file_type.lower() == 'ascii':
             self.writer.SetFileTypeToASCII()
         else:
             self.writer.SetFileTypeToBinary()
         if vtk.VTK_MAJOR_VERSION >= 6:
-            self.writer.SetInputData(vtk_poly_data)
+            self.writer.SetInputData(vtk_pdata_save)
         else:
-            self.writer.SetInput(vtk_poly_data)
+            self.writer.SetInput(vtk_pdata_save)
         self.writer.Write()
         self.writer.Update()
 
