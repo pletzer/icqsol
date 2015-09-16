@@ -203,6 +203,10 @@ add_test(NAME testColorSurfaceFieldGnu
 add_test(NAME testOutputFiles
          COMMAND "sh" "${CMAKE_SOURCE_DIR}/checkOutput.sh")
 
-
-
+# this test currently throws a segmentation fault
+add_test(NAME testRemove2
+         COMMAND "${PYTHON_EXECUTABLE}"
+         "${CMAKE_SOURCE_DIR}/examples/composeShapes.py"
+         --shapeTuples "a1,${CMAKE_SOURCE_DIR}/data/a1.vtk" "b1,data/${CMAKE_SOURCE_DIR}/b1.vtk" 
+         --compose "a1 - b1")
 
