@@ -207,6 +207,6 @@ add_test(NAME testOutputFiles
 add_test(NAME testRemove2
          COMMAND "${PYTHON_EXECUTABLE}"
          "${CMAKE_SOURCE_DIR}/examples/composeShapes.py"
-         --shapeTuples "a1,${CMAKE_SOURCE_DIR}/data/a1.vtk" "b1,data/${CMAKE_SOURCE_DIR}/b1.vtk" 
-         --compose "a1 - b1")
+         --shapeTuples "a1,${CMAKE_SOURCE_DIR}/data/a1.vtk" "b1,${CMAKE_SOURCE_DIR}/data/b1.vtk" 
+         --compose "a1 - b1" --output testRemove2.vtk --ascii)
 
