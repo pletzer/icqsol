@@ -13,24 +13,22 @@ class RefineSurface:
         @param pdata vtkPolyData instance
         """
         self.polydataOutput = vtk.vtkPolyData()
-        self.pointsOutput = vtkPoints()
+        self.pointsOutput = vtk.vtkPoints()
         
         # populate with input data
         points = pdata.GetPoints()
         numPoints = points.GetNumberOfPoints()
-        for i in range(numPolys):
-            self.pointsOutput.append(points.GetPoint(i))
+        for i in range(numPoints):
+            self.pointsOutput.InsertNextPoint(points.GetPoint(i))
+        self.polydataOutput.SetPoints(self.pointsOutput)
         
         polys = pdata.GetPolys()
         numPolys = polys.GetNumberOfCells()
+        self.polydataOutput.Allocate(numPolys, 1)
         ptIds = vtk.vtkIdList()
         for i in range(numPolys):
-            poly.GetCell(i, ptIds)
-            numPts = ptIds.GetNumberOfIds()
-            cell = [-1] * numPts
-            for j in range(numPts):
-                cell[j] = ptids.GetId(j)
-            polys.append(cell)
+            polys.GetCell(i, ptIds)
+            self.polydataOutput.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
     def refine(self, maxEdgeLength):
         """
@@ -172,11 +170,14 @@ def test1():
     ptIds.InsertNextId(0)
     ptIds.InsertNextId(1)
     ptIds.InsertNextId(2)
+    pdata.Allocate(1, 1)
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+    
+    #print pdata
 
     rs = RefineSurface(pdata)
-    pdata2 = rs.refine(1.1)
-    print pdata2
+    #pdata2 = rs.refine(1.1)
+    #print pdata2
 
 if __name__ == '__main__':
     test1()
