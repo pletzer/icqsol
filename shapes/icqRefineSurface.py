@@ -43,10 +43,16 @@ class RefineSurface:
         cells = []
         
         # iterate over the polygons
-        for poly in self.polys:
+        polys = self.polydataOutput.GetPolys()
+        numPolys = self.polydataOutput.GetNumberOfPolys()
+        ptIds = vtk.vtkIdList()
+        polys.InitTraversal()
+        for i in range(numPolys):
             
-            # number of spanning the polygon
-            numPts = len(poly)
+            polys.GetNextCell(ptIds)
+            
+            # number of points spanning the polygon
+            numPts = ptIds.GetNumberOfIds()
             
             # must have at least three points
             if numPts < 3:
@@ -54,9 +60,9 @@ class RefineSurface:
             
             # compute the normal vector of the polygon plane. Note:
             # assuming the polygon is planar
-            p0 = numpy.array(self.points(poly[0]))
-            p1 = numpy.array(self.points(poly[1]))
-            p2 = numpy.array(self.points(poly[2]))
+            p0 = numpy.array(self.pointsOutput.GetPoint(ptIds.GetId(0)))
+            p1 = numpy.array(self.pointsOutput.GetPoint(ptIds.GetId(1)))
+            p2 = numpy.array(self.pointsOutput.GetPoint(ptIds.GetId(2)))
             p1 -= p0
             p2 -= p0
             normal = numpy.cross(p1, p2)
@@ -73,8 +79,8 @@ class RefineSurface:
             for i in range(numPts):
                 
                 # start/end point indices of the edge
-                ptIdBeg = poly[i]
-                ptIdEnd = poly[(i + 1) % numPts]
+                ptIdBeg = ptIds.GetId(i)
+                ptIdEnd = ptIds.GetId((i + 1) % numPts)
                 edge = [ptIdBeg, ptIdEnd]
                 edge.sort()
                 ptIdBeg = edge[0]
@@ -83,31 +89,27 @@ class RefineSurface:
                 e = tuple(edge)
                 if not e in edge2PointIds:
                     # new edge
-                    ptBeg = numpy.array(self.points[ptIdBeg])
-                    ptEnd = numpy.array(self.points[ptIdEnd])
+                    ptBeg = numpy.array(self.pointsOutput.GetPoint(ptIdBeg))
+                    ptEnd = numpy.array(self.pointsOutput.GetPoint(ptIdEnd))
                     d = ptEnd - ptBeg
                     edgeLength = numpy.sqrt(numpy.dot(d, d))
                     # add new points to the edge
-                    numSegs = math.ceil(edgeLength / maxEdgeLength)
-                    ptIds = [ptIdBeg]
+                    numSegs = int(math.ceil(edgeLength / maxEdgeLength))
+                    pis = [ptIdBeg]
                     uvs.append([numpy.dot(ptBeg, uVec), numpy.dot(ptBeg, vVec)])
                     for k in range(1, numSegs - 1):
                         pt = ptBeg + k * d / numSegs
-                        self.points.append(pt)
-                        ptId = len(self.points) - 1
-                        ptIds.append(ptId)
+                        self.pointsOutput.InsertNextPoint(pt)
+                        ptId = self.pointsOutput.GetNumberOfPoints() - 1
+                        pis.append(ptId)
                         u, v = numpy.dot(pt, uVec), numpy.dot(pt, vVec)
                         uvs.append((ptId, [u, v]))
-                    edge2PointIds[e] = ptIds
+                    edge2PointIds[e] = pis
 
             # triangulate cell and append to list
             cells += self.triangulate(uvs)
         
         # build the output vtkPolyData object
-        numPoints = len(self.points)
-        self.pointsOutput.SetNumberOfPoints(numPoints)
-        for i in range(numPoints):
-            self.pointsOutput.SetPoint(i, self.points[i])
         ptIds = vtk.vtkIdList()
         numCells = len(cells)
         for i in range(numCells):
@@ -141,7 +143,7 @@ class RefineSurface:
         delaunay.Update()
         ugrid = delaunay.GetOutput()
         cells = []
-        numCells = ugrid.getNumberOfCells()
+        numCells = ugrid.GetNumberOfCells()
         ptIds = vtk.vtkIdList()
         for i in range(numCells):
             ugrid.getCell(i, ptIds)
@@ -176,8 +178,9 @@ def test1():
     #print pdata
 
     rs = RefineSurface(pdata)
-    #pdata2 = rs.refine(1.1)
-    #print pdata2
+    pdata2 = rs.refine(1.1)
+    assert(pdata2.GetNumberOfPolys() == 1)
+
 
 if __name__ == '__main__':
     test1()
