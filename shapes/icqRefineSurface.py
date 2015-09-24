@@ -26,15 +26,23 @@ class RefineSurface:
         numPolys = polys.GetNumberOfCells()
         self.polydata.Allocate(numPolys, 1)
         ptIds = vtk.vtkIdList()
+        polys.InitTraversal()
         for i in range(numPolys):
-            polys.GetCell(i, ptIds)
+            polys.GetNextCell(ptIds)
             self.polydata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+
+    def getVtkPolyData(self):
+        """
+        Get the vtkPolyData instance associated with the grid
+        @return vtkPolyData instance
+        """
+        return self.polydata
 
     def refine(self, max_edge_length):
         """
         Refine each cell by adding points on edges longer than max_edge_length
         @param max_edge_length maximum edge length
-        @return refined vtkPolyData instance
+        @note operation is in place
         """
 
         # edge to point Ids map
@@ -44,10 +52,10 @@ class RefineSurface:
 
         # iterate over the polygons
         polys = self.polydata.GetPolys()
-        numPolys = self.polydata.GetNumberOfPolys()
+        numPolys = polys.GetNumberOfCells()
         ptIds = vtk.vtkIdList()
         polys.InitTraversal()
-        for i in range(numPolys):
+        for iPoly in range(numPolys):
 
             polys.GetNextCell(ptIds)
 
@@ -58,9 +66,9 @@ class RefineSurface:
             if numPts < 3:
                 continue
 
-            # compute the normal vector of the polygon plane. Note:
+            # compute the normal vector on the polygon's plane. Note:
             # assuming the polygon is planar -- only taking the first
-            # 3 points 
+            # 3 points
             p0 = numpy.array(self.points.GetPoint(ptIds.GetId(0)))
             p1 = numpy.array(self.points.GetPoint(ptIds.GetId(1)))
             p2 = numpy.array(self.points.GetPoint(ptIds.GetId(2)))
@@ -78,57 +86,65 @@ class RefineSurface:
 
             # iterate over edges, add middle edge points if the edge's
             # length is > max_edge_length
-            for i in range(numPts):
+            for iPoint in range(numPts):
 
                 # start/end point indices of the edge
-                ptIdBeg = ptIds.GetId(i)
-                ptIdEnd = ptIds.GetId((i + 1) % numPts)
+                ptIdBeg = ptIds.GetId(iPoint)
+                ptIdEnd = ptIds.GetId((iPoint + 1) % numPts)
                 edge = [ptIdBeg, ptIdEnd]
                 edge.sort()
-                ptIdBeg = edge[0]
-                ptIdEnd = edge[1]
-
+                ptIdBeg, ptIdEnd = edge
                 e = tuple(edge)
+
                 if e not in edge2PointIds:
+
                     # new edge
                     ptBeg = numpy.array(self.points.GetPoint(ptIdBeg))
                     ptEnd = numpy.array(self.points.GetPoint(ptIdEnd))
                     d = ptEnd - ptBeg
                     edgeLength = numpy.sqrt(numpy.dot(d, d))
+
                     # add new points to the edge
                     numSegs = int(math.ceil(edgeLength / max_edge_length))
                     pis = [ptIdBeg]
-                    u, v = numpy.dot(ptBeg, uVec), numpy.dot(ptBeg, vVec)
-                    uvs[ptIdBeg] = (u, v)
+                    delta = d/float(numSegs)
                     for k in range(1, numSegs):
-                        pt = ptBeg + k * d / numSegs
+                        pt = ptBeg + k*delta
                         self.points.InsertNextPoint(pt)
                         ptId = self.points.GetNumberOfPoints() - 1
                         pis.append(ptId)
-                        u, v = numpy.dot(pt, uVec), numpy.dot(pt, vVec)
-                        uvs[ptId] = (u, v)
+                    pis.append(ptIdEnd)
+
                     edge2PointIds[e] = pis
+
+                # compute the location of the edge points in u, v plane coordinates
+                for ptId in edge2PointIds[e]:
+                    pt = self.points.GetPoint(ptId)
+                    u, v = numpy.dot(pt, uVec), numpy.dot(pt, vVec)
+                    uvs[ptId] = (u, v)
 
             # triangulate cell and append to list
             cells += self.triangulate(uvs)
 
         # build the output vtkPolyData object
+        pdata = vtk.vtkPolyData()
         ptIds = vtk.vtkIdList()
-        numCells = len(cells)
-        for i in range(numCells):
-            cell = cells[i]
+        pdata.SetPoints(self.points)
+        numPolys = len(cells)
+        pdata.Allocate(numPolys, 1)
+        for cell in cells:
             numPts = len(cell)
             ptIds.SetNumberOfIds(numPts)
             for j in range(numPts):
                 ptIds.SetId(j, cell[j])
-            self.polydata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+            pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
-        return self.polydata
+        self.polydata = pdata
 
     def triangulate(self, uvs):
         """
         Triangulate a set of u, v points
-        @param uvs point index to u, v plane coordinates dictionary
+        @param uvs dictionary containing point index to u, v plane coordinates map
         @return cells
         """
         uvIds = uvs.keys()
@@ -145,7 +161,9 @@ class RefineSurface:
             delaunay.SetInputData(pdata)
         else:
             delaunay.SetInput(pdata)
+
         delaunay.Update()
+
         ugrid = delaunay.GetOutput()
         cells = []
         numCells = ugrid.GetNumberOfCells()
@@ -160,6 +178,24 @@ class RefineSurface:
         return cells
 
 ##############################################################################
+
+
+def printVtkPolyData(pdata):
+
+    points = pdata.GetPoints()
+    polys = pdata.GetPolys()
+    ptIds = vtk.vtkIdList()
+    numPolys = polys.GetNumberOfCells()
+    print 'Number of polygons: {}'.format(numPolys)
+    polys.InitTraversal()
+    for i in range(numPolys):
+        cell = polys.GetNextCell(ptIds)
+        numPts = ptIds.GetNumberOfIds()
+        print '\tCell {} has {} points: '.format(i, numPts)
+        for j in range(numPts):
+            ptId = ptIds.GetId(j)
+            pt = points.GetPoint(ptId)
+            print '\t\t{} -> {}'.format(ptId, pt)
 
 
 def testNoRefinement():
@@ -180,11 +216,12 @@ def testNoRefinement():
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
     rs = RefineSurface(pdata)
-    pdata2 = rs.refine(max_edge_length=1.5)
+    rs.refine(max_edge_length=1.5)
+    pdata2 = rs.getVtkPolyData()
     assert(pdata2.GetNumberOfPolys() == 1)
 
 
-def testAddingThreePoints():
+def testAddingThreePointsThenMore():
 
     points = vtk.vtkPoints()
     points.InsertNextPoint((0., 0., 0.))
@@ -202,10 +239,46 @@ def testAddingThreePoints():
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
     rs = RefineSurface(pdata)
-    pdata2 = rs.refine(max_edge_length=1.1)
-    assert(pdata2.GetNumberOfPolys() == 4)
+    rs.refine(max_edge_length=1.1)
+    #printVtkPolyData(rs.getVtkPolyData())
+    assert(rs.getVtkPolyData().GetNumberOfPolys() == 4)
+    #rs.refine(max_edge_length=0.1)
+    #assert(rs.getVtkPolyData().GetNumberOfPolys() == 104)
+
+
+def testStartingWithTwoCells():
+
+    points = vtk.vtkPoints()
+    points.InsertNextPoint((0., 0., 0.))
+    points.InsertNextPoint((2., 0., 0.))
+    points.InsertNextPoint((2., 1., 0.))
+    points.InsertNextPoint((0., 1., 0.))
+
+    pdata = vtk.vtkPolyData()
+    pdata.SetPoints(points)
+
+    pdata.Allocate(2, 1)
+    ptIds = vtk.vtkIdList()
+    ptIds.SetNumberOfIds(3)
+    ptIds.SetId(0, 0)
+    ptIds.SetId(1, 1)
+    ptIds.SetId(2, 2)
+    pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+    ptIds.SetId(0, 2)
+    ptIds.SetId(1, 3)
+    ptIds.SetId(2, 0)
+    pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+
+    rs = RefineSurface(pdata)
+    rs.refine(max_edge_length=1.1)
+    pdata2 = rs.getVtkPolyData()
+    #printVtkPolyData(pdata2)
+    assert(rs.getVtkPolyData().GetNumberOfPolys() == 8)
+    #rs.refine(max_edge_length=0.1)
+    #assert(rs.getVtkPolyData().GetNumberOfPolys() == 208)
 
 
 if __name__ == '__main__':
     testNoRefinement()
-    testAddingThreePoints()
+    testAddingThreePointsThenMore()
+    testStartingWithTwoCells()
