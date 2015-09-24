@@ -12,27 +12,27 @@ class RefineSurface:
         Constructor
         @param pdata vtkPolyData instance
         """
-        self.polydataOutput = vtk.vtkPolyData()
-        self.pointsOutput = vtk.vtkPoints()
+        self.polydata = vtk.vtkPolyData()
+        self.points = vtk.vtkPoints()
 
         # populate with input data
         points = pdata.GetPoints()
         numPoints = points.GetNumberOfPoints()
         for i in range(numPoints):
-            self.pointsOutput.InsertNextPoint(points.GetPoint(i))
-        self.polydataOutput.SetPoints(self.pointsOutput)
+            self.points.InsertNextPoint(points.GetPoint(i))
+        self.polydata.SetPoints(self.points)
 
         polys = pdata.GetPolys()
         numPolys = polys.GetNumberOfCells()
-        self.polydataOutput.Allocate(numPolys, 1)
+        self.polydata.Allocate(numPolys, 1)
         ptIds = vtk.vtkIdList()
         for i in range(numPolys):
             polys.GetCell(i, ptIds)
-            self.polydataOutput.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+            self.polydata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
     def refine(self, max_edge_length):
         """
-        Refine each cell by adding points in the middle of each edge
+        Refine each cell by adding points on edges longer than max_edge_length
         @param max_edge_length maximum edge length
         @return refined vtkPolyData instance
         """
@@ -43,8 +43,8 @@ class RefineSurface:
         cells = []
 
         # iterate over the polygons
-        polys = self.polydataOutput.GetPolys()
-        numPolys = self.polydataOutput.GetNumberOfPolys()
+        polys = self.polydata.GetPolys()
+        numPolys = self.polydata.GetNumberOfPolys()
         ptIds = vtk.vtkIdList()
         polys.InitTraversal()
         for i in range(numPolys):
@@ -59,10 +59,11 @@ class RefineSurface:
                 continue
 
             # compute the normal vector of the polygon plane. Note:
-            # assuming the polygon is planar
-            p0 = numpy.array(self.pointsOutput.GetPoint(ptIds.GetId(0)))
-            p1 = numpy.array(self.pointsOutput.GetPoint(ptIds.GetId(1)))
-            p2 = numpy.array(self.pointsOutput.GetPoint(ptIds.GetId(2)))
+            # assuming the polygon is planar -- only taking the first
+            # 3 points 
+            p0 = numpy.array(self.points.GetPoint(ptIds.GetId(0)))
+            p1 = numpy.array(self.points.GetPoint(ptIds.GetId(1)))
+            p2 = numpy.array(self.points.GetPoint(ptIds.GetId(2)))
             p1 -= p0
             p2 -= p0
             normal = numpy.cross(p1, p2)
@@ -90,8 +91,8 @@ class RefineSurface:
                 e = tuple(edge)
                 if e not in edge2PointIds:
                     # new edge
-                    ptBeg = numpy.array(self.pointsOutput.GetPoint(ptIdBeg))
-                    ptEnd = numpy.array(self.pointsOutput.GetPoint(ptIdEnd))
+                    ptBeg = numpy.array(self.points.GetPoint(ptIdBeg))
+                    ptEnd = numpy.array(self.points.GetPoint(ptIdEnd))
                     d = ptEnd - ptBeg
                     edgeLength = numpy.sqrt(numpy.dot(d, d))
                     # add new points to the edge
@@ -101,8 +102,8 @@ class RefineSurface:
                     uvs[ptIdBeg] = (u, v)
                     for k in range(1, numSegs):
                         pt = ptBeg + k * d / numSegs
-                        self.pointsOutput.InsertNextPoint(pt)
-                        ptId = self.pointsOutput.GetNumberOfPoints() - 1
+                        self.points.InsertNextPoint(pt)
+                        ptId = self.points.GetNumberOfPoints() - 1
                         pis.append(ptId)
                         u, v = numpy.dot(pt, uVec), numpy.dot(pt, vVec)
                         uvs[ptId] = (u, v)
@@ -120,9 +121,9 @@ class RefineSurface:
             ptIds.SetNumberOfIds(numPts)
             for j in range(numPts):
                 ptIds.SetId(j, cell[j])
-            self.polydataOutput.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+            self.polydata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
-        return self.polydataOutput
+        return self.polydata
 
     def triangulate(self, uvs):
         """
