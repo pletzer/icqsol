@@ -66,9 +66,10 @@ class RefineSurface:
             p1 -= p0
             p2 -= p0
             normal = numpy.cross(p1, p2)
+            normal /= math.sqrt(numpy.dot(normal, normal))
             
             # compute the 2D basis vectors (uVc and vVec) on the plane
-            uVec = p1
+            uVec = p1 / math.sqrt(numpy.dot(p1, p1))
             vVec = numpy.cross(uVec, normal)
             
             # ordered list of point index to uv coordinates on the plane
@@ -95,10 +96,13 @@ class RefineSurface:
                     edgeLength = numpy.sqrt(numpy.dot(d, d))
                     # add new points to the edge
                     numSegs = int(math.ceil(edgeLength / maxEdgeLength))
+                    print '*** numSegs = ', numSegs, ' e = ', e, ' ptBeg = ', ptBeg, ' ptEnd = ', ptEnd
                     pis = [ptIdBeg]
-                    uvs.append([numpy.dot(ptBeg, uVec), numpy.dot(ptBeg, vVec)])
-                    for k in range(1, numSegs - 1):
+                    u, v = numpy.dot(ptBeg, uVec), numpy.dot(ptBeg, vVec)
+                    uvs.append((ptIdBeg, [u, v]))
+                    for k in range(1, numSegs):
                         pt = ptBeg + k * d / numSegs
+                        print '*** inserting point: ', pt
                         self.pointsOutput.InsertNextPoint(pt)
                         ptId = self.pointsOutput.GetNumberOfPoints() - 1
                         pis.append(ptId)
@@ -107,6 +111,7 @@ class RefineSurface:
                     edge2PointIds[e] = pis
 
             # triangulate cell and append to list
+            print '*** uvs = ', uvs
             cells += self.triangulate(uvs)
         
         # build the output vtkPolyData object
@@ -144,11 +149,10 @@ class RefineSurface:
         ugrid = delaunay.GetOutput()
         cells = []
         numCells = ugrid.GetNumberOfCells()
-        ptIds = vtk.vtkIdList()
         for i in range(numCells):
-            ugrid.getCell(i, ptIds)
+            ptIds = ugrid.GetCell(i).GetPointIds()
             cell = []
-            for j in range(ptIds.getNumberOfIds()):
+            for j in range(ptIds.GetNumberOfIds()):
                 localId = ptIds.GetId(j)
                 ptId = uvs[localId][0]
                 cell.append(ptId)
@@ -158,7 +162,7 @@ class RefineSurface:
 ##############################################################################
 
 
-def test1():
+def testNoRefinement():
     
     points = vtk.vtkPoints()
     points.InsertNextPoint((0., 0., 0.))
@@ -175,12 +179,33 @@ def test1():
     pdata.Allocate(1, 1)
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
     
-    #print pdata
+    rs = RefineSurface(pdata)
+    pdata2 = rs.refine(1.5)
+    assert(pdata2.GetNumberOfPolys() == 1)
 
+def testAddingTwoPoints():
+    
+    points = vtk.vtkPoints()
+    points.InsertNextPoint((0., 0., 0.))
+    points.InsertNextPoint((2., 0., 0.))
+    points.InsertNextPoint((2., 1., 0.))
+    
+    pdata = vtk.vtkPolyData()
+    pdata.SetPoints(points)
+    
+    ptIds = vtk.vtkIdList()
+    ptIds.InsertNextId(0)
+    ptIds.InsertNextId(1)
+    ptIds.InsertNextId(2)
+    pdata.Allocate(1, 1)
+    pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+    
     rs = RefineSurface(pdata)
     pdata2 = rs.refine(1.1)
-    assert(pdata2.GetNumberOfPolys() == 1)
+    #print pdata2
+    assert(pdata2.GetNumberOfPolys() == 3)
 
 
 if __name__ == '__main__':
-    test1()
+    #testNoRefinement()
+    testAddingTwoPoints()
