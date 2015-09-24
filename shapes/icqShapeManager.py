@@ -13,6 +13,7 @@ from csg.core import CSG
 from icqShape import Box, Cone, Cylinder, Sphere
 from icqShape import DEFAULTS, CompositeShape
 from icqsol.color.icqColorMap import ColorMap
+from icqsol.shapes.icqRefineSurface import RefineSurface
 
 VTK_DATASET_TYPES = ['STRUCTURED_GRID', 'POLYDATA', 'UNSTRUCTURED_GRID']
 FILE_FORMATS = ['ply', 'vtk']
@@ -172,6 +173,18 @@ class ShapeManager(object):
         for i in range(refine):
             s = s.refine()
         return s
+    
+    def refineVtkPolyData(self, polydata, max_edge_length):
+        """
+        Refine a vtkPolyData object by adding points along cell edges
+        @param polydata vtkPolyData instance
+        @param max_edge_length maximum edge length, edges smaller than 
+                               this value will not be segmented
+        @return vtkPolyData instance
+        """
+        rs = RefineSurface(polydata)
+        rs.refine(max_edge_length=max_edge_length)
+        return rs.getVtkPolyData()
 
     def cloneShape(self, shape):
         """
