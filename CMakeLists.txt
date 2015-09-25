@@ -195,6 +195,7 @@ add_test(NAME testColorBoltComponent0
          "${CMAKE_SOURCE_DIR}/examples/colorSurfaceField.py"
          --name "wave"
          --component 0
+         --colormap gnu
          --input testBoltFineWithField.vtk
          --output testBoltFineColored_0.vtk)
 add_test(NAME testColorBoltComponent1
@@ -202,6 +203,7 @@ add_test(NAME testColorBoltComponent1
          "${CMAKE_SOURCE_DIR}/examples/colorSurfaceField.py"
          --name "wave"
          --component 1
+         --colormap gnu
          --input testBoltFineWithField.vtk
          --output testBoltFineColored_1.vtk)
 add_test(NAME testAddSurfaceFieldFromExpression

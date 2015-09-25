@@ -22,7 +22,7 @@ parser.add_argument('--input', dest='input', default='',
                     help='VTK input file')
 
 parser.add_argument('--colormap', dest='colormap', default='hot',
-                    help='Colormap ("hot", "cold", or "blackbody")')
+                    help='Colormap ("gnu", "hot", "cold", or "blackbody")')
 
 parser.add_argument('--name', dest='name', default='',
                     help='Set the name of the field')
