@@ -50,7 +50,7 @@ else:
 
 pdata_input = shape_mgr.loadAsVtkPolyData(args.input)
 
-pdata = shape_mgr.refineSurface(pdata_input, max_edge_length=args.maxedge)
+pdata = shape_mgr.refineVtkPolyData(pdata_input, max_edge_length=args.maxedge)
 
 if args.output:
     # Always produce VTK POLYDATA.
