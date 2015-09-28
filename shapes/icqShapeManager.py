@@ -84,11 +84,11 @@ class ShapeManager(object):
             return Sphere(radius, origin, n_theta, n_phi)
         return None
 
-    def addSurfaceFieldFromExpression(self, shape, field_name, expression, time_points):
+    def addSurfaceFieldFromExpressionToVtkPolyData(self, vtk_poly_data, field_name, expression, time_points):
         """
         Add a surface field to a shape using an expression consisting of
         legal variables x,y,z (shape point coordinates) and t (time).
-        @param shape
+        @param vtk_poly_data, VTKPolyData converted from shape
         @param field_name, the name of the surface field
         @param expression, expression consisting of legal variables x, y, z, and t
         @param time_points, list of floating point values defining
@@ -99,8 +99,7 @@ class ShapeManager(object):
         # so this method returns just the data.
         valid_field_name = field_name.replace( ' ', '_' )
         # Get the points from the shape.
-        pdata = self.shapeToVTKPolyData(shape)
-        points = pdata.GetPoints()
+        points = vtk_poly_data.GetPoints()
         num_points = points.GetNumberOfPoints()
         # Define the data.
         data = vtk.vtkDoubleArray()
@@ -117,8 +116,23 @@ class ShapeManager(object):
                 t = time_points[ j ]
                 field_value = eval(expression)
                 data.SetComponent(i, j, field_value)
-        pdata.GetPointData().SetScalars(data)
-        return pdata
+        vtk_poly_data.GetPointData().SetScalars(data)
+        return vtk_poly_data
+
+    def addSurfaceFieldFromExpressionToShape(self, shape, field_name, expression, time_points):
+        """
+        Add a surface field to a shape using an expression consisting of
+        legal variables x,y,z (shape point coordinates) and t (time).
+        @param shape, shape to which to add the surface field
+        @param field_name, the name of the surface field
+        @param expression, expression consisting of legal variables x, y, z, and t
+        @param time_points, list of floating point values defining
+               snapshots in a time sequence
+        @return pdata, VTKPolyData converted from shape with added surface field
+        """
+        # Convert the shape to VTK POLYDATA.
+        vtk_poly_data = self.shapeToVTKPolyData(shape)
+        return self.addSurfaceFieldFromExpressionToVtkPolyData(vtk_poly_data, field_name, expression, time_points)
 
     def colorSurfaceField(self, vtk_poly_data, color_map,
                           field_name=None, field_component=0):

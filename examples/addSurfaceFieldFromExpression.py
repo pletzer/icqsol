@@ -34,7 +34,7 @@ parser.add_argument('--ascii', dest='ascii', action='store_true',
                     help='Save data in ASCII format (default is binary)')
 
 parser.add_argument('--output', dest='output',
-                    default='addSurfaceFieldFromExpression-{0}.vtk'.format(tid),
+                    default='addSurfaceFieldFromExpressionToShape-{0}.vtk'.format(tid),
                     help='VTK Output file.')
 
 args = parser.parse_args()
@@ -66,8 +66,8 @@ times = [0.0]
 if args.times:
     times = eval(args.times)
 
-pdata = shape_mgr.addSurfaceFieldFromExpression(shp, args.name,
-                                                args.expression, times)
+pdata = shape_mgr.addSurfaceFieldFromExpressionToShape(shp, args.name,
+                                                       args.expression, times)
 
 if args.output:
     # Always produce VTK POLYDATA.
