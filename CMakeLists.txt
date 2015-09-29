@@ -190,6 +190,14 @@ add_test(NAME testAddSurfaceFieldFromExpressionBolt
          --name "wave"
          --input testBoltFine.vtk
          --output testBoltFineWithField.vtk)
+add_test(NAME testAddSurfaceFieldFromExpressionSmallPolygon
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
+         --expression "exp(-0.1*t)*cos(6*pi*x)*cos(10*pi*sqrt(y**2 + z**2))/sqrt(y**2 + z**2 + 0.1)"
+         --times "linspace(0, 1.0, 10)"
+         --name "wave"
+         --input "${CMAKE_SOURCE_DIR}/data/surface_field.vtk"
+         --output testAddSurfaceFieldFromExpressionSmallPolygon.vtk)
 add_test(NAME testColorBoltComponent0
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/colorSurfaceField.py"
