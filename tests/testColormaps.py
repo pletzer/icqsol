@@ -13,7 +13,7 @@ s = shape_mgr.createShape('box', origin=(0., 0., 0.), lengths=[10., 1., 1.])
 s2 = shape_mgr.refineShape(s, refine=4)
 
 # add a field
-pdata = shape_mgr.addSurfaceFieldFromExpression(s2, 'myField', 'x', [0.0])
+pdata = shape_mgr.addSurfaceFieldFromExpressionToShape(s2, 'myField', 'x', [0.0])
 
 # color
 pdataHot = shape_mgr.colorSurfaceField(pdata, 'hot', field_name='myField')
