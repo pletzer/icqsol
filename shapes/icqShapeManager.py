@@ -131,7 +131,7 @@ class ShapeManager(object):
         @return pdata, VTKPolyData converted from shape with added surface field
         """
         # Convert the shape to VTK POLYDATA.
-        vtk_poly_data = self.shapeToVTKPolyData(shape)
+        vtk_poly_data = self.shapeToVtkPolyData(shape)
         return self.addSurfaceFieldFromExpressionToVtkPolyData(vtk_poly_data, field_name, expression, time_points)
 
     def colorSurfaceField(self, vtk_poly_data, color_map,
@@ -269,7 +269,7 @@ class ShapeManager(object):
         @return a Shape object
         """
         vtk_poly_data = self.loadAsVtkPolyData(file_name)
-        return self.shapeFromVTKPolyData(vtk_poly_data)
+        return self.shapeFromVtkPolyData(vtk_poly_data)
 
     def rotateShape(self, shape, axis=(1., 0., 0.), angleDeg=0.0):
         """
@@ -288,7 +288,7 @@ class ShapeManager(object):
         @param file_type either 'ascii' or 'binary'
         @param normals resolve features (corners) and save normal vectors if True
         """
-        vtk_poly_data = self.shapeToVTKPolyData(shape)
+        vtk_poly_data = self.shapeToVtkPolyData(shape)
         self.saveVtkPolyData(vtk_poly_data, file_name, file_type)
 
     def saveVtkPolyData(self, vtk_poly_data, file_name,
@@ -324,7 +324,7 @@ class ShapeManager(object):
     def shapeToPolygons(self, shape):
         return shape.toPolygons()
 
-    def shapeFromVTKPolyData(self, pdata):
+    def shapeFromVtkPolyData(self, pdata):
         """
         Create a shape from a VTK PolyData object
         @param pdata vtkPolyData instance
@@ -350,7 +350,7 @@ class ShapeManager(object):
         # instantiate the shape
         return CSG.fromPolygons(polygons)
 
-    def shapeToVTKPolyData(self, shape):
+    def shapeToVtkPolyData(self, shape):
         """
         Convert shape to a VTK polydata object
         """
@@ -402,7 +402,7 @@ class ShapeManager(object):
         @param filename write to a file if this keyword
                is present and a non-empty string
         """
-        pdata = self.shapeToVTKPolyData(shape)
+        pdata = self.shapeToVtkPolyData(shape)
         self.showVtkPolyData(pdata, windowSizeX, windowSizeY, filename)
         
     def showVtkPolyData(self, pdata, windowSizeX=600, windowSizeY=400, filename=''):
