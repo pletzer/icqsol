@@ -197,6 +197,7 @@ add_test(NAME testColorBoltComponent0
          --component 0
          --colormap gnu
          --input testBoltFineWithField.vtk
+         --ascii 
          --output testBoltFineColored_0.vtk)
 add_test(NAME testColorBoltComponent1
          COMMAND "${PYTHON_EXECUTABLE}" 
@@ -205,6 +206,7 @@ add_test(NAME testColorBoltComponent1
          --component 1
          --colormap gnu
          --input testBoltFineWithField.vtk
+         --ascii
          --output testBoltFineColored_1.vtk)
 add_test(NAME testAddSurfaceFieldFromExpression
          COMMAND "${PYTHON_EXECUTABLE}" 
