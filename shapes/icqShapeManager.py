@@ -324,16 +324,30 @@ class ShapeManager(object):
     def shapeToPolygons(self, shape):
         return shape.toPolygons()
 
-    def shapeFromVtkPolyData(self, pdata):
+    def shapeFromVtkPolyData(self, pdata, min_cell_area=1.e-8):
         """
         Create a shape from a VTK PolyData object
         @param pdata vtkPolyData instance
+        @param min_cell_area tolerance for cell areas
         @return shape
         @note field data will get lost
         """
+        if min_cell_area > 0:
+            # remove polygons with zero cell area
+            cleaner = vtk.vtkCleanPolyData()
+            cleaner.SetTolerance(min_cell_area)
+            cleaner.PointMergingOff() # want to keep edges sharp
+            if vtk.VTK_MAJOR_VERSION >= 6:
+                cleaner.SetInputData(pdata)
+            else:
+                cleaner.SetInput(pdata)
+            pdata2 = cleaner.GetOutput()
+        else:
+            pdata2 = pdata
+
         # store the cell connectivity as CSG polygons
-        numCells = pdata.GetNumberOfPolys()
-        cells = pdata.GetPolys()
+        numCells = pdata2.GetNumberOfPolys()
+        cells = pdata2.GetPolys()
         cells.InitTraversal()
         ptIds = vtk.vtkIdList()
         polygons = []
@@ -343,7 +357,7 @@ class ShapeManager(object):
             verts = []
             for j in range(npts):
                 pointIndex = ptIds.GetId(j)
-                pt = pdata.GetPoint(pointIndex)
+                pt = pdata2.GetPoint(pointIndex)
                 v = Vertex(Vector(pt[0], pt[1], pt[2]))
                 verts.append(v)
             polygons.append(Polygon(verts))
