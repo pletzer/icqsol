@@ -93,10 +93,9 @@ class ShapeManager(object):
         @param expression, expression consisting of legal variables x, y, z, and t
         @param time_points, list of floating point values defining
                snapshots in a time sequence
-        @return pdata, VTKPolyData converted from shape with added surface field
+        @return vtkPolyData instance
         """
-        # When we attach a surface field, we can no longer use CSG objects
-        # so this method returns just the data.
+        # The field name cannot have spaces.
         valid_field_name = field_name.replace( ' ', '_' )
         # Get the points from the shape.
         points = vtk_poly_data.GetPoints()
