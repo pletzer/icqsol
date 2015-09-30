@@ -108,13 +108,14 @@ class ShapeManager(object):
         # Update the data.
         data.SetNumberOfComponents(num_time_points)
         data.SetNumberOfTuples(num_points)
-        # Add the surface field.
+        # Set the surface field values.
         for i in range(num_points):
             x, y, z = points.GetPoint(i)
             for j in range(num_time_points):
                 t = time_points[ j ]
                 field_value = eval(expression)
                 data.SetComponent(i, j, field_value)
+        # Add the field.
         vtk_poly_data.GetPointData().SetScalars(data)
         return vtk_poly_data
 

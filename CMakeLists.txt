@@ -197,6 +197,14 @@ add_test(NAME testAddSurfaceFieldFromExpressionBolt
          --name "wave"
          --input testBoltFine.vtk
          --output testBoltFineWithField.vtk)
+add_test(NAME testAddSurfaceFieldFromExpressionBolt2
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
+         --expression "1.0"
+         --name "ones"
+         --input testBoltFineWithField.vtk
+         --output testBoltFineWithField2.vtk
+         --ascii)
 add_test(NAME testAddSurfaceFieldFromExpressionSmallPolygon
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
