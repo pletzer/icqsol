@@ -70,14 +70,14 @@ class RefineSurface:
             # assuming the polygon is planar -- only taking the first
             # 3 points
             p0 = numpy.array(self.points.GetPoint(ptIds.GetId(0)))
-            dp1 = numpy.array(self.points.GetPoint(ptIds.GetId(1)))
-            dp2 = numpy.array(self.points.GetPoint(ptIds.GetId(2)))
-            dp1 -= p0
-            dp2 -= p0
-            normal = numpy.cross(dp1, dp2)
+            p1 = numpy.array(self.points.GetPoint(ptIds.GetId(1)))
+            p2 = numpy.array(self.points.GetPoint(ptIds.GetId(2)))
+            p1 -= p0
+            p2 -= p0
+            normal = numpy.cross(p1, p2)
             normal /= math.sqrt(numpy.dot(normal, normal))
 
-            # compute the 2D basis vectors (uVec and vVec) on the plane
+            # compute the 2D basis vectors (uVc and vVec) on the plane
             uVec = p1 / math.sqrt(numpy.dot(p1, p1))
             vVec = numpy.cross(normal, uVec)
 
@@ -105,7 +105,7 @@ class RefineSurface:
                     edgeLength = numpy.sqrt(numpy.dot(d, d))
 
                     # add new points to the edge
-                    numSegs = int(math.ceil(edgeLength / max_edge_length))
+                    numSegs = max(1, int(math.ceil(edgeLength/max_edge_length)))
                     pis = [ptIdBeg]
                     delta = d/float(numSegs)
                     for k in range(1, numSegs):

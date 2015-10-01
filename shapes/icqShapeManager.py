@@ -119,20 +119,47 @@ class ShapeManager(object):
         vtk_poly_data.GetPointData().SetScalars(data)
         return vtk_poly_data
 
-    def addSurfaceFieldFromExpressionToShape(self, shape, field_name, expression, time_points):
+    def addSurfaceFieldFromExpressionToShape(self, shape, field_name, expression,
+                                      time_points, max_edge_length=float('inf')):
         """
         Add a surface field to a shape using an expression consisting of
         legal variables x,y,z (shape point coordinates) and t (time).
-        @param shape, shape to which to add the surface field
+        @param shape
         @param field_name, the name of the surface field
         @param expression, expression consisting of legal variables x, y, z, and t
         @param time_points, list of floating point values defining
                snapshots in a time sequence
+        @param max_edge_length max edge length for refinement
         @return pdata, VTKPolyData converted from shape with added surface field
         """
-        # Convert the shape to VTK POLYDATA.
-        vtk_poly_data = self.shapeToVtkPolyData(shape)
-        return self.addSurfaceFieldFromExpressionToVtkPolyData(vtk_poly_data, field_name, expression, time_points)
+        # When we attach a surface field, we can no longer use CSG objects
+        # so this method returns just the data.
+        valid_field_name = field_name.replace( ' ', '_' )
+        # Get the points from the shape.
+        pdataInput = self.shapeToVTKPolyData(shape)
+        # Refine if need be.
+        pdata = self.refineVtkPolyData(pdataInput, 
+                                       max_edge_length=max_edge_length)
+        # Set the field data.
+        points = pdata.GetPoints()
+        num_points = points.GetNumberOfPoints()
+        # Define the data.
+        data = vtk.vtkDoubleArray()
+        data.SetName(valid_field_name)
+        # Handle time points.
+        num_time_points = len(time_points)
+        # Update the data.
+        data.SetNumberOfComponents(num_time_points)
+        data.SetNumberOfTuples(num_points)
+        # Add the surface field.
+        for i in range(num_points):
+            x, y, z = points.GetPoint(i)
+            for j in range(num_time_points):
+                t = time_points[ j ]
+                field_value = eval(expression)
+                data.SetComponent(i, j, field_value)
+        pdata.GetPointData().SetScalars(data)
+        return pdata
 
     def colorSurfaceField(self, vtk_poly_data, color_map,
                           field_name=None, field_component=0):
@@ -269,7 +296,7 @@ class ShapeManager(object):
         @return a Shape object
         """
         vtk_poly_data = self.loadAsVtkPolyData(file_name)
-        return self.shapeFromVtkPolyData(vtk_poly_data)
+        return self.shapeFromVTKPolyData(vtk_poly_data)
 
     def rotateShape(self, shape, axis=(1., 0., 0.), angleDeg=0.0):
         """
@@ -288,7 +315,7 @@ class ShapeManager(object):
         @param file_type either 'ascii' or 'binary'
         @param normals resolve features (corners) and save normal vectors if True
         """
-        vtk_poly_data = self.shapeToVtkPolyData(shape)
+        vtk_poly_data = self.shapeToVTKPolyData(shape)
         self.saveVtkPolyData(vtk_poly_data, file_name, file_type)
 
     def saveVtkPolyData(self, vtk_poly_data, file_name,
@@ -324,30 +351,16 @@ class ShapeManager(object):
     def shapeToPolygons(self, shape):
         return shape.toPolygons()
 
-    def shapeFromVtkPolyData(self, pdata, min_cell_area=1.e-8):
+    def shapeFromVTKPolyData(self, pdata):
         """
         Create a shape from a VTK PolyData object
         @param pdata vtkPolyData instance
-        @param min_cell_area tolerance for cell areas
         @return shape
         @note field data will get lost
         """
-        if min_cell_area > 0:
-            # remove polygons with zero cell area
-            cleaner = vtk.vtkCleanPolyData()
-            cleaner.SetTolerance(min_cell_area)
-            cleaner.PointMergingOff() # want to keep edges sharp
-            if vtk.VTK_MAJOR_VERSION >= 6:
-                cleaner.SetInputData(pdata)
-            else:
-                cleaner.SetInput(pdata)
-            pdata2 = cleaner.GetOutput()
-        else:
-            pdata2 = pdata
-
         # store the cell connectivity as CSG polygons
-        numCells = pdata2.GetNumberOfPolys()
-        cells = pdata2.GetPolys()
+        numCells = pdata.GetNumberOfPolys()
+        cells = pdata.GetPolys()
         cells.InitTraversal()
         ptIds = vtk.vtkIdList()
         polygons = []
@@ -357,14 +370,14 @@ class ShapeManager(object):
             verts = []
             for j in range(npts):
                 pointIndex = ptIds.GetId(j)
-                pt = pdata2.GetPoint(pointIndex)
+                pt = pdata.GetPoint(pointIndex)
                 v = Vertex(Vector(pt[0], pt[1], pt[2]))
                 verts.append(v)
             polygons.append(Polygon(verts))
         # instantiate the shape
         return CSG.fromPolygons(polygons)
 
-    def shapeToVtkPolyData(self, shape):
+    def shapeToVTKPolyData(self, shape):
         """
         Convert shape to a VTK polydata object
         """
@@ -416,7 +429,7 @@ class ShapeManager(object):
         @param filename write to a file if this keyword
                is present and a non-empty string
         """
-        pdata = self.shapeToVtkPolyData(shape)
+        pdata = self.shapeToVTKPolyData(shape)
         self.showVtkPolyData(pdata, windowSizeX, windowSizeY, filename)
         
     def showVtkPolyData(self, pdata, windowSizeX=600, windowSizeY=400, filename=''):
