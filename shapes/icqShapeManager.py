@@ -202,6 +202,26 @@ class ShapeManager(object):
         vtk_poly_data_copy.GetPointData().SetScalars(rgbArray)
         return vtk_poly_data_copy
 
+    def cleanPolygon(self, verts, min_triangle_area):
+        """
+        Remove vertices that are degenerate
+        @param verts list of Vertex instances (input and output)
+        @param min_triangle_area minimum triangle area 
+        """
+        numVerts = len(verts)
+        if numVerts < 3:
+            # Nothing to do.
+            return
+        pa = verts[0].pos
+        area = verts[1].pos.minus(pa).cross(verts[2].pos.minus(pa)).length()
+        if area > min_triangle_area:
+            # We can compute the normal.
+            return
+        else:
+            # Remove vertex and recursively call this method.
+            del verts[1]
+            self.cleanPolygon(verts, min_triangle_area)
+
     def refineShape(self, shape, refine=1):
         """
         Refine a shape by inserting one vertex to each edge and one
@@ -351,14 +371,15 @@ class ShapeManager(object):
     def shapeToPolygons(self, shape):
         return shape.toPolygons()
 
-    def shapeFromVTKPolyData(self, pdata):
+    def shapeFromVTKPolyData(self, pdata, min_cell_area=1.e-6):
         """
         Create a shape from a VTK PolyData object
         @param pdata vtkPolyData instance
+        @param min_cell_area tolerance for cell areas
         @return shape
         @note field data will get lost
         """
-        # store the cell connectivity as CSG polygons
+        # Store the cell connectivity as CSG polygons.
         numCells = pdata.GetNumberOfPolys()
         cells = pdata.GetPolys()
         cells.InitTraversal()
@@ -373,8 +394,10 @@ class ShapeManager(object):
                 pt = pdata.GetPoint(pointIndex)
                 v = Vertex(Vector(pt[0], pt[1], pt[2]))
                 verts.append(v)
-            polygons.append(Polygon(verts))
-        # instantiate the shape
+            self.cleanPolygon(verts, min_cell_area)
+            if len(verts) >= 3:
+                polygons.append(Polygon(verts))
+        # Instantiate the shape.
         return CSG.fromPolygons(polygons)
 
     def shapeToVTKPolyData(self, shape):
