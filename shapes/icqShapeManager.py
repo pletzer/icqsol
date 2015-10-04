@@ -371,7 +371,7 @@ class ShapeManager(object):
     def shapeToPolygons(self, shape):
         return shape.toPolygons()
 
-    def shapeFromVTKPolyData(self, pdata, min_cell_area=1.e-6):
+    def shapeFromVTKPolyData(self, pdata, min_cell_area=1.e-8):
         """
         Create a shape from a VTK PolyData object
         @param pdata vtkPolyData instance
