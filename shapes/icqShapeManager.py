@@ -138,8 +138,11 @@ class ShapeManager(object):
         # Get the points from the shape.
         pdataInput = self.shapeToVTKPolyData(shape)
         # Refine if need be.
-        pdata = self.refineVtkPolyData(pdataInput, 
+        pdata2 = self.refineVtkPolyData(pdataInput,
+                                       max_edge_length=1.2*max_edge_length)
+        pdata = self.refineVtkPolyData(pdata2,
                                        max_edge_length=max_edge_length)
+                                       
         # Set the field data.
         points = pdata.GetPoints()
         num_points = points.GetNumberOfPoints()

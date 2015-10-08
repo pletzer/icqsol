@@ -37,6 +37,23 @@ class RefineSurface:
         @return vtkPolyData instance
         """
         return self.polydata
+    
+    def computeNormal(self, verts):
+        """
+        Compute the normal to the polygon by taking the first three vertices
+        that are not degenerate
+        @param vertices as numpy arrays
+        @return normal vector or (0., 0., 0.) and tangential lengths
+        """
+        pa = verts[0]
+        pb = verts[1] - pa
+        for i in range(2, len(verts)):
+            pc = verts[i] - pa
+            area = numpy.cross(pb, pc)
+            areaVal = numpy.sqrt(numpy.dot(area, area))
+            if areaVal > 0.0:
+                return area/areaVal, pb, pc
+        return numpy.array([0.,0.,0.]), pb, pc
 
     def refine(self, max_edge_length):
         """
@@ -61,23 +78,20 @@ class RefineSurface:
 
             # number of points spanning the polygon
             numPts = ptIds.GetNumberOfIds()
-
+            
             # must have at least three points
             if numPts < 3:
                 continue
+            
+            verts = [ numpy.array(self.points.GetPoint(ptIds.GetId(i))) \
+                     for i in range(numPts)]
+            normal, p1, p2 = self.computeNormal(verts)
+            normalLenSqr = numpy.dot(normal, normal)
+            if normalLenSqr == 0:
+                # degenerate cell
+                continue
 
-            # compute the normal vector on the polygon's plane. Note:
-            # assuming the polygon is planar -- only taking the first
-            # 3 points
-            p0 = numpy.array(self.points.GetPoint(ptIds.GetId(0)))
-            p1 = numpy.array(self.points.GetPoint(ptIds.GetId(1)))
-            p2 = numpy.array(self.points.GetPoint(ptIds.GetId(2)))
-            p1 -= p0
-            p2 -= p0
-            normal = numpy.cross(p1, p2)
-            normal /= math.sqrt(numpy.dot(normal, normal))
-
-            # compute the 2D basis vectors (uVc and vVec) on the plane
+            # compute the 2D basis vectors (uVec and vVec) on the plane
             uVec = p1 / math.sqrt(numpy.dot(p1, p1))
             vVec = numpy.cross(normal, uVec)
 

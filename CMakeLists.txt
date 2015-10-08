@@ -264,6 +264,15 @@ add_test(NAME testAddSurfaceFieldFromExpressionTimeDependent
          --input testPrimitiveCylinder.ply
          --output testPrimitiveCylinderWithTimeDependentField.vtk
          --ascii)
+add_test(NAME testAddSurfaceFieldFromExpressionPlate
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
+         --expression "sin(pi*x/0.1)*cos(pi*y/0.15)*exp(-(z-0.1)**2)"
+         --name "my_field"
+         --refine 0.01
+         --input "${CMAKE_SOURCE_DIR}/data/plate.vtk"
+         --output testAddSurfaceFieldFromExpressionPlate.vtk
+         --ascii)
 add_test(NAME testColorSurfaceFieldGnu
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/colorSurfaceField.py"
