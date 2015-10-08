@@ -71,6 +71,22 @@ add_test(NAME testColormaps
 add_test(NAME testColorMap
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/tests/testColorMap.py")
+add_test(NAME testPrimitiveSphereOptionList 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
+         --type "sphere" --list)
+add_test(NAME testPrimitiveConeOptionList 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
+         --type "cone" --list)
+add_test(NAME testPrimitiveBoxOptionList 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
+         --type "box" --list)
+add_test(NAME testPrimitiveCylinderOptionList 
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
+         --type "cylinder" --list)
 add_test(NAME testPrimitiveSphere 
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/createPrimitiveShape.py" 
