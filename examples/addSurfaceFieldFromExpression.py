@@ -24,6 +24,9 @@ parser.add_argument('--input', dest='input', default='',
 parser.add_argument('--expression', dest='expression', default='scalar_field',
                     help='Expression of x, y, z, and t')
 
+parser.add_argument('--refine', dest='refine', default=0.0, type=float,
+                    help='Maximum edge length (use 0 if no refinement)')
+
 parser.add_argument('--name', dest='name',
                     help='Set the name of the field')
 
@@ -66,8 +69,12 @@ times = [0.0]
 if args.times:
     times = eval(args.times)
 
+maxEdgeLength = float('inf')
+if args.refine > 0:
+    maxEdgeLength = args.refine
 pdata = shape_mgr.addSurfaceFieldFromExpressionToShape(shp, args.name,
-                                                       args.expression, times)
+                                                       args.expression, times,
+                                                       max_edge_length=maxEdgeLength)
 
 if args.output:
     # Always produce VTK POLYDATA.
