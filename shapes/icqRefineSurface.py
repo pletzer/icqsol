@@ -2,6 +2,7 @@
 
 import math
 import numpy
+import operator
 import vtk
 
 
@@ -43,7 +44,7 @@ class RefineSurface:
         Compute the normal to the polygon by taking the first three vertices
         that are not degenerate
         @param vertices as numpy arrays
-        @return normal vector or (0., 0., 0.) and tangential lengths
+        @return normal vector or (0., 0., 0.), tangential lengths, and area
         """
         pa = verts[0]
         pb = verts[1] - pa
@@ -52,8 +53,8 @@ class RefineSurface:
             area = numpy.cross(pb, pc)
             areaVal = numpy.sqrt(numpy.dot(area, area))
             if areaVal > 0.0:
-                return area/areaVal, pb, pc
-        return numpy.array([0.,0.,0.]), pb, pc
+                return area/areaVal, pb, pc, areaVal
+        return numpy.array([0.,0.,0.]), pb, pc, 0.0
 
     def refine(self, max_edge_length):
         """
@@ -61,6 +62,173 @@ class RefineSurface:
         @param max_edge_length maximum edge length
         @note operation is in place
         """
+
+        # iterate over the polys
+        polys = self.polydata.GetPolys()
+        ptIds = vtk.vtkIdList()
+        polys.InitTraversal()
+        cells = []
+        edges = set()
+        for iPoly in range(polys.GetNumberOfCells()):
+            
+            polys.GetNextCell(ptIds)
+            
+            # compute the two tangential unit vectors
+            uVec, vVec, normal = self.computeUVNormal(self.points, ptIds)
+            if normal.dot(normal) == 0:
+                # zero area polygon, nothing to do
+                continue
+            
+            # collect the point ids of the polygon
+            polyPtIds = []
+
+            # iterate over edges
+            numNodes = ptIds.GetNumberOfIds()
+            for iNode in range(numNodes):
+                i0 = ptIds.GetId(iNode)
+                i1 = ptIds.GetId((iNode + 1) % numNodes)
+                edge = [i0, i1]
+                edge.sort()
+                edge = tuple(edge)
+                
+                polyPtIds.append(i0)
+
+                if edge in edges:
+                    # edge has already been split, go to next edge
+                    continue
+                
+                edges.add(edge)
+                
+                i0, i1 = edge
+                p0 = numpy.array(self.points.GetPoint(edge[0]))
+                p1 = numpy.array(self.points.GetPoint(edge[1]))
+                dEdge = p1 - p0
+                edgeLength = numpy.sqrt(dEdge.dot(dEdge))
+                numSegs = max(1, math.ceil(edgeLength/max_edge_length))
+
+                # add points along edge
+                pt = p0
+                d10 = (p1 - p0) / float(numSegs)
+                for iSeg in range(numSegs - 1):
+                    pt += d10
+                    ptId = self.points.GetNumberOfPoints()
+                    # insert point
+                    self.points.InsertNextPoint(pt)
+                    polyPtIds.append(ptId)
+
+            # triangulate the cell
+            polyCells = self.triangulatePolygon(uVec, vVec, self.points, polyPtIds)
+            cells += polyCells
+
+        # build the output vtkPolyData object
+        pdata = vtk.vtkPolyData()
+        ptIds = vtk.vtkIdList()
+        pdata.SetPoints(self.points)
+        numPolys = len(cells)
+        pdata.Allocate(numPolys, 1)
+        for cell in cells:
+            numPts = len(cell)
+            ptIds.SetNumberOfIds(numPts)
+            for j in range(numPts):
+                ptIds.SetId(j, cell[j])
+            pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+
+        # Reset the polydata struct
+        self.polydata = pdata
+            
+    def computeUVNormal(self, points, ptIds):
+        """
+        Compute the two tangential unit vectors and the normal vector
+        @param points vtkPoints instance
+        @param ptIds point indices
+        @return u vector, v vector, normal
+        """
+        uVec = numpy.zeros((3,), numpy.float64)
+        vVec = numpy.zeros((3,), numpy.float64)
+        numPts = ptIds.GetNumberOfIds()
+        if numPts < 3:
+            return uVec, vVec, uVec
+        p0 = numpy.array(points.GetPoint(ptIds.GetId(0)))
+        for i in range(1, numPts - 1):
+            dp1 = numpy.array(points.GetPoint(ptIds.GetId(i))) - p0
+            dp2 = numpy.array(points.GetPoint(ptIds.GetId(i + 1))) - p0
+            perp = numpy.cross(dp1, dp2)
+            pDotp = perp.dot(perp)
+            if pDotp > 0:
+                normal = perp / numpy.sqrt(pDotp)
+                uVec = dp1 / numpy.sqrt(dp1.dot(dp1))
+                vVec = numpy.cross(normal, uVec)
+                return uVec, vVec, normal
+        return uVec, vVec, numpy.zeros((3,), numpy.float64)
+
+    def triangulatePolygon(self, uVec, vVec, points, polyPtIds):
+        """
+        Triangulate polygon using the uVec x vVec projection
+        @param uVec unit vector tangential to the polygon
+        @param vVec second unit vector tangential to the polygon
+        @param points vtkPoints object
+        @param polyPtIds list of polygon's point indices
+        @return list of cells (list of point indices)
+        """
+        
+        numPts = len(polyPtIds)
+        if numPts < 3:
+            return []
+        elif numPts == 3:
+            # no need to do any triangulation, just return the cell
+            return [polyPtIds]
+        
+        pts = vtk.vtkPoints()
+        pts.SetNumberOfPoints(numPts)
+        
+        # project each point onto the plane
+        pt = numpy.zeros((3,), numpy.float64)
+        for i in range(numPts):
+            p = numpy.array(points.GetPoint(polyPtIds[i]))
+            pt[0:2] = p.dot(uVec), p.dot(vVec)
+            pts.SetPoint(i, pt)
+        
+        pdata = vtk.vtkPolyData()
+        pdata.SetPoints(pts)
+        
+        delaunay = vtk.vtkDelaunay2D()
+        delaunay.SetTolerance(1.e-5)
+        delaunay.SetAlpha(0.0)
+        if vtk.VTK_MAJOR_VERSION >= 6:
+            delaunay.SetInputData(pdata)
+        else:
+            delaunay.SetInput(pdata)
+        
+        delaunay.Update()
+        
+        ugrid = delaunay.GetOutput()
+        cells = []
+        numCells = ugrid.GetNumberOfCells()
+        if numCells == 0:
+            # Delaunay triangulation failed
+            # not sure why this is happening...
+            return [polyPtIds]
+        else:
+            for i in range(numCells):
+                ptIds = ugrid.GetCell(i).GetPointIds()
+                cell = []
+                for j in range(ptIds.GetNumberOfIds()):
+                    localId = ptIds.GetId(j)
+                    ptId = polyPtIds[localId]
+                    cell.append(ptId)
+                cells.append(cell)
+        return cells
+    
+    
+    def refine2(self, max_edge_length):
+        """
+        Refine each cell by adding points on edges longer than max_edge_length
+        @param max_edge_length maximum edge length
+        @note operation is in place
+        """
+        
+        print '***** max_edge_length = ', max_edge_length
+        print '***** input: number of polys = ', self.polydata.GetNumberOfPolys()
 
         # edge to point Ids map
         edge2PointIds = {}
@@ -81,13 +249,14 @@ class RefineSurface:
             
             # must have at least three points
             if numPts < 3:
+                print '+++++ numPts = ', numPts
                 continue
             
             verts = [ numpy.array(self.points.GetPoint(ptIds.GetId(i))) \
                      for i in range(numPts)]
-            normal, p1, p2 = self.computeNormal(verts)
-            normalLenSqr = numpy.dot(normal, normal)
-            if normalLenSqr == 0:
+            normal, p1, p2, area = self.computeNormal(verts)
+            if area == 0:
+                print '????? area = ', area
                 # degenerate cell
                 continue
 
@@ -120,13 +289,22 @@ class RefineSurface:
 
                     # add new points to the edge
                     numSegs = max(1, int(math.ceil(edgeLength/max_edge_length)))
+                    
+                    # point indices
                     pis = [ptIdBeg]
+                    
+                    # increment along edge
                     delta = d/float(numSegs)
+                    
                     for k in range(1, numSegs):
                         pt = ptBeg + k*delta
+                        
+                        # insert new point
+                        print '**** inserting point ', pt, ' along edge ', e, ' in cell ', ptIds
                         self.points.InsertNextPoint(pt)
                         ptId = self.points.GetNumberOfPoints() - 1
                         pis.append(ptId)
+                    
                     pis.append(ptIdEnd)
 
                     edge2PointIds[e] = pis
@@ -136,9 +314,17 @@ class RefineSurface:
                     pt = self.points.GetPoint(ptId)
                     u, v = numpy.dot(pt, uVec), numpy.dot(pt, vVec)
                     uvs[ptId] = (u, v)
+                
+                # add middle point for fat triangles
+                #if area >  * numpy.sqrt(p1.dot(p1)) * numpy.sqrt(p2.dot(p2)):
+                #    print '*** adding middle point'
+                #    pMid = reduce(operator.add, verts) / float(numPts)
+                #    self.points.InsertNextPoint(pMid)
+                #    ptId = self.points.GetNumberOfPoints() - 1
+                #    uvs[ptId] = (u, v)
 
-            # triangulate cell and append to list
-            cells += self.triangulate(uvs)
+                # triangulate cell and append to list
+                cells += self.triangulate(uvs)
 
         # build the output vtkPolyData object
         pdata = vtk.vtkPolyData()
@@ -152,7 +338,8 @@ class RefineSurface:
             for j in range(numPts):
                 ptIds.SetId(j, cell[j])
             pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
-
+        
+        print '.....output: number of polys: ', pdata.GetNumberOfPolys()
         self.polydata = pdata
 
     def triangulate(self, uvs):
