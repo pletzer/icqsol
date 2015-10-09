@@ -72,17 +72,35 @@ class RefineSurface:
         for iPoly in range(polys.GetNumberOfCells()):
             
             polys.GetNextCell(ptIds)
+            numPts = ptIds.GetNumberOfIds()
+            
+            if numPts < 3:
+                continue
             
             # collect the polygon's vertices
             polyPtIds = []
-            for i in range(ptIds.GetNumberOfIds()):
-                polyPtIds.append(ptIds.GetId(i))
+            pts = []
+            for i in range(numPts):
+                ptId = ptIds.GetId(i)
+                polyPtIds.append(ptId)
+                pts.append(numpy.array(self.points.GetPoint(ptId)))
             
             # compute the two tangential unit vectors
             uVec, vVec, normal = self.computeUVNormal(ptIds)
             if normal.dot(normal) == 0:
                 # zero area polygon, nothing to do
                 continue
+            
+            """
+            uCrossV = numpy.cross(uVec, vVec)
+            if uCrossV.dot(uCrossV) > 0.3:
+                # add centroid point
+                pMid = reduce(operator.add, pts) / float(numPts)
+                ptId = self.points.GetNumberOfPoints()
+                polyPtIds.append(ptId)
+                # insert point
+                self.points.InsertNextPoint(pMid)
+            """
 
             # iterate over edges
             numNodes = ptIds.GetNumberOfIds()
