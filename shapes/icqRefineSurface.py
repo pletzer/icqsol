@@ -68,56 +68,56 @@ class RefineSurface:
         ptIds = vtk.vtkIdList()
         polys.InitTraversal()
         cells = []
-        edges = set()
+        edge2PtIds = {}
         for iPoly in range(polys.GetNumberOfCells()):
             
             polys.GetNextCell(ptIds)
             
+            # collect the polygon's vertices
+            polyPtIds = []
+            for i in range(ptIds.GetNumberOfIds()):
+                polyPtIds.append(ptIds.GetId(i))
+            
             # compute the two tangential unit vectors
-            uVec, vVec, normal = self.computeUVNormal(self.points, ptIds)
+            uVec, vVec, normal = self.computeUVNormal(ptIds)
             if normal.dot(normal) == 0:
                 # zero area polygon, nothing to do
                 continue
-            
-            # collect the point ids of the polygon
-            polyPtIds = []
 
             # iterate over edges
             numNodes = ptIds.GetNumberOfIds()
             for iNode in range(numNodes):
                 i0 = ptIds.GetId(iNode)
                 i1 = ptIds.GetId((iNode + 1) % numNodes)
-                edge = [i0, i1]
-                edge.sort()
-                edge = tuple(edge)
+                edge = (i0, i1)
+                edgeCompl = (i1, i0)
                 
-                polyPtIds.append(i0)
-
-                if edge in edges:
+                edgePtIds = edge2PtIds.get(edge, []) + edge2PtIds.get(edgeCompl, [])
+                if len(edgePtIds) > 0:
                     # edge has already been split, go to next edge
+                    polyPtIds += edgePtIds
                     continue
-                
-                edges.add(edge)
-                
-                i0, i1 = edge
-                p0 = numpy.array(self.points.GetPoint(edge[0]))
-                p1 = numpy.array(self.points.GetPoint(edge[1]))
+
+                p0 = numpy.array(self.points.GetPoint(i0))
+                p1 = numpy.array(self.points.GetPoint(i1))
                 dEdge = p1 - p0
                 edgeLength = numpy.sqrt(dEdge.dot(dEdge))
-                numSegs = max(1, math.ceil(edgeLength/max_edge_length))
+                numSegs = int(max(1, math.ceil(edgeLength/max_edge_length)))
 
                 # add points along edge
-                pt = p0
                 d10 = (p1 - p0) / float(numSegs)
-                for iSeg in range(numSegs - 1):
-                    pt += d10
+                for iSeg in range(1, numSegs):
+                    pt = p0 + iSeg*d10
                     ptId = self.points.GetNumberOfPoints()
                     # insert point
                     self.points.InsertNextPoint(pt)
-                    polyPtIds.append(ptId)
+                    edgePtIds.append(ptId)
+                
+                edge2PtIds[edge] = edgePtIds
+                polyPtIds += edgePtIds
 
             # triangulate the cell
-            polyCells = self.triangulatePolygon(uVec, vVec, self.points, polyPtIds)
+            polyCells = self.triangulatePolygon(uVec, vVec, polyPtIds)
             cells += polyCells
 
         # build the output vtkPolyData object
@@ -136,10 +136,9 @@ class RefineSurface:
         # Reset the polydata struct
         self.polydata = pdata
             
-    def computeUVNormal(self, points, ptIds):
+    def computeUVNormal(self, ptIds):
         """
         Compute the two tangential unit vectors and the normal vector
-        @param points vtkPoints instance
         @param ptIds point indices
         @return u vector, v vector, normal
         """
@@ -148,10 +147,10 @@ class RefineSurface:
         numPts = ptIds.GetNumberOfIds()
         if numPts < 3:
             return uVec, vVec, uVec
-        p0 = numpy.array(points.GetPoint(ptIds.GetId(0)))
+        p0 = numpy.array(self.points.GetPoint(ptIds.GetId(0)))
         for i in range(1, numPts - 1):
-            dp1 = numpy.array(points.GetPoint(ptIds.GetId(i))) - p0
-            dp2 = numpy.array(points.GetPoint(ptIds.GetId(i + 1))) - p0
+            dp1 = numpy.array(self.points.GetPoint(ptIds.GetId(i))) - p0
+            dp2 = numpy.array(self.points.GetPoint(ptIds.GetId(i + 1))) - p0
             perp = numpy.cross(dp1, dp2)
             pDotp = perp.dot(perp)
             if pDotp > 0:
@@ -161,12 +160,11 @@ class RefineSurface:
                 return uVec, vVec, normal
         return uVec, vVec, numpy.zeros((3,), numpy.float64)
 
-    def triangulatePolygon(self, uVec, vVec, points, polyPtIds):
+    def triangulatePolygon(self, uVec, vVec, polyPtIds):
         """
         Triangulate polygon using the uVec x vVec projection
         @param uVec unit vector tangential to the polygon
         @param vVec second unit vector tangential to the polygon
-        @param points vtkPoints object
         @param polyPtIds list of polygon's point indices
         @return list of cells (list of point indices)
         """
@@ -184,7 +182,7 @@ class RefineSurface:
         # project each point onto the plane
         pt = numpy.zeros((3,), numpy.float64)
         for i in range(numPts):
-            p = numpy.array(points.GetPoint(polyPtIds[i]))
+            p = numpy.array(self.points.GetPoint(polyPtIds[i]))
             pt[0:2] = p.dot(uVec), p.dot(vVec)
             pts.SetPoint(i, pt)
         
@@ -217,165 +215,6 @@ class RefineSurface:
                     ptId = polyPtIds[localId]
                     cell.append(ptId)
                 cells.append(cell)
-        return cells
-    
-    
-    def refine2(self, max_edge_length):
-        """
-        Refine each cell by adding points on edges longer than max_edge_length
-        @param max_edge_length maximum edge length
-        @note operation is in place
-        """
-        
-        print '***** max_edge_length = ', max_edge_length
-        print '***** input: number of polys = ', self.polydata.GetNumberOfPolys()
-
-        # edge to point Ids map
-        edge2PointIds = {}
-
-        cells = []
-
-        # iterate over the polygons
-        polys = self.polydata.GetPolys()
-        numPolys = polys.GetNumberOfCells()
-        ptIds = vtk.vtkIdList()
-        polys.InitTraversal()
-        for iPoly in range(numPolys):
-
-            polys.GetNextCell(ptIds)
-
-            # number of points spanning the polygon
-            numPts = ptIds.GetNumberOfIds()
-            
-            # must have at least three points
-            if numPts < 3:
-                print '+++++ numPts = ', numPts
-                continue
-            
-            verts = [ numpy.array(self.points.GetPoint(ptIds.GetId(i))) \
-                     for i in range(numPts)]
-            normal, p1, p2, area = self.computeNormal(verts)
-            if area == 0:
-                print '????? area = ', area
-                # degenerate cell
-                continue
-
-            # compute the 2D basis vectors (uVec and vVec) on the plane
-            uVec = p1 / math.sqrt(numpy.dot(p1, p1))
-            vVec = numpy.cross(normal, uVec)
-
-            # ordered list of point index to uv coordinates on the plane
-            uvs = {}
-
-            # iterate over edges, add middle edge points if the edge's
-            # length is > max_edge_length
-            for iPoint in range(numPts):
-
-                # start/end point indices of the edge
-                ptIdBeg = ptIds.GetId(iPoint)
-                ptIdEnd = ptIds.GetId((iPoint + 1) % numPts)
-                edge = [ptIdBeg, ptIdEnd]
-                edge.sort()
-                ptIdBeg, ptIdEnd = edge
-                e = tuple(edge)
-
-                if e not in edge2PointIds:
-
-                    # new edge
-                    ptBeg = numpy.array(self.points.GetPoint(ptIdBeg))
-                    ptEnd = numpy.array(self.points.GetPoint(ptIdEnd))
-                    d = ptEnd - ptBeg
-                    edgeLength = numpy.sqrt(numpy.dot(d, d))
-
-                    # add new points to the edge
-                    numSegs = max(1, int(math.ceil(edgeLength/max_edge_length)))
-                    
-                    # point indices
-                    pis = [ptIdBeg]
-                    
-                    # increment along edge
-                    delta = d/float(numSegs)
-                    
-                    for k in range(1, numSegs):
-                        pt = ptBeg + k*delta
-                        
-                        # insert new point
-                        print '**** inserting point ', pt, ' along edge ', e, ' in cell ', ptIds
-                        self.points.InsertNextPoint(pt)
-                        ptId = self.points.GetNumberOfPoints() - 1
-                        pis.append(ptId)
-                    
-                    pis.append(ptIdEnd)
-
-                    edge2PointIds[e] = pis
-
-                # compute the location of the edge points in u, v plane coordinates
-                for ptId in edge2PointIds[e]:
-                    pt = self.points.GetPoint(ptId)
-                    u, v = numpy.dot(pt, uVec), numpy.dot(pt, vVec)
-                    uvs[ptId] = (u, v)
-                
-                # add middle point for fat triangles
-                #if area >  * numpy.sqrt(p1.dot(p1)) * numpy.sqrt(p2.dot(p2)):
-                #    print '*** adding middle point'
-                #    pMid = reduce(operator.add, verts) / float(numPts)
-                #    self.points.InsertNextPoint(pMid)
-                #    ptId = self.points.GetNumberOfPoints() - 1
-                #    uvs[ptId] = (u, v)
-
-                # triangulate cell and append to list
-                cells += self.triangulate(uvs)
-
-        # build the output vtkPolyData object
-        pdata = vtk.vtkPolyData()
-        ptIds = vtk.vtkIdList()
-        pdata.SetPoints(self.points)
-        numPolys = len(cells)
-        pdata.Allocate(numPolys, 1)
-        for cell in cells:
-            numPts = len(cell)
-            ptIds.SetNumberOfIds(numPts)
-            for j in range(numPts):
-                ptIds.SetId(j, cell[j])
-            pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
-        
-        print '.....output: number of polys: ', pdata.GetNumberOfPolys()
-        self.polydata = pdata
-
-    def triangulate(self, uvs):
-        """
-        Triangulate a set of u, v points
-        @param uvs dictionary containing point index to u, v plane coordinates map
-        @return cells
-        """
-        uvIds = uvs.keys()
-        uvPoints = uvs.values()
-        points = vtk.vtkPoints()
-        pdata = vtk.vtkPolyData()
-        delaunay = vtk.vtkDelaunay2D()
-        pt = numpy.zeros((3,), numpy.float64)
-        for uv in uvPoints:
-            pt[0:2] = uv
-            points.InsertNextPoint(pt)
-        pdata.SetPoints(points)
-        if vtk.VTK_MAJOR_VERSION >= 6:
-            delaunay.SetInputData(pdata)
-        else:
-            delaunay.SetInput(pdata)
-
-        delaunay.Update()
-
-        ugrid = delaunay.GetOutput()
-        cells = []
-        numCells = ugrid.GetNumberOfCells()
-        for i in range(numCells):
-            ptIds = ugrid.GetCell(i).GetPointIds()
-            cell = []
-            for j in range(ptIds.GetNumberOfIds()):
-                localId = ptIds.GetId(j)
-                ptId = uvIds[localId]
-                cell.append(ptId)
-            cells.append(cell)
         return cells
 
 ##############################################################################
