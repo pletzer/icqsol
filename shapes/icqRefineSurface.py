@@ -73,34 +73,17 @@ class RefineSurface:
             
             polys.GetNextCell(ptIds)
             numPts = ptIds.GetNumberOfIds()
+            polyPtIds = []
             
             if numPts < 3:
+                # need at least three points, next polygon
                 continue
-            
-            # collect the polygon's vertices
-            polyPtIds = []
-            pts = []
-            for i in range(numPts):
-                ptId = ptIds.GetId(i)
-                polyPtIds.append(ptId)
-                pts.append(numpy.array(self.points.GetPoint(ptId)))
-            
+        
             # compute the two tangential unit vectors
             uVec, vVec, normal = self.computeUVNormal(ptIds)
             if normal.dot(normal) == 0:
                 # zero area polygon, nothing to do
                 continue
-            
-            """
-            uCrossV = numpy.cross(uVec, vVec)
-            if uCrossV.dot(uCrossV) > 0.3:
-                # add centroid point
-                pMid = reduce(operator.add, pts) / float(numPts)
-                ptId = self.points.GetNumberOfPoints()
-                polyPtIds.append(ptId)
-                # insert point
-                self.points.InsertNextPoint(pMid)
-            """
 
             # iterate over edges
             numNodes = ptIds.GetNumberOfIds()
@@ -110,9 +93,11 @@ class RefineSurface:
                 edge = (i0, i1)
                 edgeCompl = (i1, i0)
                 
-                edgePtIds = edge2PtIds.get(edge, []) + edge2PtIds.get(edgeCompl, [])
+                edgePtIds = edge2PtIds.get(edgeCompl, [])
                 if len(edgePtIds) > 0:
-                    # edge has already been split, go to next edge
+                    # edge has already been split, take edge and reverse order
+                    edgePtIds.reverse()
+                    edgePtIds = [i0,] + edgePtIds[:-1]
                     polyPtIds += edgePtIds
                     continue
 
@@ -124,13 +109,15 @@ class RefineSurface:
 
                 # add points along edge
                 d10 = (p1 - p0) / float(numSegs)
+                edgePtIds.append(i0)
                 for iSeg in range(1, numSegs):
                     pt = p0 + iSeg*d10
+                    # index of point to add
                     ptId = self.points.GetNumberOfPoints()
                     # insert point
                     self.points.InsertNextPoint(pt)
                     edgePtIds.append(ptId)
-                
+            
                 edge2PtIds[edge] = edgePtIds
                 polyPtIds += edgePtIds
 
