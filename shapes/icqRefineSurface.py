@@ -4,6 +4,7 @@ import math
 import numpy
 import operator
 import vtk
+#import triangle
 
 
 class RefineSurface:
@@ -123,6 +124,8 @@ class RefineSurface:
 
             # triangulate the cell
             polyCells = self.triangulatePolygon(uVec, vVec, polyPtIds)
+            #polyCells = self.triangulatePolygon2(p0, uVec, vVec, polyPtIds,
+            #                                     max_edge_length)
             cells += polyCells
 
         # build the output vtkPolyData object
@@ -164,6 +167,60 @@ class RefineSurface:
                 vVec = numpy.cross(normal, uVec)
                 return uVec, vVec, normal
         return uVec, vVec, numpy.zeros((3,), numpy.float64)
+
+    def triangulatePolygon2(self, p0, uVec, vVec, polyPtIds, max_edge_length):
+        """
+        Triangulate polygon using the uVec x vVec projection
+        @param p0 reference vertex
+        @param uVec unit vector tangential to the polygon
+        @param vVec second unit vector tangential to the polygon
+        @param polyPtIds list of polygon's point indices
+        @param max_edge_length maximum edge length
+        @return list of cells (list of point indices)
+        """
+        import triangle
+    
+        numPts = len(polyPtIds)
+        if numPts < 3:
+            return []
+        elif numPts == 3:
+            # no need to do any triangulation, just return the cell
+            return [polyPtIds]
+    
+        pts = []
+        # project each point onto the plane
+        for i in range(numPts):
+            p = numpy.array(self.points.GetPoint(polyPtIds[i]))
+            pts.append( (p.dot(uVec), p.dot(vVec)) )
+
+        segs = [(i, (i + 1)%numPts) for i in range(numPts)]
+        
+        tri = triangle.Triangle()
+        tri.set_points(pts)
+        tri.set_segments(segs)
+        maxArea = 0.5 * max_edge_length**2
+        tri.triangulate(area=maxArea)
+            
+        nodes = tri.get_nodes()
+        polyCells = tri.get_triangles()
+        
+        # add the new vertices
+        n = len(pts) # new points follow the boundary points
+        for pIndex in range(n, len(nodes)):
+            u, v = nodes[pIndex][0]
+            p = p0 + u*uVec + v*vVec
+            # insert new point
+            ptId = self.points.GetNumberOfPoints()
+            self.points.InsertNextPoint(p)
+            polyPtIds.append(ptId)
+        
+        cells = []
+        for c in polyCells:
+            ia, ib, ic = c[0]
+            cell = [ polyPtIds[ia], polyPtIds[ib], polyPtIds[ic] ]
+            cells.append(cell)
+        
+        return cells
 
     def triangulatePolygon(self, uVec, vVec, polyPtIds):
         """
