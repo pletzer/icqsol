@@ -1,7 +1,7 @@
-ICQSol
+icqsol
 ======
 
-ICQSol is a collection of tools for constructing and solving partial 
+icqsol is a collection of tools for constructing and solving partial 
 differential equations on the web.
 
 How to build icqsol 
@@ -13,6 +13,7 @@ Prerequisites
 * python. Version 2.7 will work
 * numpy. Version 1.9.2 will work
 * VTK with python wrapping enabled. Version 6.1.0 will work
+* Pytriangle. Version 1.0 will work
 * CMake
 
 Installing ICQSol
@@ -33,7 +34,7 @@ to set PYTHONPATH
 
 $ cmake -DINSTALL_PREFIX=ON -DCMAKE_INSTALL_PREFIX=<myDirectory> .
 
-How to test ICQSol
+How to test icqsol
 ------------------
 
 You should be able to import icqsol in the python interpreter
