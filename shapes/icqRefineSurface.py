@@ -2,9 +2,8 @@
 
 import math
 import numpy
-import operator
 import vtk
-#import triangle
+import triangle
 
 
 class RefineSurface:
@@ -39,23 +38,6 @@ class RefineSurface:
         @return vtkPolyData instance
         """
         return self.polydata
-    
-    def computeNormal(self, verts):
-        """
-        Compute the normal to the polygon by taking the first three vertices
-        that are not degenerate
-        @param vertices as numpy arrays
-        @return normal vector or (0., 0., 0.), tangential lengths, and area
-        """
-        pa = verts[0]
-        pb = verts[1] - pa
-        for i in range(2, len(verts)):
-            pc = verts[i] - pa
-            area = numpy.cross(pb, pc)
-            areaVal = numpy.sqrt(numpy.dot(area, area))
-            if areaVal > 0.0:
-                return area/areaVal, pb, pc, areaVal
-        return numpy.array([0.,0.,0.]), pb, pc, 0.0
 
     def refine(self, max_edge_length):
         """
@@ -71,15 +53,15 @@ class RefineSurface:
         cells = []
         edge2PtIds = {}
         for iPoly in range(polys.GetNumberOfCells()):
-            
+
             polys.GetNextCell(ptIds)
             numPts = ptIds.GetNumberOfIds()
             polyPtIds = []
-            
+
             if numPts < 3:
                 # need at least three points, next polygon
                 continue
-        
+
             # compute the two tangential unit vectors
             uVec, vVec, normal = self.computeUVNormal(ptIds)
             if normal.dot(normal) == 0:
@@ -93,12 +75,12 @@ class RefineSurface:
                 i1 = ptIds.GetId((iNode + 1) % numNodes)
                 edge = (i0, i1)
                 edgeCompl = (i1, i0)
-                
+
                 edgePtIds = edge2PtIds.get(edgeCompl, [])
                 if len(edgePtIds) > 0:
                     # edge has already been split, take edge and reverse order
                     edgePtIds.reverse()
-                    edgePtIds = [i0,] + edgePtIds[:-1]
+                    edgePtIds = [i0] + edgePtIds[:-1]
                     polyPtIds += edgePtIds
                     continue
 
@@ -118,7 +100,7 @@ class RefineSurface:
                     # insert point
                     self.points.InsertNextPoint(pt)
                     edgePtIds.append(ptId)
-            
+
                 edge2PtIds[edge] = edgePtIds
                 polyPtIds += edgePtIds
 
@@ -142,7 +124,7 @@ class RefineSurface:
 
         # Reset the polydata struct
         self.polydata = pdata
-            
+
     def computeUVNormal(self, ptIds):
         """
         Compute the two tangential unit vectors and the normal vector
@@ -177,13 +159,12 @@ class RefineSurface:
         @param max_edge_length maximum edge length
         @return list of cells (list of point indices)
         """
-        import triangle
-        
+
         numPts = len(polyPtIds)
         if numPts < 3:
             # need at least three points
             return []
-        
+
         # reference position
         p0 = numpy.array(self.points.GetPoint(polyPtIds[0]))
 
@@ -192,15 +173,15 @@ class RefineSurface:
         for i in range(numPts):
             pos = numpy.array(self.points.GetPoint(polyPtIds[i]))
             pos -= p0
-            pts.append( (pos.dot(uVec), pos.dot(vVec)) )
-        
+            pts.append((pos.dot(uVec), pos.dot(vVec)))
+
         # list of segments
-        segs = [(i, (i + 1)%numPts) for i in range(numPts)]
-        
+        segs = [(i, (i + 1) % numPts) for i in range(numPts)]
+
         tri = triangle.Triangle()
         tri.set_points(pts)
         tri.set_segments(segs)
-        
+
         # internal points will be added if triangle area exceeds threshold
         maxArea = None
         if max_edge_length < float('inf'):
@@ -208,7 +189,7 @@ class RefineSurface:
 
         # triangulate
         tri.triangulate(area=maxArea, mode='pzeQ')
-            
+
         nodes = tri.get_nodes()
         polyCells = tri.get_triangles()
 
@@ -216,17 +197,17 @@ class RefineSurface:
         for pIndex in range(len(pts), len(nodes)):
             ptId = self.points.GetNumberOfPoints()
             u, v = nodes[pIndex][0]
-            p = p0 + u*uVec + v*vVec # wrong?
+            p = p0 + u*uVec + v*vVec
             # insert new point
             self.points.InsertNextPoint(p)
             polyPtIds.append(ptId)
-        
+
         cells = []
         for c in polyCells:
             ia, ib, ic = c[0]
-            cell = [ polyPtIds[ia], polyPtIds[ib], polyPtIds[ic] ]
+            cell = [polyPtIds[ia], polyPtIds[ib], polyPtIds[ic]]
             cells.append(cell)
-        
+
         return cells
 
 ##############################################################################
@@ -241,7 +222,6 @@ def printVtkPolyData(pdata):
     print 'Number of polygons: {}'.format(numPolys)
     polys.InitTraversal()
     for i in range(numPolys):
-        cell = polys.GetNextCell(ptIds)
         numPts = ptIds.GetNumberOfIds()
         print '\tCell {} has {} points: '.format(i, numPts)
         for j in range(numPts):
@@ -292,10 +272,7 @@ def testAddingThreePointsThenMore():
 
     rs = RefineSurface(pdata)
     rs.refine(max_edge_length=1.1)
-    #printVtkPolyData(rs.getVtkPolyData())
     assert(rs.getVtkPolyData().GetNumberOfPolys() == 4)
-    #rs.refine(max_edge_length=0.1)
-    #assert(rs.getVtkPolyData().GetNumberOfPolys() == 104)
 
 
 def testStartingWithTwoCells():
@@ -323,11 +300,7 @@ def testStartingWithTwoCells():
 
     rs = RefineSurface(pdata)
     rs.refine(max_edge_length=1.1)
-    pdata2 = rs.getVtkPolyData()
-    #printVtkPolyData(pdata2)
     assert(rs.getVtkPolyData().GetNumberOfPolys() == 8)
-    #rs.refine(max_edge_length=0.1)
-    #assert(rs.getVtkPolyData().GetNumberOfPolys() == 208)
 
 
 if __name__ == '__main__':
