@@ -123,9 +123,9 @@ class RefineSurface:
                 polyPtIds += edgePtIds
 
             # triangulate the cell
-            polyCells = self.triangulatePolygon(uVec, vVec, polyPtIds)
-            #polyCells = self.triangulatePolygon2(p0, uVec, vVec, polyPtIds,
-            #                                     max_edge_length)
+            #polyCells = self.triangulatePolygon(uVec, vVec, polyPtIds)
+            polyCells = self.triangulatePolygon2(uVec, vVec, polyPtIds,
+                                                 max_edge_length)
             cells += polyCells
 
         # build the output vtkPolyData object
@@ -152,9 +152,10 @@ class RefineSurface:
         """
         uVec = numpy.zeros((3,), numpy.float64)
         vVec = numpy.zeros((3,), numpy.float64)
+        normal = numpy.zeros((3,), numpy.float64)
         numPts = ptIds.GetNumberOfIds()
         if numPts < 3:
-            return uVec, vVec, uVec
+            return uVec, vVec, normal
         p0 = numpy.array(self.points.GetPoint(ptIds.GetId(0)))
         for i in range(1, numPts - 1):
             dp1 = numpy.array(self.points.GetPoint(ptIds.GetId(i))) - p0
@@ -166,12 +167,11 @@ class RefineSurface:
                 uVec = dp1 / numpy.sqrt(dp1.dot(dp1))
                 vVec = numpy.cross(normal, uVec)
                 return uVec, vVec, normal
-        return uVec, vVec, numpy.zeros((3,), numpy.float64)
+        return uVec, vVec, normal
 
-    def triangulatePolygon2(self, p0, uVec, vVec, polyPtIds, max_edge_length):
+    def triangulatePolygon2(self, uVec, vVec, polyPtIds, max_edge_length):
         """
         Triangulate polygon using the uVec x vVec projection
-        @param p0 reference vertex
         @param uVec unit vector tangential to the polygon
         @param vVec second unit vector tangential to the polygon
         @param polyPtIds list of polygon's point indices
@@ -179,38 +179,46 @@ class RefineSurface:
         @return list of cells (list of point indices)
         """
         import triangle
-    
+        
         numPts = len(polyPtIds)
         if numPts < 3:
+            # need at least three points
             return []
-        elif numPts == 3:
-            # no need to do any triangulation, just return the cell
-            return [polyPtIds]
-    
+        
+        # reference position
+        p0 = numpy.array(self.points.GetPoint(polyPtIds[0]))
+
         pts = []
         # project each point onto the plane
         for i in range(numPts):
-            p = numpy.array(self.points.GetPoint(polyPtIds[i]))
-            pts.append( (p.dot(uVec), p.dot(vVec)) )
-
+            pos = numpy.array(self.points.GetPoint(polyPtIds[i]))
+            pos -= p0
+            pts.append( (pos.dot(uVec), pos.dot(vVec)) )
+        
+        # list of segments
         segs = [(i, (i + 1)%numPts) for i in range(numPts)]
         
         tri = triangle.Triangle()
         tri.set_points(pts)
         tri.set_segments(segs)
-        maxArea = 0.5 * max_edge_length**2
-        tri.triangulate(area=maxArea)
+        
+        # internal points will be added if triangle area exceeds threshold
+        maxArea = None
+        if max_edge_length < float('inf'):
+            maxArea = 0.5 * max_edge_length**2
+
+        # triangulate
+        tri.triangulate(area=maxArea, mode='pzeQ')
             
         nodes = tri.get_nodes()
         polyCells = tri.get_triangles()
-        
-        # add the new vertices
-        n = len(pts) # new points follow the boundary points
-        for pIndex in range(n, len(nodes)):
-            u, v = nodes[pIndex][0]
-            p = p0 + u*uVec + v*vVec
-            # insert new point
+
+        # add internal vertices
+        for pIndex in range(len(pts), len(nodes)):
             ptId = self.points.GetNumberOfPoints()
+            u, v = nodes[pIndex][0]
+            p = p0 + u*uVec + v*vVec # wrong?
+            # insert new point
             self.points.InsertNextPoint(p)
             polyPtIds.append(ptId)
         

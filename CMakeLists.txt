@@ -269,7 +269,7 @@ add_test(NAME testAddSurfaceFieldFromExpressionPlate
          "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
          --expression "sin(pi*x/0.1)*cos(pi*y/0.15)*exp(-(z-0.1)**2)"
          --name "my_field"
-         --refine 0.01
+         --refine 0.02
          --input "${CMAKE_SOURCE_DIR}/data/plate.vtk"
          --output testAddSurfaceFieldFromExpressionPlate.vtk
          --ascii)
