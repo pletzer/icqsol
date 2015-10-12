@@ -123,9 +123,8 @@ class RefineSurface:
                 polyPtIds += edgePtIds
 
             # triangulate the cell
-            #polyCells = self.triangulatePolygon(uVec, vVec, polyPtIds)
-            polyCells = self.triangulatePolygon2(uVec, vVec, polyPtIds,
-                                                 max_edge_length)
+            polyCells = self.triangulatePolygon(uVec, vVec, polyPtIds,
+                                                max_edge_length)
             cells += polyCells
 
         # build the output vtkPolyData object
@@ -169,7 +168,7 @@ class RefineSurface:
                 return uVec, vVec, normal
         return uVec, vVec, normal
 
-    def triangulatePolygon2(self, uVec, vVec, polyPtIds, max_edge_length):
+    def triangulatePolygon(self, uVec, vVec, polyPtIds, max_edge_length):
         """
         Triangulate polygon using the uVec x vVec projection
         @param uVec unit vector tangential to the polygon
@@ -228,63 +227,6 @@ class RefineSurface:
             cell = [ polyPtIds[ia], polyPtIds[ib], polyPtIds[ic] ]
             cells.append(cell)
         
-        return cells
-
-    def triangulatePolygon(self, uVec, vVec, polyPtIds):
-        """
-        Triangulate polygon using the uVec x vVec projection
-        @param uVec unit vector tangential to the polygon
-        @param vVec second unit vector tangential to the polygon
-        @param polyPtIds list of polygon's point indices
-        @return list of cells (list of point indices)
-        """
-        
-        numPts = len(polyPtIds)
-        if numPts < 3:
-            return []
-        elif numPts == 3:
-            # no need to do any triangulation, just return the cell
-            return [polyPtIds]
-        
-        pts = vtk.vtkPoints()
-        pts.SetNumberOfPoints(numPts)
-        
-        # project each point onto the plane
-        pt = numpy.zeros((3,), numpy.float64)
-        for i in range(numPts):
-            p = numpy.array(self.points.GetPoint(polyPtIds[i]))
-            pt[0:2] = p.dot(uVec), p.dot(vVec)
-            pts.SetPoint(i, pt)
-        
-        pdata = vtk.vtkPolyData()
-        pdata.SetPoints(pts)
-        
-        delaunay = vtk.vtkDelaunay2D()
-        delaunay.SetTolerance(1.e-5)
-        delaunay.SetAlpha(0.0)
-        if vtk.VTK_MAJOR_VERSION >= 6:
-            delaunay.SetInputData(pdata)
-        else:
-            delaunay.SetInput(pdata)
-        
-        delaunay.Update()
-        
-        ugrid = delaunay.GetOutput()
-        cells = []
-        numCells = ugrid.GetNumberOfCells()
-        if numCells == 0:
-            # Delaunay triangulation failed
-            # not sure why this is happening...
-            return [polyPtIds]
-        else:
-            for i in range(numCells):
-                ptIds = ugrid.GetCell(i).GetPointIds()
-                cell = []
-                for j in range(ptIds.GetNumberOfIds()):
-                    localId = ptIds.GetId(j)
-                    ptId = polyPtIds[localId]
-                    cell.append(ptId)
-                cells.append(cell)
         return cells
 
 ##############################################################################
