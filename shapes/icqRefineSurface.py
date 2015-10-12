@@ -175,6 +175,19 @@ class RefineSurface:
             pos -= p0
             pts.append((pos.dot(uVec), pos.dot(vVec)))
 
+        # remove duplicate points, which can cause triangle to crash
+        indicesToDelete = []
+        for i in range(numPts):
+            i1 = (i + 1) % numPts
+            edgeLenSqr = (pts[i1][0] - pts[i][0])**2 + (pts[i1][1] - pts[i][1])**2
+            if edgeLenSqr < 1.e-15:
+                indicesToDelete.append(i)
+        for i in range(len(indicesToDelete) - 1, -1, -1):
+            del pts[indicesToDelete[i]]
+
+        # reset
+        numPts = len(pts)
+
         # list of segments
         segs = [(i, (i + 1) % numPts) for i in range(numPts)]
 
@@ -184,11 +197,14 @@ class RefineSurface:
 
         # internal points will be added if triangle area exceeds threshold
         maxArea = None
-        if max_edge_length < float('inf'):
+        if max_edge_length < float('inf') and max_edge_length > 0.:
             maxArea = 0.5 * max_edge_length**2
 
         # triangulate
-        tri.triangulate(area=maxArea, mode='pzeQ')
+        # p: triangulate a straight planar graph
+        # z: zero based indexing
+        # Q: quiet mode
+        tri.triangulate(area=maxArea, mode='pzQ')
 
         nodes = tri.get_nodes()
         polyCells = tri.get_triangles()
