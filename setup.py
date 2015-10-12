@@ -19,5 +19,5 @@ setup(name='icqsol',
                 'icqsol.discretization',
                 'icqsol.shapes',
                 'icqsol.util'],
-      requires = ['numpy', 'vtk'],
+      requires = ['numpy', 'vtk', 'csg', 'triangle',],
      )
