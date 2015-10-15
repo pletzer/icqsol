@@ -16,7 +16,7 @@ setup(name='icqsol',
       package_dir = {'icqsol': ''}, # the present working directory maps to icqsol below
       packages=['icqsol',
                 'icqsol.color', 
-                'icqsol.quadrature',
+                'icqsol.bem',
                 'icqsol.discretization',
                 'icqsol.shapes',
                 'icqsol.util'],

@@ -9,7 +9,7 @@ gaussPtsAndWeights = {
     2: [(0.16666666666667, 0.16666666666667, 0.33333333333333),
         (0.16666666666667, 0.66666666666667, 0.33333333333333),
         (0.66666666666667, 0.16666666666667, 0.33333333333333)],
-    3: [(0.33333333333333, 0.33333333333333 -0.56250000000000),
+    3: [(0.33333333333333, 0.33333333333333, -0.56250000000000),
         (0.20000000000000, 0.20000000000000, 0.52083333333333),
         (0.20000000000000, 0.60000000000000, 0.52083333333333),
         (0.60000000000000, 0.20000000000000, 0.52083333333333)],
@@ -38,7 +38,7 @@ gaussPtsAndWeights = {
         (0.63650249912140, 0.31035245103378, 0.08285107561837),
         (0.31035245103378, 0.05314504984482, 0.08285107561837),
         (0.05314504984482, 0.63650249912140, 0.08285107561837)],
-    7: [(0.33333333333333, 0.33333333333333 -0.14957004446768),
+    7: [(0.33333333333333, 0.33333333333333, -0.14957004446768),
         (0.26034596607904, 0.26034596607904, 0.17561525743321),
         (0.26034596607904, 0.47930806784192, 0.17561525743321),
         (0.47930806784192, 0.26034596607904, 0.17561525743321),
@@ -69,13 +69,79 @@ gaussPtsAndWeights = {
         (0.00839477740996, 0.72849239295540, 0.02723031417443)],
 }
 
-def tri_quad(order, pa, pb, pv, function):
-    uVec, vVec, normal = computeUVNormal(pa, pb, pc),
+def computeXiEtaArea(pa, pb, pc):
+    """
+    Compute the two tangential unit vectors and the normal vector
+    @param ptIds point indices
+    @return u vector, v vector, normal
+    """
+    xiVec = numpy.zeros((3,), numpy.float64)
+    etaVec = numpy.zeros((3,), numpy.float64)
+    area = 0.0
+    xiVec = pb - pa
+    etaVec = pc - pa
+    perp = numpy.cross(xiVec, etaVec)
+    pDotp = perp.dot(perp)
+    area = 0.5 * pDotp
+    return xiVec, etaVec, area
+
+def triangleQuadrature(order, pa, pb, pc, func):
+    """
+    Compute the integral of a function over a triangle
+    @param order integration order (1 <= order 8)
+    @param pa first triangle vertex (3 floats)
+    @param pb second triangle vertex (3 floats)
+    @param pc third triangle vertex (3 floats)
+    @param func function of position -> real
+    @return integral
+    """
     res = 0
+    xiVec, etaVec, area = computeXiEtaArea(pa, pb, pc)
+    if area == 0:
+        return res
     for gpw in gaussPtsAndWeights[order]:
-        u, v = gpw[0][0], gpw[0][1], gpw[1]
-        x = pa + u*uVec + v*vVec
-        res += weight * function(x),
-    area = numpy.cross(uVec, vVec),
-    res *= (0.5 * numpy.sqrt(area.dot(area))),
+        xi, eta, weight = gpw
+        x = pa + xi*xiVec + eta*etaVec
+        res += weight * func(x)
+    res *= area
     return res
+
+##############################################################################
+
+def testConstant():
+    pa = numpy.array([0., 0., 0.])
+    pb = numpy.array([1., 0.5, 0.])
+    pc = numpy.array([0., 1., 0.])
+    def f(x):
+        return 1.0
+    for order in range(1, 9):
+        res = triangleQuadrature(order, pa, pb, pc, f)
+        assert(abs(res - 0.5) < 1.e-12)
+
+def testLinear():
+    pa = numpy.array([0., 0., 0.])
+    pb = numpy.array([1., 0., 0.])
+    pc = numpy.array([1., 1., 0.])
+    def f(x):
+        return 2.0 - x[0] - 2*x[1]
+    for order in range(1, 9):
+        res = triangleQuadrature(order, pa, pb, pc, f)
+        assert(abs(res - 1./3.) < 1.e-12)
+
+def testLinear2():
+    pa = numpy.array([0., 0., 0.])
+    pb = numpy.array([1., 0., 0.])
+    pc = numpy.array([2., 1., 0.])
+    def f(x):
+        return 2.0 - x[0] - 2*x[1]
+    for order in range(1, 9):
+        res = triangleQuadrature(order, pa, pb, pc, f)
+        assert(abs(res - 1./6.) < 1.e-12)
+
+if __name__ == '__main__':
+    testConstant()
+    testLinear()
+    testLinear2()
+
+
+
