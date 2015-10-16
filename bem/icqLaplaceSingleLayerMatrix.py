@@ -8,11 +8,13 @@ from scipy.special import sph_harm
 
 class SrcFunc:
     
-    def __init__(self, m, n):
+    def __init__(self, m, n, center):
         self.m = m
         self.n = n
+        self.center = center
     
-    def __call__(self, x):
+    def __call__(self, xp):
+        x = xp - self.center
         r = numpy.sqrt(x.dot(x))
         rho = numpy.sqrt(x[0]**2 + x[1]**2)
         theta = numpy.arcsin(rho/r)
@@ -21,11 +23,13 @@ class SrcFunc:
 
 class ObsFunc:
     
-    def __init__(self, m, n):
+    def __init__(self, m, n, center):
         self.m = m
         self.n = n
+        self.center = center
     
-    def __call__(self, x):
+    def __call__(self, xp):
+        x = xp - self.center
         r = numpy.sqrt(x.dot(x))
         rho = numpy.sqrt(x[0]**2 + x[1]**2)
         theta = numpy.arcsin(rho/r)
@@ -40,6 +44,7 @@ class LaplaceSingleLayerMatrix:
         Constructor
         @param pdata instance of vtkPolyData
         """
+        
         # triangulate
         rs = RefineSurface(pdata)
         rs.refine(max_edge_length=max_edge_length)
@@ -50,55 +55,143 @@ class LaplaceSingleLayerMatrix:
         numTriangles = polys.GetNumberOfCells()
         
         self.matrix = numpy.zeros((numTriangles, numTriangles), numpy.complex)
-
-        ptIds = vtk.vtkIdList()
-        ptIds2 = vtk.vtkIdList()
+        self.computeMatrixByExpansion(order, maxN)
+        #self.computeMatrixDirect(order, maxN)
+    
+    def computeMatrixDirect(self, order, maxN):
+        
+        polys = self.pdata.GetPolys()
         points = self.pdata.GetPoints()
+        numTriangles = polys.GetNumberOfCells()
+        
+        # iterate over observer points
+        ptIdsObs = vtk.vtkIdList()
+        ptIdsSrc = vtk.vtkIdList()
+        
         polys.InitTraversal()
-        # iterate over the source triangles
-        for iTriangle in range(numTriangles):
-            polys.GetNextCell(ptIds)
-            ia, ib, ic = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
-            pa = numpy.array(points.GetPoint(ia))
-            pb = numpy.array(points.GetPoint(ib))
-            pc = numpy.array(points.GetPoint(ic))
+        for iTriangleObs in range(numTriangles):
+            polys.GetNextCell(ptIdsObs)
+            iaObs, ibObs, icObs = ptIdsObs.GetId(0), ptIdsObs.GetId(1), ptIdsObs.GetId(2)
+            paObs = numpy.array(points.GetPoint(iaObs))
+            pbObs = numpy.array(points.GetPoint(ibObs))
+            pcObs = numpy.array(points.GetPoint(icObs))
+            pMidObs = (paObs + pbObs + pcObs)/3.
+            dp1Obs = pbObs - paObs
+            dp2Obs = pcObs - paObs
+            dp3Obs = paObs - pcObs
+            normal = numpy.cross(dp1Obs, dp2Obs)
+            normal /= numpy.sqrt(normal.dot(normal))
+            edgeLength = numpy.sqrt(max(dp1Obs.dot(dp1Obs),
+                                        dp2Obs.dot(dp2Obs),
+                                        dp3Obs.dot(dp3Obs)))
+                                        
+            distance = 5.0
+            xObs = pMidObs + distance*edgeLength*normal
+            print '*** xObs = ', xObs
+                
+            # iterate over source triangles
+            for iTriangleSrc in range(numTriangles):
+                polys.GetCell(iTriangleSrc, ptIdsSrc)
+                iaSrc, ibSrc, icSrc = ptIdsSrc.GetId(0), ptIdsSrc.GetId(1), ptIdsSrc.GetId(2)
+                paSrc = numpy.array(points.GetPoint(iaSrc))
+                pbSrc = numpy.array(points.GetPoint(ibSrc))
+                pcSrc = numpy.array(points.GetPoint(icSrc))
+                
+                def green(x):
+                    r = xObs - x
+                    return 1.0/(4.*numpy.pi*numpy.sqrt(r.dot(r)))
+                                                    
+                alpha = triangleQuadrature(order, paSrc, pbSrc, pcSrc, green)
+                self.matrix[iTriangleObs, iTriangleSrc] += alpha
+
+        
+    def computeMatrixByExpansion(self, order, maxN):
+        
+        polys = self.pdata.GetPolys()
+        points = self.pdata.GetPoints()
+        numTriangles = polys.GetNumberOfCells()
+        
+        ptIdsObs = vtk.vtkIdList()
+        ptIdsSrc = vtk.vtkIdList()
+
+        # iterate over observer points
+        polys.InitTraversal()
+        for iTriangleObs in range(numTriangles):
+            
+            polys.GetNextCell(ptIdsObs)
+            
+            ia, ib, ic = ptIdsObs.GetId(0), ptIdsObs.GetId(1), ptIdsObs.GetId(2)
+            paObs = numpy.array(points.GetPoint(ia))
+            pbObs = numpy.array(points.GetPoint(ib))
+            pcObs = numpy.array(points.GetPoint(ic))
+            
+            # triangle mid point is the observer position
+            pObs = (paObs + pbObs + pcObs)/3.
+            
+            # edges
+            dp1Obs = pbObs - paObs
+            dp2Obs = pcObs - paObs
+            dp3Obs = pcObs - pbObs
+            
+            # normal to the triangle
+            normal = numpy.cross(dp1Obs, dp2Obs)
+            normal /= numpy.sqrt(normal.dot(normal))
+            
+            # max edge length
+            edgeLength = numpy.sqrt(max(dp1Obs.dot(dp1Obs),
+                                        dp2Obs.dot(dp2Obs),
+                                        dp3Obs.dot(dp3Obs)))
+                                  
+            # set the coordinate reference position
+            # distance >~ cell size, make it too small and the quadrature will not
+            # converge. Make it too large and many more expansion terms are needed
+            
+            distance = 1.5
+            center = pObs + distance*edgeLength*normal
+        
             # expand in spherical harmonics
             for n in range(maxN):
                 for m in range(-n, n+1):
-                    f = SrcFunc(m, n)
-                    f2 = ObsFunc(m, n)
-                    alphaMN = triangleQuadrature(order, pa, pb, pc, f)
-                    # iterate over the observer positions
-                    for iTriangle2 in range(numTriangles):
-                        polys.GetCell(iTriangle2, ptIds2)
-                        ia2, ib2, ic2 = ptIds2.GetId(0), ptIds2.GetId(1), ptIds2.GetId(2)
-                        pa2 = numpy.array(points.GetPoint(ia2))
-                        pb2 = numpy.array(points.GetPoint(ib2))
-                        pc2 = numpy.array(points.GetPoint(ic2))
+    
+                    fObs = ObsFunc(m, n, center)
+                    fObsVal = fObs(pObs)
+                    
+                    fSrc = SrcFunc(m, n, center)
+    
+                    # iterate over source triangles
+                    for iTriangleSrc in range(numTriangles):
                         
-                        normal = numpy.cross(pb2 - pa2, pc2 - pa2)
-                        normal /= numpy.sqrt(normal.dot(normal))
-                        # observer is at mid point
-                        edgeLength = numpy.sqrt(max((pb2-pa2).dot(pb2-pa2), 
-                                                    (pc2-pb2).dot(pc2-pb2),
-                                                    (pa2-pc2).dot(pa2-pc2)))
-                        pMid = (pa2 + pb2 + pc2)/3. - edgeLength*0.0*normal
-
-                        self.matrix[iTriangle2, iTriangle] += f2(pMid)*alphaMN
+                        polys.GetCell(iTriangleSrc, ptIdsSrc)
+                        
+                        ia, ib, ic = ptIdsSrc.GetId(0), ptIdsSrc.GetId(1), ptIdsSrc.GetId(2)
+                        paSrc = numpy.array(points.GetPoint(ia))
+                        pbSrc = numpy.array(points.GetPoint(ib))
+                        pcSrc = numpy.array(points.GetPoint(ic))
+    
+                        # evaluate the integral
+                        alphaMN = triangleQuadrature(order, paSrc, pbSrc, pcSrc, fSrc)
+                        self.matrix[iTriangleObs, iTriangleSrc] += fObsVal * alphaMN
+        
 
     def getMatrix(self):
+        """
+        Return the coupling matrix
+        @return matrix
+        """
         return self.matrix
 
 #############################################################################################
 
 def test():
     
+    h = 0.1
+    
     # create set of points
     points = vtk.vtkPoints()
     points.SetNumberOfPoints(3)
-    points.SetPoint(0, [1., -1./3., -1./3.])
-    points.SetPoint(1, [1., 2./3., -1./3.])
-    points.SetPoint(2, [1., -1./3., 2./3.])
+    points.SetPoint(0, [1., -1.*h/3., -1.*h/3.])
+    points.SetPoint(1, [1., 2.*h/3., -1.*h/3.])
+    points.SetPoint(2, [1., -1.*h/3., 2.*h/3.])
 
     # create vtkPolyData object
     pdata = vtk.vtkPolyData()
@@ -111,8 +204,8 @@ def test():
     pdata.Allocate(1, 1)
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
-    for order in range(2, 9):
-        lslm = LaplaceSingleLayerMatrix(pdata, max_edge_length=1000., order=order, maxN=10)
+    for order in range(1, 9):
+        lslm = LaplaceSingleLayerMatrix(pdata, max_edge_length=1000., order=order, maxN=20)
         print 'order = ', order, ' matrix = ', lslm.getMatrix()
 
 if __name__ == '__main__':
