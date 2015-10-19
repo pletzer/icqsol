@@ -130,51 +130,54 @@ class LaplaceMatrices:
                                         dp2Obs.dot(dp2Obs),
                                         dp3Obs.dot(dp3Obs)))
 
-            # set the coordinate reference position
-            # distance >~ cell size, make it too small and the quadrature will
-            # not converge. Make it too large and many more expansion terms are
-            # needed
+            # set the coordinate reference position distance >~ cell size.
+            # Make it too small and the quadrature will not converge.
+            # Make it too large and many more expansion terms are needed
 
             distance = 1.5
             center = pObs + distance*edgeLength*normal
 
-            # expand in spherical harmonics
-            for n in range(maxN):
-                for m in range(-n, n+1):
+            # iterate over source triangles
+            for iTriangleSrc in range(numTriangles):
+            
+                polys.GetCell(iTriangleSrc, ptIdsSrc)
+            
+                ia = ptIdsSrc.GetId(0)
+                ib = ptIdsSrc.GetId(1)
+                ic = ptIdsSrc.GetId(2)
+                paSrc = numpy.array(points.GetPoint(ia))
+                pbSrc = numpy.array(points.GetPoint(ib))
+                pcSrc = numpy.array(points.GetPoint(ic))
+                #print '*** paSrc, pbSrc, pcSrc = ', paSrc, pbSrc, pcSrc
+            
+                normalSrc = numpy.cross(pbSrc - paSrc, pcSrc - paSrc)
+                normalSrc /= numpy.sqrt(normalSrc.dot(normalSrc))
+            
+                # normal derivative of Green function
+                kSrc = SrcNormalDerivFun(normalSrc, pObs)
+                
+                beta = triangleQuadrature(order,
+                                          paSrc, pbSrc, pcSrc,
+                                          kSrc)
+                self.doubleLayerMatrix[iTriangleObs, iTriangleSrc] = beta
 
-                    fObs = ObsFunc(m, n, center)
-                    fObsVal = fObs(pObs)
+                # expand in spherical harmonics
+                for n in range(maxN):
+                    for m in range(-n, n+1):
 
-                    gSrc = SrcFunc(m, n, center)
+                        fObs = ObsFunc(m, n, center)
+                        fObsVal = fObs(pObs)
 
-                    # iterate over source triangles
-                    for iTriangleSrc in range(numTriangles):
-
-                        polys.GetCell(iTriangleSrc, ptIdsSrc)
-
-                        ia = ptIdsSrc.GetId(0)
-                        ib = ptIdsSrc.GetId(1)
-                        ic = ptIdsSrc.GetId(2)
-                        paSrc = numpy.array(points.GetPoint(ia))
-                        pbSrc = numpy.array(points.GetPoint(ib))
-                        pcSrc = numpy.array(points.GetPoint(ic))
-                        
-                        normalSrc = numpy.cross(pbSrc - paSrc, pcSrc - paSrc)
-                        normalSrc /= numpy.sqrt(normalSrc.dot(normalSrc))
-                        
-                        kSrc = SrcNormalDerivFun(normalSrc, pObs)
+                        # Green functor
+                        gSrc = SrcFunc(m, n, center)
 
                         # evaluate the integrals
                         alpha = triangleQuadrature(order,
                                                    paSrc, pbSrc, pcSrc,
                                                    gSrc)
-                        beta = triangleQuadrature(order,
-                                                  paSrc, pbSrc, pcSrc,
-                                                  kSrc)
+                        
                         self.singleLayerMatrix[iTriangleObs, iTriangleSrc] += \
                             fObsVal*alpha
-                        self.doubleLayerMatrix[iTriangleObs, iTriangleSrc] += \
-                            fObsVal*beta
     
 
     def getSingleLayerMatrix(self):
@@ -204,26 +207,31 @@ class LaplaceMatrices:
         
         v = numpy.zeros((n,), numpy.complex)
         # add residue
-        for i in i in range(n):
-            kMat += 0.5
+        for i in range(n):
+            kMat[i, i] += 0.5
         
         # evaluate potential on each triangle center
         ptIds = vtk.vtkIdList()
         polys = self.pdata.GetPolys()
+        points = self.pdata.GetPoints()
         for i in range(n):
             
             polys.GetCell(i, ptIds)
             ia, ib, ic = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
-            pa = numpy.array(self.points.GetPoint(ia))
-            pb = numpy.array(self.points.GetPoint(ib))
-            pc = numpy.array(self.points.GetPoint(ic))
+            pa = numpy.array(points.GetPoint(ia))
+            pb = numpy.array(points.GetPoint(ib))
+            pc = numpy.array(points.GetPoint(ic))
             pMid = (pa + pb + pc)/3.
             x, y, z = pMid
             
             v[i] = eval(dirichletExpr)
         
+        gMat = self.getSingleLayerMatrix()
+        print 'g = ', gMat
+        print 'k = ', kMat
+        
         # solve
-        gM1 = numpy.linalg.inv(self.getSingleLayerMatrix())
+        gM1 = numpy.linalg.inv(gMat)
         return gM1.dot(kMat).dot(v)
 
 
