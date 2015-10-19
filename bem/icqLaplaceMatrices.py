@@ -29,6 +29,21 @@ class SrcFunc:
             r**(self.n + 1)
 
 
+class SrcNormalDerivFun:
+
+    """
+    Source functor for normal derivative of Green function
+    """
+    def __init__(self, normal, xobs):
+        self.normal = normal
+        self.xobs = xobs
+    
+    def __call__(self, x):
+        d = self.xobs - x
+        r = numpy.sqrt(d.dot(d)) + 1.e-10
+        return self.normal.dot(d)/(4.*numpy.pi * r**1.5)
+
+
 class ObsFunc:
     """
     Observer functor
@@ -50,7 +65,7 @@ class ObsFunc:
             r**(self.n)/(2*self.n + 1)
 
 
-class LaplaceSingleLayerMatrix:
+class LaplaceMatrices:
 
     def __init__(self, pdata, max_edge_length, order, maxN):
         """
@@ -71,10 +86,12 @@ class LaplaceSingleLayerMatrix:
         polys = self.pdata.GetPolys()
         numTriangles = polys.GetNumberOfCells()
 
-        self.matrix = numpy.zeros((numTriangles, numTriangles), numpy.complex)
-        self.__computeMatrixByExpansion(order, maxN)
+        shp = (numTriangles, numTriangles)
+        self.singleLayerMatrix = numpy.zeros(shp, numpy.complex)
+        self.doubleLayerMatrix = numpy.zeros(shp, numpy.complex)
+        self.__computeMatricesByExpansion(order, maxN)
 
-    def __computeMatrixByExpansion(self, order, maxN):
+    def __computeMatricesByExpansion(self, order, maxN):
 
         polys = self.pdata.GetPolys()
         points = self.pdata.GetPoints()
@@ -128,7 +145,7 @@ class LaplaceSingleLayerMatrix:
                     fObs = ObsFunc(m, n, center)
                     fObsVal = fObs(pObs)
 
-                    fSrc = SrcFunc(m, n, center)
+                    gSrc = SrcFunc(m, n, center)
 
                     # iterate over source triangles
                     for iTriangleSrc in range(numTriangles):
@@ -141,20 +158,38 @@ class LaplaceSingleLayerMatrix:
                         paSrc = numpy.array(points.GetPoint(ia))
                         pbSrc = numpy.array(points.GetPoint(ib))
                         pcSrc = numpy.array(points.GetPoint(ic))
+                        
+                        normalSrc = numpy.cross(pbSrc - paSrc, pcSrc - paSrc)
+                        normalSrc /= numpy.sqrt(normalSrc.dot(normalSrc))
+                        
+                        kSrc = SrcNormalDerivFun(normalSrc, pObs)
 
-                        # evaluate the integral
+                        # evaluate the integrals
                         alpha = triangleQuadrature(order,
                                                    paSrc, pbSrc, pcSrc,
-                                                   fSrc)
-                        self.matrix[iTriangleObs, iTriangleSrc] += \
+                                                   gSrc)
+                        beta = triangleQuadrature(order,
+                                                  paSrc, pbSrc, pcSrc,
+                                                  kSrc)
+                        self.singleLayerMatrix[iTriangleObs, iTriangleSrc] += \
                             fObsVal*alpha
+                        self.doubleLayerMatrix[iTriangleObs, iTriangleSrc] += \
+                            fObsVal*beta
+    
 
-    def getMatrix(self):
+    def getSingleLayerMatrix(self):
         """
-        Return the coupling matrix
+        Return the single layer coupling matrix
         @return matrix
         """
-        return self.matrix
+        return self.singleLayerMatrix
+
+    def getDoubleLayerMatrix(self):
+        """
+        Return the double layer coupling matrix
+        @return matrix
+        """
+        return self.doubleLayerMatrix
 
 ###############################################################################
 
@@ -181,10 +216,12 @@ def test():
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
     for order in range(1, 9):
-        lslm = LaplaceSingleLayerMatrix(pdata,
-                                        max_edge_length=1000.,
-                                        order=order, maxN=20)
-        print 'order = ', order, ' matrix = ', lslm.getMatrix()
+        lslm = LaplaceMatrices(pdata,
+                               max_edge_length=1000.,
+                               order=order, maxN=20)
+        print 'order = ', order
+        print 'single layer matrix: ', lslm.getSingleLayerMatrix()
+        print 'double layer matrix: ', lslm.getDoubleLayerMatrix()
 
 if __name__ == '__main__':
     test()
