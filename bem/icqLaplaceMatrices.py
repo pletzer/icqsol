@@ -191,6 +191,42 @@ class LaplaceMatrices:
         """
         return self.doubleLayerMatrix
 
+    def computeNeumannFromDirichlet(self, dirichletExpr):
+        """
+        Get the Neumann boundary values from the Dirichlet boundary conditions
+        @param dirichletExpr expression for the potential values
+        @return response
+        """
+        from math import pi, sin, cos, log, exp, sqrt
+        
+        kMat = self.getDoubleLayerMatrix()
+        n = kMat.shape[0]
+        
+        v = numpy.zeros((n,), numpy.complex)
+        # add residue
+        for i in i in range(n):
+            kMat += 0.5
+        
+        # evaluate potential on each triangle center
+        ptIds = vtk.vtkIdList()
+        polys = self.pdata.GetPolys()
+        for i in range(n):
+            
+            polys.GetCell(i, ptIds)
+            ia, ib, ic = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
+            pa = numpy.array(self.points.GetPoint(ia))
+            pb = numpy.array(self.points.GetPoint(ib))
+            pc = numpy.array(self.points.GetPoint(ic))
+            pMid = (pa + pb + pc)/3.
+            x, y, z = pMid
+            
+            v[i] = eval(dirichletExpr)
+        
+        # solve
+        gM1 = numpy.linalg.inv(self.getSingleLayerMatrix())
+        return gM1.dot(kMat).dot(v)
+
+
 ###############################################################################
 
 

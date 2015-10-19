@@ -41,6 +41,8 @@ enable_testing()
 #
 
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests")
+add_test(NAME testLaplace 
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testLaplace.py")
 add_test(NAME testCreateCylinder 
          COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testCreateCylinder.py" --output testCreateCylinder.vtk)
 add_test(NAME testCreateBox 
