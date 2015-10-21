@@ -75,124 +75,173 @@ class LaplaceMatrices:
                                polygons into triangles
         @param order order of the expansion (in the range 1 to 8)
         @param maxN maximum n in spherical harmonic expansion
-                            (> 0, ~ 10 is a good number)
+                            (>= 0, ~10 is a good number)
         """
+
+        assert(order > 0 and order <= 8)
+        assert(maxN >= 0)
 
         # triangulate
         rs = RefineSurface(pdata)
         rs.refine(max_edge_length=max_edge_length)
         self.pdata = rs.getVtkPolyData()
 
+        # store the point indices for each cell
+        self.ptIdList = [] 
+        ptIds = vtk.vtkIdList()
         polys = self.pdata.GetPolys()
-        numTriangles = polys.GetNumberOfCells()
-
-        shp = (numTriangles, numTriangles)
-        self.singleLayerMatrix = numpy.zeros(shp, numpy.complex)
-        self.doubleLayerMatrix = numpy.zeros(shp, numpy.complex)
-        self.__computeMatricesByExpansion(order, maxN)
-
-    def __computeMatricesByExpansion(self, order, maxN):
-
-        polys = self.pdata.GetPolys()
-        points = self.pdata.GetPoints()
-        numTriangles = polys.GetNumberOfCells()
-
-        ptIdsObs = vtk.vtkIdList()
-        ptIdsSrc = vtk.vtkIdList()
-
-        # iterate over observer points
         polys.InitTraversal()
-        for iTriangleObs in range(numTriangles):
+        for i in range(polys.GetNumberOfCells()):
+            polys.GetNextCell(ptIds)
+            assert(ptIds.GetNumberOfIds() == 3)
+            self.ptIdList.append([ptIds.GetId(0), 
+                                  ptIds.GetId(1), 
+                                  ptIds.GetId(2)])
 
-            polys.GetNextCell(ptIdsObs)
+        self.points = self.pdata.GetPoints()
+        self.polys = self.pdata.GetPolys()
+        self.numTriangles = self.polys.GetNumberOfCells()
 
-            ia = ptIdsObs.GetId(0)
-            ib = ptIdsObs.GetId(1)
-            ic = ptIdsObs.GetId(2)
-            paObs = numpy.array(points.GetPoint(ia))
-            pbObs = numpy.array(points.GetPoint(ib))
-            pcObs = numpy.array(points.GetPoint(ic))
+        shp = (self.numTriangles, self.numTriangles)
+        self.gMat = numpy.zeros(shp, numpy.float64)
+        self.kMat = numpy.zeros(shp, numpy.float64)
+        
+        self.order = order
+        self.maxN = maxN
+        self.__computeMatrices()
+    
+    def __computeNormalDerivativeGreenCoupling(self, iObs, jSrc):
+        
+        # observer
+        cellObs = self.ptIdList[iObs]
+        paObs = numpy.array(self.points.GetPoint(cellObs[0]))
+        pbObs = numpy.array(self.points.GetPoint(cellObs[1]))
+        pcObs = numpy.array(self.points.GetPoint(cellObs[2]))
+        xObs = (paObs + pbObs + pcObs) / 3.0
 
-            # triangle mid point is the observer position
-            pObs = (paObs + pbObs + pcObs)/3.
+        # source
+        cellSrc = self.ptIdList[jSrc]
+        paSrc = numpy.array(self.points.GetPoint(cellSrc[0]))
+        pbSrc = numpy.array(self.points.GetPoint(cellSrc[1]))
+        pcSrc = numpy.array(self.points.GetPoint(cellSrc[2]))
+        
+        normalSrc = numpy.cross(pbSrc - paSrc, pcSrc - paSrc)
+        lengthSqr = normalSrc.dot(normalSrc)
+        assert(lengthSqr > 0.)
+        normalSrc /= numpy.sqrt(lengthSqr)
 
-            # edges
+        if iObs != jSrc:
+            
+            # use standard Gauss quadrature
+            
+            def kreen(x):
+                r = xObs - x
+                return normalSrc.dot(r)/(4. * numpy.pi * numpy.sqrt(r.dot(r))**3)
+            
+            self.kMat[iObs, jSrc] = triangleQuadrature(self.order,
+                                                       paSrc, pbSrc, pcSrc,
+                                                                    kreen)
+        
+        else:
+
+            # zero contribution [normal and (xObs - xSrc) are orthogonal]
+            self.kMat[iObs, jSrc] = 0.0
+            
+
+    def __computeGreenCoupling(self, iObs, jSrc):
+                
+        # observer
+        cellObs = self.ptIdList[iObs]
+        paObs = numpy.array(self.points.GetPoint(cellObs[0]))
+        pbObs = numpy.array(self.points.GetPoint(cellObs[1]))
+        pcObs = numpy.array(self.points.GetPoint(cellObs[2]))
+        xObs = (paObs + pbObs + pcObs) / 3.0
+
+        # source
+        cellSrc = self.ptIdList[jSrc]
+        paSrc = numpy.array(self.points.GetPoint(cellSrc[0]))
+        pbSrc = numpy.array(self.points.GetPoint(cellSrc[1]))
+        pcSrc = numpy.array(self.points.GetPoint(cellSrc[2]))
+
+        if iObs != jSrc:
+        
+            # use standard Gauss quadrature
+            
+            def green(x):
+                r = xObs - x
+                return 1.0/(4. * numpy.pi * numpy.sqrt(r.dot(r)))
+        
+            alpha = triangleQuadrature(self.order, paSrc, pbSrc, pcSrc, green)
+            self.gMat[iObs, jSrc] = alpha
+        
+        else:
+            
+            # quadrature by expansion in spherical harmonics
+            
+            # normal to the triangle
             dp1Obs = pbObs - paObs
             dp2Obs = pcObs - paObs
             dp3Obs = pcObs - pbObs
-
-            # normal to the triangle
             normal = numpy.cross(dp1Obs, dp2Obs)
-            normal /= numpy.sqrt(normal.dot(normal))
-
-            # max edge length
+            lengthSqr = normal.dot(normal)
+            assert(lengthSqr > 0.)
+            normal /= numpy.sqrt(lengthSqr)
+            
+            # max edge length of the source triangle
             edgeLength = numpy.sqrt(max(dp1Obs.dot(dp1Obs),
                                         dp2Obs.dot(dp2Obs),
                                         dp3Obs.dot(dp3Obs)))
-
+                                        
             # set the coordinate reference position distance >~ cell size.
             # Make it too small and the quadrature will not converge.
             # Make it too large and many more expansion terms are needed
 
             distance = 1.5
-            center = pObs + distance*edgeLength*normal
+            center = xObs + distance*edgeLength*normal
 
-            # iterate over source triangles
-            for iTriangleSrc in range(numTriangles):
-            
-                polys.GetCell(iTriangleSrc, ptIdsSrc)
-            
-                ia = ptIdsSrc.GetId(0)
-                ib = ptIdsSrc.GetId(1)
-                ic = ptIdsSrc.GetId(2)
-                paSrc = numpy.array(points.GetPoint(ia))
-                pbSrc = numpy.array(points.GetPoint(ib))
-                pcSrc = numpy.array(points.GetPoint(ic))
-                #print '*** paSrc, pbSrc, pcSrc = ', paSrc, pbSrc, pcSrc
-            
-                normalSrc = numpy.cross(pbSrc - paSrc, pcSrc - paSrc)
-                normalSrc /= numpy.sqrt(normalSrc.dot(normalSrc))
-            
-                # normal derivative of Green function
-                kSrc = SrcNormalDerivFun(normalSrc, pObs)
-                
-                beta = triangleQuadrature(order,
-                                          paSrc, pbSrc, pcSrc,
-                                          kSrc)
-                self.doubleLayerMatrix[iTriangleObs, iTriangleSrc] = beta
-
-                # expand in spherical harmonics
-                for n in range(maxN):
-                    for m in range(-n, n+1):
-
-                        fObs = ObsFunc(m, n, center)
-                        fObsVal = fObs(pObs)
-
-                        # Green functor
-                        gSrc = SrcFunc(m, n, center)
-
-                        # evaluate the integrals
-                        alpha = triangleQuadrature(order,
+            alpha = 0.0
+            for n in range(self.maxN):
+                for m in range(-n, n+1):
+                    
+                    fObs = ObsFunc(m, n, center)
+                    fObsVal = fObs(xObs)
+                    
+                    # Green functor
+                    gSrc = SrcFunc(m, n, center)
+                    
+                    # evaluate the integrals
+                    alpha += fObsVal * \
+                                triangleQuadrature(self.order,
                                                    paSrc, pbSrc, pcSrc,
                                                    gSrc)
-                        
-                        self.singleLayerMatrix[iTriangleObs, iTriangleSrc] += \
-                            fObsVal*alpha
-    
 
-    def getSingleLayerMatrix(self):
+                    # add contribution
+            self.gMat[iObs, jSrc] = alpha.real
+
+    def __computeMatrices(self):
+
+        # iterate over the observer triangles
+        for iObs in range(self.numTriangles):
+
+            # iterate over source triangles
+            for jSrc in range(self.numTriangles):
+                
+                self.__computeGreenCoupling(iObs, jSrc)
+                self.__computeNormalDerivativeGreenCoupling(iObs, jSrc)
+
+    def getGreenMatrix(self):
         """
-        Return the single layer coupling matrix
+        Return the Green function matrix
         @return matrix
         """
-        return self.singleLayerMatrix
+        return self.gMat
 
-    def getDoubleLayerMatrix(self):
+    def getNormalDerivativeGreenMatrix(self):
         """
-        Return the double layer coupling matrix
+        Return the normal derivative of the Green function matrix
         @return matrix
         """
-        return self.doubleLayerMatrix
+        return self.kMat
 
     def computeNeumannFromDirichlet(self, dirichletExpr):
         """
@@ -202,10 +251,10 @@ class LaplaceMatrices:
         """
         from math import pi, sin, cos, log, exp, sqrt
         
-        kMat = self.getDoubleLayerMatrix()
+        kMat = self.getNormalDerivativeGreenMatrix()
         n = kMat.shape[0]
         
-        v = numpy.zeros((n,), numpy.complex)
+        v = numpy.zeros((n,), numpy.float64)
         # add residue
         for i in range(n):
             kMat[i, i] += 0.5
@@ -226,7 +275,7 @@ class LaplaceMatrices:
             
             v[i] = eval(dirichletExpr)
         
-        gMat = self.getSingleLayerMatrix()
+        gMat = self.getGreenMatrix()
         print 'g = ', gMat
         print 'k = ', kMat
         
@@ -264,8 +313,8 @@ def test():
                                max_edge_length=1000.,
                                order=order, maxN=20)
         print 'order = ', order
-        print 'single layer matrix: ', lslm.getSingleLayerMatrix()
-        print 'double layer matrix: ', lslm.getDoubleLayerMatrix()
+        print 'g matrix: ', lslm.getGreenMatrix()
+        print 'k matrix: ', lslm.getNormalDerivativeGreenMatrix()
 
 if __name__ == '__main__':
     test()
