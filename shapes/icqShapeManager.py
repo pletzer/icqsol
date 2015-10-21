@@ -94,6 +94,7 @@ class ShapeManager(object):
         @param expression, expression consisting of legal variables x, y, z, and t
         @param time_points, list of floating point values defining
                snapshots in a time sequence
+        @param location location of field within cell, either 'POINT' or 'CELL'
         @return vtkPolyData instance
         """
         # The field name cannot have spaces.
@@ -142,7 +143,9 @@ class ShapeManager(object):
         return vtk_poly_data
 
     def addSurfaceFieldFromExpressionToShape(self, shape, field_name, expression,
-                                      time_points, max_edge_length=float('inf')):
+                                             time_points,
+                                             max_edge_length=float('inf'),
+                                             location='POINT'):
         """
         Add a surface field to a shape using an expression consisting of
         legal variables x,y,z (shape point coordinates) and t (time).
@@ -152,6 +155,7 @@ class ShapeManager(object):
         @param time_points, list of floating point values defining
                snapshots in a time sequence
         @param max_edge_length max edge length for refinement
+        @param location location of field within cell, either 'POINT' or 'CELL'
         @return pdata, VTKPolyData converted from shape with added surface field
         """
         # When we attach a surface field, we can no longer use CSG objects
@@ -163,27 +167,11 @@ class ShapeManager(object):
         # Refine if need be.
         pdata = self.refineVtkPolyData(pdataInput,
                                        max_edge_length=max_edge_length)
-        
-        # Set the field data.
-        points = pdata.GetPoints()
-        num_points = points.GetNumberOfPoints()
-        # Define the data.
-        data = vtk.vtkDoubleArray()
-        data.SetName(valid_field_name)
-        # Handle time points.
-        num_time_points = len(time_points)
-        # Update the data.
-        data.SetNumberOfComponents(num_time_points)
-        data.SetNumberOfTuples(num_points)
-        # Add the surface field.
-        for i in range(num_points):
-            x, y, z = points.GetPoint(i)
-            for j in range(num_time_points):
-                t = time_points[ j ]
-                field_value = eval(expression)
-                data.SetComponent(i, j, field_value)
-        pdata.GetPointData().SetScalars(data)
-        return pdata
+        return self.addSurfaceFieldFromExpressionToVtkPolyData(pdata,
+                                                               field_name,
+                                                               expression,
+                                                               time_points,
+                                                               location)
 
     def colorSurfaceField(self, vtk_poly_data, color_map,
                           field_name=None, field_component=0):
