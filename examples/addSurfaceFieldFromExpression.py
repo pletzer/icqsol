@@ -33,6 +33,9 @@ parser.add_argument('--name', dest='name',
 parser.add_argument('--times', dest='times', default='',
                     help='Comma separated list of time values')
 
+parser.add_argument('--location', dest='location', default='point',
+                    help='"point" or "cell"')
+
 parser.add_argument('--ascii', dest='ascii', action='store_true',
                     help='Save data in ASCII format (default is binary)')
 
@@ -74,7 +77,8 @@ if args.refine > 0:
     maxEdgeLength = args.refine
 pdata = shape_mgr.addSurfaceFieldFromExpressionToShape(shp, args.name,
                                                        args.expression, times,
-                                                       max_edge_length=maxEdgeLength)
+                                                       max_edge_length=maxEdgeLength,
+                                                       location=args.location.upper())
 
 if args.output:
     # Always produce VTK POLYDATA.

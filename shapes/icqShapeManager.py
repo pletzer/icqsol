@@ -126,11 +126,11 @@ class ShapeManager(object):
             # Set the surface field values.
             ptIds = vtk.vtkIdList()
             for i in range(num_cells):
-                vtk_poly_data.GetCellPoints(ptIds)
+                vtk_poly_data.GetCellPoints(i, ptIds)
                 avrgPosition = numpy.zeros((3,), numpy.float64)
                 num_pts = ptIds.GetNumberOfIds()
                 for k in range(num_pts):
-                    avrgPosition += numpy.array(points.getPoint(ptIds.GetId(k)))
+                    avrgPosition += numpy.array(points.GetPoint(ptIds.GetId(k)))
                 avrgPosition /= num_pts
                 x, y, z = avrgPosition
                 for j in range(num_time_points):
