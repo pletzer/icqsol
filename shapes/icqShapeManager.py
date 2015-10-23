@@ -109,7 +109,7 @@ class ShapeManager(object):
         num_time_points = len(time_points)
         # Update the data.
         data.SetNumberOfComponents(num_time_points)
-        if location == 'POINT':
+        if location.upper() == 'POINT':
             data.SetNumberOfTuples(num_points)
             # Set the surface field values.
             for i in range(num_points):
