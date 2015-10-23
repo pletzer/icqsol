@@ -120,7 +120,7 @@ class ShapeManager(object):
                     data.SetComponent(i, j, field_value)
             # Add the field.
             vtk_poly_data.GetPointData().SetScalars(data)
-        elif location == 'CELL':
+        elif location.upper() == 'CELL':
             num_cells = vtk_poly_data.GetNumberOfCells()
             data.SetNumberOfTuples(num_cells)
             # Set the surface field values.
@@ -155,7 +155,8 @@ class ShapeManager(object):
         @param time_points, list of floating point values defining
                snapshots in a time sequence
         @param max_edge_length max edge length for refinement
-        @param location location of field within cell, either 'POINT' or 'CELL'
+        @param location location of field within cell, either 'POINT' or 'CELL' 
+                        (capitalization does not matter)
         @return pdata, VTKPolyData converted from shape with added surface field
         """
         # When we attach a surface field, we can no longer use CSG objects

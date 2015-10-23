@@ -78,7 +78,7 @@ if args.refine > 0:
 pdata = shape_mgr.addSurfaceFieldFromExpressionToShape(shp, args.name,
                                                        args.expression, times,
                                                        max_edge_length=maxEdgeLength,
-                                                       location=args.location.upper())
+                                                       location=args.location)
 
 if args.output:
     # Always produce VTK POLYDATA.
