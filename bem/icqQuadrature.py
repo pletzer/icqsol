@@ -69,22 +69,6 @@ gaussPtsAndWeights = {
         (0.00839477740996, 0.72849239295540, 0.02723031417443)],
 }
 
-def computeXiEtaArea(pa, pb, pc):
-    """
-    Compute the two tangential unit vectors and the normal vector
-    @param ptIds point indices
-    @return u vector, v vector, normal
-    """
-    xiVec = numpy.zeros((3,), numpy.float64)
-    etaVec = numpy.zeros((3,), numpy.float64)
-    area = 0.0
-    xiVec = pb - pa
-    etaVec = pc - pa
-    perp = numpy.cross(xiVec, etaVec)
-    pDotp = perp.dot(perp)
-    area = 0.5 * pDotp
-    return xiVec, etaVec, area
-
 def triangleQuadrature(order, pa, pb, pc, func):
     """
     Compute the integral of a function over a triangle
@@ -96,14 +80,17 @@ def triangleQuadrature(order, pa, pb, pc, func):
     @return integral
     """
     res = 0
-    xiVec, etaVec, area = computeXiEtaArea(pa, pb, pc)
+    pb2 = pb - pa
+    pc2 = pc - pa
+    areaVec = numpy.cross(pb2, pc2)
+    area = numpy.sqrt(areaVec.dot(areaVec))
     if area == 0:
         return res
     for gpw in gaussPtsAndWeights[order]:
         xi, eta, weight = gpw
-        x = pa + xi*xiVec + eta*etaVec
+        x = pa + xi*pb2 + eta*pc2
         res += weight * func(x)
-    res *= area
+    res *= 0.5*area
     return res
 
 ##############################################################################

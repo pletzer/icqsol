@@ -40,24 +40,29 @@ class TestQuadrature(unittest.TestCase):
         jac = numpy.sqrt(jacVec.dot(jacVec))
         def func(x):
             x, y, z = x
-            return 1. #+ 2*x + 3*y**2 + 3*z**3
-        exact = jac*0.5 #780053./30000.
+            return 1. + 2*x + 3*y**2 + 3*z**3
+        exact = jac*780053./30000.
     
         order = 1
         value = triangleQuadrature(order=order,
                                    pa=pa, pb=pb, pc=pc,
                                    func=func)
         error = value - exact
-        print 'order = {} value = {} error = {}'.format(order, value, error)
-        #assert(abs(error) < 0.084)
+        assert(abs(error) < 2.9)
                                
-        for order in range(2, 9):
+        order = 2
+        value = triangleQuadrature(order=order,
+                                   pa=pa, pb=pb, pc=pc,
+                                   func=func)
+        error = value - exact
+        assert(abs(error) < 0.05)
+        
+        for order in range(3, 9):
             value = triangleQuadrature(order=order,
                                        pa=pa, pb=pb, pc=pc,
                                        func=func)
             error = value - exact
-            print 'order = {} value = {} error = {}'.format(order, value, error)
-            #assert(abs(value - exact) < 1.e-10)
+            assert(abs(value - exact) < 1.e-12)
 
 
 if __name__ == '__main__':
