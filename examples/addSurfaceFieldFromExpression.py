@@ -21,13 +21,13 @@ parser = argparse.ArgumentParser(description=description)
 parser.add_argument('--input', dest='input', default='',
                     help='Input file (PLY or VTK)')
 
-parser.add_argument('--expression', dest='expression', default='scalar_field',
+parser.add_argument('--expression', dest='expression', default='sin(pi*x)*cos(pi*y)*z',
                     help='Expression of x, y, z, and t')
 
 parser.add_argument('--refine', dest='refine', default=0.0, type=float,
                     help='Maximum edge length (use 0 if no refinement)')
 
-parser.add_argument('--name', dest='name',
+parser.add_argument('--name', dest='name', default='myField',
                     help='Set the name of the field')
 
 parser.add_argument('--times', dest='times', default='',
