@@ -175,7 +175,7 @@ class ShapeManager(object):
                                                                location)
 
     def colorSurfaceField(self, vtk_poly_data, color_map,
-                          field_name=None, field_component=0):
+                          field_name='', field_component=0):
         """
         Color a selected surface field of a shape.
         @param vtk_poly_data, data defining the shape with surface field information
@@ -190,29 +190,38 @@ class ShapeManager(object):
         vtk_poly_data_copy.SetPoints(vtk_poly_data.GetPoints())
         vtk_poly_data_copy.SetPolys(vtk_poly_data.GetPolys())
         # Get information from the data.
-        pointData = vtk_poly_data.GetPointData()
-        numComps = pointData.GetNumberOfComponents()
+        isPoint = False
+        array = vtk_poly_data.GetPointData().GetScalars(field_name)
+        if array is None:
+            array = vtk_poly_data.GetCellData().GetScalars(field_name)
+        else:
+            isPoint = True
+        # Bail out if field was not found
+        if array is None:
+                raise NotImplementedError, \
+                    'Could not find field "{0}"!'.format(field_name)
+        numComps = array.GetNumberOfComponents()
         assert field_component < numComps, "Field component should be < %d" % numComps
-        numPoints = vtk_poly_data.GetPoints().GetNumberOfPoints()
-        numArrays = pointData.GetNumberOfArrays()
-        assert field_name is not None or numArrays == 1, "Field name must be specified since data has %d arrays" % numArrays
         # Get the min/max field values.
-        array = pointData.GetScalars(field_name)
         fmin, fmax = array.GetRange()
         # Prepare for coloring the points.
         rgbArray = vtk.vtkUnsignedCharArray()
         rgbArray.SetNumberOfComponents(3)
-        rgbArray.SetNumberOfTuples(numPoints)
+        numElements = array.GetNumberOfTuples()
+        rgbArray.SetNumberOfTuples(numElements)
         rgbArray.SetName('Colors')
         # Build the color map.
         colorMap = ColorMap(fmin, fmax)
         colorMethod = eval('colorMap.' + color_map)
         # Set the colors.
-        for i in range(numPoints):
+        for i in range(numElements):
             f = array.GetComponent(i, field_component)
             rgbArray.SetTuple(i, colorMethod(f))
         # Attach the array.
-        vtk_poly_data_copy.GetPointData().SetScalars(rgbArray)
+        if isPoint:
+            vtk_poly_data_copy.GetPointData().SetScalars(rgbArray)
+        else:
+            vtk_poly_data_copy.GetCellData().SetScalars(rgbArray)
         return vtk_poly_data_copy
 
     def cleanPolygon(self, verts, min_triangle_area):
