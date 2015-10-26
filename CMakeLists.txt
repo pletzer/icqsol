@@ -226,6 +226,12 @@ add_test(NAME testAddSurfaceFieldFromExpressionBoltCell
          --location "cell"
          --input testBoltFine.vtk
          --output testBoltFineWithFieldCell.vtk)
+add_test(NAME testColorBoltCell
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/colorSurfaceField.py"
+         --input testBoltFineWithFieldCell.vtk 
+         --name "wave"
+         --output testColorBoltCell.vtk --ascii)
 add_test(NAME testAddSurfaceFieldFromExpressionBolt2
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
