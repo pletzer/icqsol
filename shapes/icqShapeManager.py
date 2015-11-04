@@ -639,7 +639,7 @@ class ShapeManager(object):
     def setReader(self, file_format=None, vtk_dataset_type=None ):
         """
         Set the reader.
-        @param file_format, one of vtk or ply - defauylt to self.file_format
+        @param file_format, one of vtk or ply - default to self.file_format
         @param vtk_dataset_type, one of the VTK_VTK_DATASET_TYPES
         """
         if file_format is None:
