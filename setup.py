@@ -5,7 +5,7 @@ Set up script for icqsol
 pletzer@psu.edu
 """
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(name='icqsol',
       version='0.1',
@@ -13,6 +13,9 @@ setup(name='icqsol',
       author='Alex Pletzer',
       author_email='alexander@gokliya.net',
       url='https://github.com/pletzer/icqsol/wiki',
+      install_requires=['pytriangle>=1.0.3',],
+      dependency_links=['http://github.com/pletzer/pytriangle/tarball/master#egg=pytriangle-1.0.3',
+      ],
       package_dir = {'icqsol': ''}, # the present working directory maps to icqsol below
       packages=['icqsol',
                 'icqsol.color', 
@@ -20,5 +23,5 @@ setup(name='icqsol',
                 'icqsol.discretization',
                 'icqsol.shapes',
                 'icqsol.util'],
-      requires = ['numpy', 'vtk', 'csg', 'triangle',],
+      requires = ['numpy', 'vtk', 'csg',],
      )
