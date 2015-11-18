@@ -284,8 +284,6 @@ class ShapeManager(object):
         @param expression expression involving +, -, and * operations.
         @return new shape
         """
-        print '*** shape_tuples = ', shape_tuples
-        print '*** expression = ', expression
         return CompositeShape(shape_tuples, expression)
 
     def getBoundarySurfaceInsideShape(self, shape, other):
