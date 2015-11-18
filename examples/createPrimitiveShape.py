@@ -125,7 +125,7 @@ else:
 # display list of options (if asking for it)
 if args.list:
     for optName, optVal in options[args.type].items():
-        print '{:>10} --> {:>20}'.format(optName, optVal)
+        print '{0:>10} --> {1:>20}'.format(optName, optVal)
 
 if args.output:
     if args.ascii:
