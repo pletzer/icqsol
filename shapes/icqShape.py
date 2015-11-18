@@ -85,6 +85,6 @@ def CompositeShape(shape_tuples=[], expression=''):
     """
     for i in range(len(shape_tuples)):
         varName = shape_tuples[i][0]
-        cmd = '{} = shape_tuples[{}][1]'.format(varName, i)
+        cmd = '{0} = shape_tuples[{1}][1]'.format(varName, i)
         exec(cmd)
     return eval(expression)
