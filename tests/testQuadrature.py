@@ -90,7 +90,7 @@ class TestQuadrature(unittest.TestCase):
                                        pa=pa, pb=pb, pc=pc,
                                        func=func)
             error = value - exact
-            print 'order = {} value = {} error = {}'.format(order, value, error)
+            print 'order = {0} value = {1} error = {2}'.format(order, value, error)
             assert(abs(value - exact) < 0.002)
 
 

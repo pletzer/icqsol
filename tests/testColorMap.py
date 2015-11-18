@@ -6,7 +6,7 @@ cm = ColorMap(fmin=fmin, fmax=fmax)
 
 n = 10
 for i in range(n):
-	f = fmin + (fmax - fmin)*i/float(n)
-	print 'hot       f = {}: {}'.format(f, cm.hot(f))
-	print 'cold      f = {}: {}'.format(f, cm.cold(f))
-	print 'blackbody f = {}: {}'.format(f, cm.blackbody(f))
+    f = fmin + (fmax - fmin)*i/float(n)
+    print 'hot       f = {0}: {1}'.format(f, cm.hot(f))
+    print 'cold      f = {0}: {1}'.format(f, cm.cold(f))
+    print 'blackbody f = {0}: {1}'.format(f, cm.blackbody(f))
