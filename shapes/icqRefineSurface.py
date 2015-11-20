@@ -16,6 +16,7 @@ class RefineSurface:
         self.polydata = vtk.vtkPolyData()
         self.polydata.DeepCopy(pdata)
         self.points = self.polydata.GetPoints()
+        self.pointData = self.polydata.GetPointData()
 
     def getVtkPolyData(self):
         """
@@ -138,10 +139,10 @@ class RefineSurface:
     def triangulatePolygon(self, uVec, vVec, polyPtIds, max_edge_length):
         """
         Triangulate polygon using the uVec x vVec projection
-        @param uVec unit vector tangential to the polygon
-        @param vVec second unit vector tangential to the polygon
-        @param polyPtIds list of polygon's point indices
-        @param max_edge_length maximum edge length
+        @param uVec unit vector tangential to the polygon (input)
+        @param vVec second unit vector tangential to the polygon (input)
+        @param polyPtIds list of polygon's point indices (input and output)
+        @param max_edge_length maximum edge length (input)
         @return list of cells (list of point indices)
         """
 
@@ -154,11 +155,19 @@ class RefineSurface:
         p0 = numpy.array(self.points.GetPoint(polyPtIds[0]))
 
         pts = []
+        pointData = {}
+        for i in range(self.pointData.GetNumberOfArrays()):
+            name = self.pointData.GetArray(i).GetName()
+            pointData[name] = []
         # project each point onto the plane
         for i in range(numPts):
-            pos = numpy.array(self.points.GetPoint(polyPtIds[i]))
+            ptId = polyPtIds[i]
+            pos = numpy.array(self.points.GetPoint(ptId))
             pos -= p0
             pts.append((pos.dot(uVec), pos.dot(vVec)))
+            for name, pd in pointData.items():
+                self.pointData.SetActiveScalars(name)
+                pd.append(tuple(self.pointData.GetScalars().GetTuple(ptId)))
 
         # remove duplicate points, which can cause triangle to crash
         indicesToDelete = []
@@ -168,7 +177,10 @@ class RefineSurface:
             if edgeLenSqr < 1.e-15:
                 indicesToDelete.append(i)
         for i in range(len(indicesToDelete) - 1, -1, -1):
-            del pts[indicesToDelete[i]]
+            j = indicesToDelete[i]
+            del pts[j]
+            for pd in pointData.values():
+                del pd[j]
 
         # reset
         numPts = len(pts)
