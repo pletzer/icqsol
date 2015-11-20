@@ -67,7 +67,7 @@ else:
     shape_mgr = ShapeManager(file_format=util.VTK_FORMAT,
                              vtk_dataset_type=vtk_dataset_type)
 
-shp = shape_mgr.loadAsShape(args.input)
+pdata = shape_mgr.loadAsVtkPolyData(args.input)
 times = [0.0]
 if args.times:
     times = eval(args.times)
@@ -75,7 +75,7 @@ if args.times:
 maxEdgeLength = float('inf')
 if args.refine > 0:
     maxEdgeLength = args.refine
-pdata = shape_mgr.addSurfaceFieldFromExpressionToShape(shp, args.name,
+pdataOut = shape_mgr.addSurfaceFieldFromExpressionToVtkPolyData(pdata, args.name,
                                                        args.expression, times,
                                                        max_edge_length=maxEdgeLength,
                                                        location=args.location)
@@ -88,6 +88,6 @@ if args.output:
         file_type = util.ASCII
     else:
         file_type = util.BINARY
-    shape_mgr.saveVtkPolyData(vtk_poly_data=pdata,
+    shape_mgr.saveVtkPolyData(vtk_poly_data=pdataOut,
                               file_name=args.output,
                               file_type=file_type)

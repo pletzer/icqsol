@@ -85,7 +85,10 @@ class ShapeManager(object):
             return Sphere(radius, origin, n_theta, n_phi)
         return None
 
-    def addSurfaceFieldFromExpressionToVtkPolyData(self, vtk_poly_data, field_name, expression, time_points, location='POINT'):
+    def addSurfaceFieldFromExpressionToVtkPolyData(self, vtk_poly_data, field_name, 
+                                                   expression, time_points, 
+                                                   max_edge_length=float('inf'),
+                                                   location='POINT'):
         """
         Add a surface field to a shape using an expression consisting of
         legal variables x,y,z (shape point coordinates) and t (time).
@@ -97,10 +100,13 @@ class ShapeManager(object):
         @param location location of field within cell, either 'POINT' or 'CELL'
         @return vtkPolyData instance
         """
+        # Refine if need be.
+        pdata = self.refineVtkPolyData(vtk_poly_data,
+                                       max_edge_length=max_edge_length)
         # The field name cannot have spaces.
         valid_field_name = field_name.replace( ' ', '_' )
         # Get the points from the shape.
-        points = vtk_poly_data.GetPoints()
+        points = pdata.GetPoints()
         num_points = points.GetNumberOfPoints()
         # Define the data.
         data = vtk.vtkDoubleArray()
@@ -119,14 +125,14 @@ class ShapeManager(object):
                     field_value = eval(expression)
                     data.SetComponent(i, j, field_value)
             # Add the field.
-            vtk_poly_data.GetPointData().SetScalars(data)
+            pdata.GetPointData().AddArray(data)
         elif location.upper() == 'CELL':
-            num_cells = vtk_poly_data.GetNumberOfCells()
+            num_cells = pdata.GetNumberOfCells()
             data.SetNumberOfTuples(num_cells)
             # Set the surface field values.
             ptIds = vtk.vtkIdList()
             for i in range(num_cells):
-                vtk_poly_data.GetCellPoints(i, ptIds)
+                pdata.GetCellPoints(i, ptIds)
                 avrgPosition = numpy.zeros((3,), numpy.float64)
                 num_pts = ptIds.GetNumberOfIds()
                 for k in range(num_pts):
@@ -138,9 +144,9 @@ class ShapeManager(object):
                     field_value = eval(expression)
                     data.SetComponent(i, j, field_value)
             # Add the field.
-            vtk_poly_data.GetCellData().SetScalars(data)
+            pdata.GetCellData().AddArray(data)
         
-        return vtk_poly_data
+        return pdata
 
     def addSurfaceFieldFromExpressionToShape(self, shape, field_name, expression,
                                              time_points,
@@ -172,6 +178,7 @@ class ShapeManager(object):
                                                                field_name,
                                                                expression,
                                                                time_points,
+                                                               max_edge_length,
                                                                location)
 
     def colorSurfaceField(self, vtk_poly_data, color_map,
