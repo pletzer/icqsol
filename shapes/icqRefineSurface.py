@@ -17,6 +17,7 @@ class RefineSurface:
         self.polydata.DeepCopy(pdata)
         self.points = self.polydata.GetPoints()
         self.pointData = self.polydata.GetPointData()
+        self.cellData = self.polydata.GetCellData()
 
     def getVtkPolyData(self):
         """
@@ -179,6 +180,7 @@ class RefineSurface:
         for i in range(len(indicesToDelete) - 1, -1, -1):
             j = indicesToDelete[i]
             del pts[j]
+            # remove degenerate scalar field values
             for pd in pointData.values():
                 del pd[j]
 
@@ -191,6 +193,8 @@ class RefineSurface:
         tri = triangle.Triangle()
         tri.set_points(pts)
         tri.set_segments(segs)
+        attrs, names, components = self.pointDataToAttributes(pointData)
+        tri.set_attributes(attrs)
 
         # internal points will be added if triangle area exceeds threshold
         maxArea = None
@@ -205,6 +209,7 @@ class RefineSurface:
 
         nodes = tri.get_nodes()
         polyCells = tri.get_triangles()
+        interpolatedScalars = tri.get_attributes()
 
         # add internal vertices
         for pIndex in range(len(pts), len(nodes)):
@@ -222,6 +227,44 @@ class RefineSurface:
             cells.append(cell)
 
         return cells
+        
+    def pointDataToAttributes(self, pointData):
+        """
+        Convert point data dictionary 
+        into an attribute array which can be passed to the triangle program
+        @param pointData {name: [(comp0, comp1, ...), ...], ...}
+        @return attributes, names, and components as separate lists
+        """
+        attrs = []
+        names = []
+        components = []
+
+        if len(pointData) == 0:
+            return attrs, names, components
+
+        scalarNames = pointData.keys()
+        scalarData = pointData.values()
+        numPts = len(scalarData[0])
+        for i in range(numPts):
+            a = []
+            n = []
+            c = []
+
+            # iterate ove the scalar field names
+            for j in range(len(scalarNames)):
+                name = scalarNames[j]
+                data = scalarData[j]
+          
+                # iterate over the components
+                for k in range(len(data[0])):
+                    a.append(data[i][k])
+                    n.append(name)
+                    c.append(k)
+            attrs.append(tuple(a))
+            names.append(tuple(n))
+            components.append(tuple(c))  
+
+        return attrs, names, components
 
 ##############################################################################
 
