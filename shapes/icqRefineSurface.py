@@ -209,9 +209,10 @@ class RefineSurface:
 
         nodes = tri.get_nodes()
         polyCells = tri.get_triangles()
-        interpolatedScalars = tri.get_attributes()
+        interpolatedAttrs = tri.get_attributes()
 
         # add internal vertices
+        pIndex2PtId = {}
         for pIndex in range(len(pts), len(nodes)):
             ptId = self.points.GetNumberOfPoints()
             u, v = nodes[pIndex][0]
@@ -219,6 +220,29 @@ class RefineSurface:
             # insert new point
             self.points.InsertNextPoint(p)
             polyPtIds.append(ptId)
+            pIndex2PtId[pIndex] = ptId
+
+        # add internal point data
+        if attrs==None: # turn off for the time being
+
+            # make space for the new point data
+            for name in pointData:
+                self.pointData.SetActiveScalars(name)
+                # add space for the new points
+                numTuples = self.pointData.GetScalars().GetNumberOfTuples()
+                newSize = numTuples + len(nodes) - len(pts)
+                success = self.pointData.GetScalars().Resize(newSize)
+                # should test for success != None
+
+            # add the new point data
+            for pIndex in range(len(pts), len(nodes)):
+                for i in range(len(interpolatedAttrs[pIndex])):
+                     name = names[i]
+                     component = components[i]
+                     value = interpolatedAttrs[pIndex][i]
+                     ptId = pIndex2PtId[pIndex]
+                     self.pointData.SetActiveScalars(name)
+                     self.pointData.GetScalars().SetComponent(ptId, component, value)
 
         cells = []
         for c in polyCells:
@@ -244,25 +268,29 @@ class RefineSurface:
 
         scalarNames = pointData.keys()
         scalarData = pointData.values()
+        
+        # set the name and component lists, which is 
+        # the same for each node
+        for j in range(len(scalarNames)):
+            name = scalarNames[j]
+            data = scalarData[j]
+            for k in range(len(data[0])):
+                names.append(name)
+                components.append(k)
+                
         numPts = len(scalarData[0])
         for i in range(numPts):
             a = []
-            n = []
-            c = []
 
             # iterate ove the scalar field names
             for j in range(len(scalarNames)):
-                name = scalarNames[j]
                 data = scalarData[j]
           
                 # iterate over the components
                 for k in range(len(data[0])):
                     a.append(data[i][k])
-                    n.append(name)
-                    c.append(k)
+
             attrs.append(tuple(a))
-            names.append(tuple(n))
-            components.append(tuple(c))  
 
         return attrs, names, components
 
