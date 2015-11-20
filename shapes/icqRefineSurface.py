@@ -14,23 +14,8 @@ class RefineSurface:
         @param pdata vtkPolyData instance
         """
         self.polydata = vtk.vtkPolyData()
-        self.points = vtk.vtkPoints()
-
-        # populate with input data
-        points = pdata.GetPoints()
-        numPoints = points.GetNumberOfPoints()
-        for i in range(numPoints):
-            self.points.InsertNextPoint(points.GetPoint(i))
-        self.polydata.SetPoints(self.points)
-
-        polys = pdata.GetPolys()
-        numPolys = polys.GetNumberOfCells()
-        self.polydata.Allocate(numPolys, 1)
-        ptIds = vtk.vtkIdList()
-        polys.InitTraversal()
-        for i in range(numPolys):
-            polys.GetNextCell(ptIds)
-            self.polydata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+        self.polydata.DeepCopy(pdata)
+        self.points = self.polydata.GetPoints()
 
     def getVtkPolyData(self):
         """
