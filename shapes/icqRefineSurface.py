@@ -13,9 +13,10 @@ class RefineSurface:
         Constructor
         @param pdata vtkPolyData instance
         """
-        self.polydata = vtk.vtkPolyData()
-        self.polydata.DeepCopy(pdata)
+        self.polydata = pdata
 
+        # save the points and point data as separate class members
+        # so as not to pollute pdata
         self.points = vtk.vtkPoints()
         self.points.DeepCopy(pdata.GetPoints())
 
@@ -30,9 +31,9 @@ class RefineSurface:
         self.cellData = {}
         cd = pdata.GetCellData()
         for i in range(cd.GetNumberOfArrays()):
-            arr = cd.GetArray(i)
-            name = arr.GetName()
+            name = cd.GetArray(i).GetName()
             self.cellData[name] = vtk.vtkDoubleArray()
+            self.cellData[name].SetName(name)
 
     def getVtkPolyData(self):
         """
@@ -101,6 +102,14 @@ class RefineSurface:
                     # insert point
                     self.points.InsertNextPoint(pt)
                     edgePtIds.append(ptId)
+                    # interpolate the field values along the edge
+                    w0 = (numSegs - iSeg)/float(numSegs)
+                    w1 = iSeg/float(numSegs)
+                    for name in self.pointData:
+                        v0 = numpy.array(self.pointData[name].GetTuple(i0))
+                        v1 = numpy.array(self.pointData[name].GetTuple(i1))
+                        interpTuple = w0*v0 + w1*v1
+                        self.pointData[name].InsertNextTuple(interpTuple)
 
                 edge2PtIds[edge] = edgePtIds
                 polyPtIds += edgePtIds
@@ -111,20 +120,28 @@ class RefineSurface:
             cells += polyCells
 
         # build the output vtkPolyData object
-        pdata = vtk.vtkPolyData()
-        ptIds = vtk.vtkIdList()
-        pdata.SetPoints(self.points)
+        newPolyData = vtk.vtkPolyData()
+
+        # set points
+        newPolyData.SetPoints(self.points)
+
+        # set all the point data
+        for name in self.pointData:
+            newPolyData.GetPointData().AddArray(self.pointData[name])
+
+        # build the connectivity
         numPolys = len(cells)
-        pdata.Allocate(numPolys, 1)
+        newPolyData.Allocate(numPolys, 1)
+        ptIds = vtk.vtkIdList()
         for cell in cells:
             numPolyPts = len(cell)
             ptIds.SetNumberOfIds(numPolyPts)
             for j in range(numPolyPts):
                 ptIds.SetId(j, cell[j])
-            pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+            newPolyData.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
         # Reset the polydata struct
-        self.polydata = pdata
+        self.polydata = newPolyData
 
     def computeUVNormal(self, ptIds):
         """
@@ -234,17 +251,17 @@ class RefineSurface:
             polyPtIds.append(ptId)
             pIndex2PtId[pIndex] = ptId
 
-        # add internal point data
-        if attrs == None: # turn off for the time being
-
+        # add point data inside the cell
+        if attrs == None: # turn off for the time being!!!!!
             # make space for the new point data
             for name in pointData:
                 numTuples = self.pointData[name].GetNumberOfTuples()
                 newSize = numTuples + len(nodes) - len(pts)
                 success = self.pointData[name].Resize(newSize)
-                # should test for success != None
+                if success != 1:
+                    raise MemoryError, 'Failed to resize vtkDoubleArray associated with field ', name
 
-            # add the new point data
+            # add the new internal point data
             for pIndex in range(len(pts), len(nodes)):
                 for i in range(len(interpolatedAttrs[pIndex])):
                      name = names[i]
