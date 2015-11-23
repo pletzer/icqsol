@@ -15,9 +15,24 @@ class RefineSurface:
         """
         self.polydata = vtk.vtkPolyData()
         self.polydata.DeepCopy(pdata)
-        self.points = self.polydata.GetPoints()
-        self.pointData = self.polydata.GetPointData()
-        self.cellData = self.polydata.GetCellData()
+
+        self.points = vtk.vtkPoints()
+        self.points.DeepCopy(pdata.GetPoints())
+
+        self.pointData = {}
+        pd = pdata.GetPointData()
+        for i in range(pd.GetNumberOfArrays()):
+            arr = pd.GetArray(i)
+            name = arr.GetName()
+            self.pointData[name] = vtk.vtkDoubleArray()
+            self.pointData[name].DeepCopy(arr)
+
+        self.cellData = {}
+        cd = pdata.GetCellData()
+        for i in range(cd.GetNumberOfArrays()):
+            arr = cd.GetArray(i)
+            name = arr.GetName()
+            self.cellData[name] = vtk.vtkDoubleArray()
 
     def getVtkPolyData(self):
         """
@@ -42,10 +57,10 @@ class RefineSurface:
         for iPoly in range(polys.GetNumberOfCells()):
 
             polys.GetNextCell(ptIds)
-            numPts = ptIds.GetNumberOfIds()
+            numPolyPts = ptIds.GetNumberOfIds()
             polyPtIds = []
 
-            if numPts < 3:
+            if numPolyPts < 3:
                 # need at least three points, next polygon
                 continue
 
@@ -56,10 +71,9 @@ class RefineSurface:
                 continue
 
             # iterate over edges
-            numNodes = ptIds.GetNumberOfIds()
-            for iNode in range(numNodes):
+            for iNode in range(numPolyPts):
                 i0 = ptIds.GetId(iNode)
-                i1 = ptIds.GetId((iNode + 1) % numNodes)
+                i1 = ptIds.GetId((iNode + 1) % numPolyPts)
                 edge = (i0, i1)
                 edgeCompl = (i1, i0)
 
@@ -103,9 +117,9 @@ class RefineSurface:
         numPolys = len(cells)
         pdata.Allocate(numPolys, 1)
         for cell in cells:
-            numPts = len(cell)
-            ptIds.SetNumberOfIds(numPts)
-            for j in range(numPts):
+            numPolyPts = len(cell)
+            ptIds.SetNumberOfIds(numPolyPts)
+            for j in range(numPolyPts):
                 ptIds.SetId(j, cell[j])
             pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
@@ -157,8 +171,7 @@ class RefineSurface:
 
         pts = []
         pointData = {}
-        for i in range(self.pointData.GetNumberOfArrays()):
-            name = self.pointData.GetArray(i).GetName()
+        for name in self.pointData:
             pointData[name] = []
         # project each point onto the plane
         for i in range(numPts):
@@ -167,8 +180,7 @@ class RefineSurface:
             pos -= p0
             pts.append((pos.dot(uVec), pos.dot(vVec)))
             for name, pd in pointData.items():
-                self.pointData.SetActiveScalars(name)
-                pd.append(tuple(self.pointData.GetScalars().GetTuple(ptId)))
+                pd.append(tuple(self.pointData[name].GetTuple(ptId)))
 
         # remove duplicate points, which can cause triangle to crash
         indicesToDelete = []
@@ -223,15 +235,13 @@ class RefineSurface:
             pIndex2PtId[pIndex] = ptId
 
         # add internal point data
-        if attrs==None: # turn off for the time being
+        if attrs == None: # turn off for the time being
 
             # make space for the new point data
             for name in pointData:
-                self.pointData.SetActiveScalars(name)
-                # add space for the new points
-                numTuples = self.pointData.GetScalars().GetNumberOfTuples()
+                numTuples = self.pointData[name].GetNumberOfTuples()
                 newSize = numTuples + len(nodes) - len(pts)
-                success = self.pointData.GetScalars().Resize(newSize)
+                success = self.pointData[name].Resize(newSize)
                 # should test for success != None
 
             # add the new point data
@@ -241,8 +251,7 @@ class RefineSurface:
                      component = components[i]
                      value = interpolatedAttrs[pIndex][i]
                      ptId = pIndex2PtId[pIndex]
-                     self.pointData.SetActiveScalars(name)
-                     self.pointData.GetScalars().SetComponent(ptId, component, value)
+                     self.pointData[name].SetComponent(ptId, component, value)
 
         cells = []
         for c in polyCells:
