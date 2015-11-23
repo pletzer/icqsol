@@ -25,7 +25,6 @@ class RefineSurface:
             arr = pd.GetArray(i)
             name = arr.GetName()
             self.pointData[name] = vtk.vtkDoubleArray()
-            self.pointData[name].SetName(name)
             self.pointData[name].DeepCopy(arr)
 
         self.cellData = {}
@@ -246,15 +245,15 @@ class RefineSurface:
             polyPtIds.append(ptId)
             pIndex2PtId[pIndex] = ptId
 
-        # add internal point data
+        # add point data inside the cell
         if attrs:
-
             # make space for the new point data
             for name in pointData:
                 numTuples = self.pointData[name].GetNumberOfTuples()
                 newSize = numTuples + len(nodes) - len(pts)
                 success = self.pointData[name].Resize(newSize)
-                # should test for success != None
+                if success != 1:
+                    raise MemoryError, 'Failed to resize vtkDoubleArray associated with field ', name
 
             # add the new internal point data
             for pIndex in range(len(pts), len(nodes)):

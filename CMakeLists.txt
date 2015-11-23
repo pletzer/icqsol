@@ -329,6 +329,6 @@ add_test(NAME testRefineWithField
          "${CMAKE_SOURCE_DIR}/examples/refineSurface.py"
          --input testPrimitiveCylinderWithTimeDependentField.vtk
          --output testRefineWithField.vtk
-         --maxedge 0.5
+         --maxedge 0.1
          --ascii)
 
