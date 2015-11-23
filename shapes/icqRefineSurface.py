@@ -25,6 +25,7 @@ class RefineSurface:
             arr = pd.GetArray(i)
             name = arr.GetName()
             self.pointData[name] = vtk.vtkDoubleArray()
+            self.pointData[name].SetName(name)
             self.pointData[name].DeepCopy(arr)
 
         self.cellData = {}
@@ -33,6 +34,7 @@ class RefineSurface:
             arr = cd.GetArray(i)
             name = arr.GetName()
             self.cellData[name] = vtk.vtkDoubleArray()
+            self.cellData[name].SetName(name)
 
     def getVtkPolyData(self):
         """
@@ -101,6 +103,14 @@ class RefineSurface:
                     # insert point
                     self.points.InsertNextPoint(pt)
                     edgePtIds.append(ptId)
+                    # interpolate the field values along the edge
+                    w0 = (numSegs - iSeg)/float(numSegs)
+                    w1 = iSeg/float(numSegs)
+                    for name in self.pointData:
+                        v0 = numpy.array(self.pointData[name].GetTuple(i0))
+                        v1 = numpy.array(self.pointData[name].GetTuple(i1))
+                        interpTuple = w0*v0 + w1*v1
+                        self.pointData[name].InsertNextTuple(interpTuple)
 
                 edge2PtIds[edge] = edgePtIds
                 polyPtIds += edgePtIds
@@ -114,6 +124,8 @@ class RefineSurface:
         pdata = vtk.vtkPolyData()
         ptIds = vtk.vtkIdList()
         pdata.SetPoints(self.points)
+        for name in self.pointData:
+            pdata.GetPointData().AddArray(self.pointData[name])
         numPolys = len(cells)
         pdata.Allocate(numPolys, 1)
         for cell in cells:
@@ -235,7 +247,7 @@ class RefineSurface:
             pIndex2PtId[pIndex] = ptId
 
         # add internal point data
-        if attrs == None: # turn off for the time being
+        if attrs:
 
             # make space for the new point data
             for name in pointData:
@@ -244,7 +256,7 @@ class RefineSurface:
                 success = self.pointData[name].Resize(newSize)
                 # should test for success != None
 
-            # add the new point data
+            # add the new internal point data
             for pIndex in range(len(pts), len(nodes)):
                 for i in range(len(interpolatedAttrs[pIndex])):
                      name = names[i]
