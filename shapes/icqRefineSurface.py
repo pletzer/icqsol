@@ -161,8 +161,8 @@ class RefineSurface:
         @return list of cells (list of point indices)
         """
 
-        numPts = len(polyPtIds)
-        if numPts < 3:
+        numPolyPts = len(polyPtIds)
+        if numPolyPts < 3:
             # need at least three points
             return []
 
@@ -174,7 +174,7 @@ class RefineSurface:
         for name in self.pointData:
             pointData[name] = []
         # project each point onto the plane
-        for i in range(numPts):
+        for i in range(numPolyPts):
             ptId = polyPtIds[i]
             pos = numpy.array(self.points.GetPoint(ptId))
             pos -= p0
@@ -184,8 +184,8 @@ class RefineSurface:
 
         # remove duplicate points, which can cause triangle to crash
         indicesToDelete = []
-        for i in range(numPts):
-            i1 = (i + 1) % numPts
+        for i in range(numPolyPts):
+            i1 = (i + 1)%numPolyPts
             edgeLenSqr = (pts[i1][0] - pts[i][0])**2 + (pts[i1][1] - pts[i][1])**2
             if edgeLenSqr < 1.e-15:
                 indicesToDelete.append(i)
@@ -197,10 +197,10 @@ class RefineSurface:
                 del pd[j]
 
         # reset
-        numPts = len(pts)
+        numPolyPts = len(pts)
 
         # list of segments
-        segs = [(i, (i + 1) % numPts) for i in range(numPts)]
+        segs = [(i, (i + 1)%numPolyPts) for i in range(numPolyPts)]
 
         tri = triangle.Triangle()
         tri.set_points(pts)
