@@ -265,10 +265,9 @@ class RefineSurface:
             iBeg = names.index(name)
             iEnd = len(names) - names[::-1].index(name)
             for pIndex in range(len(pts), len(nodes)):
-                for i in range(len(interpolatedAttrs[pIndex])):
-                    ptId = pIndex2PtId[pIndex]
-                    vals = interpolatedAttrs[pIndex][iBeg:iEnd]
-                    self.pointData[name].SetTuple(ptId, vals)
+                ptId = pIndex2PtId[pIndex]
+                vals = interpolatedAttrs[pIndex][iBeg:iEnd]
+                self.pointData[name].SetTuple(ptId, vals)
 
         cells = []
         for c in polyCells:
