@@ -252,23 +252,23 @@ class RefineSurface:
             pIndex2PtId[pIndex] = ptId
 
         # add point data inside the cell
-        if attrs == None: # turn off for the time being!!!!!
-            # make space for the new point data
-            for name in pointData:
-                numTuples = self.pointData[name].GetNumberOfTuples()
-                newSize = numTuples + len(nodes) - len(pts)
-                success = self.pointData[name].Resize(newSize)
-                if success != 1:
-                    raise MemoryError, 'Failed to resize vtkDoubleArray associated with field ', name
+        for name in pointData:
+            numTuples = self.pointData[name].GetNumberOfTuples()
+            newSize = numTuples + len(nodes) - len(pts)
+            success = self.pointData[name].Resize(newSize)
+            if success != 1:
+                raise MemoryError, 'Failed to resize vtkDoubleArray associated with field ', name
+            self.pointData[name].SetNumberOfTuples(newSize)
+            self.pointData[name].SetName(name)
 
             # add the new internal point data
+            iBeg = names.index(name)
+            iEnd = len(names) - names[::-1].index(name)
             for pIndex in range(len(pts), len(nodes)):
                 for i in range(len(interpolatedAttrs[pIndex])):
-                     name = names[i]
-                     component = components[i]
-                     value = interpolatedAttrs[pIndex][i]
-                     ptId = pIndex2PtId[pIndex]
-                     self.pointData[name].SetComponent(ptId, component, value)
+                    ptId = pIndex2PtId[pIndex]
+                    vals = interpolatedAttrs[pIndex][iBeg:iEnd]
+                    self.pointData[name].SetTuple(ptId, vals)
 
         cells = []
         for c in polyCells:
