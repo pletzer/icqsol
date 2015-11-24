@@ -331,4 +331,11 @@ add_test(NAME testRefineWithField
          --output testRefineWithField.vtk
          --maxedge 0.1
          --ascii)
+add_test(NAME testRefineWithCellField
+         COMMAND "${PYTHON_EXECUTABLE}"
+         "${CMAKE_SOURCE_DIR}/examples/refineSurface.py"
+         --input testBoltFineWithFieldCell.vtk
+         --output testRefineWithCellField.vtk
+         --maxedge 0.1
+         --ascii)
 
