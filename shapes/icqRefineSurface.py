@@ -55,6 +55,8 @@ class RefineSurface:
         polys.InitTraversal()
         cells = []
         edge2PtIds = {}
+        newCellBegEndInds = []
+        iNewBeg = 0
         for iPoly in range(polys.GetNumberOfCells()):
 
             polys.GetNextCell(ptIds)
@@ -118,6 +120,11 @@ class RefineSurface:
             polyCells = self.triangulatePolygon(uVec, vVec, polyPtIds,
                                                 max_edge_length)
             cells += polyCells
+            iNewEnd = iNewBeg + len(polyCells)
+            # all the cell data have the same value inside this polygon
+            # store the srta/end cell indices 
+            newCellBegEndInds.append( (iNewBeg, iNewEnd) )
+            iNewBeg = iNewEnd
 
         # build the output vtkPolyData object
         newPolyData = vtk.vtkPolyData()
@@ -139,6 +146,27 @@ class RefineSurface:
             for j in range(numPolyPts):
                 ptIds.SetId(j, cell[j])
             newPolyData.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+
+        numTuples = self.polydata.GetPolys().GetNumberOfCells()
+        newNumTuples = newPolyData.GetPolys().GetNumberOfCells()
+
+        # add the cell arrays
+        cd = self.polydata.GetCellData()
+        numCellArrays = cd.GetNumberOfArrays()
+        for el in range(numCellArrays):
+            arr = cd.GetArray(el)
+            name = arr.GetName()
+            numComps = arr.GetNumberOfComponents()
+
+            newArr = self.cellData[name]
+            newArr.SetNumberOfComponents(numComps)
+            newArr.SetNumberOfTuples(newNumTuples)
+            for i in range(numTuples):
+                vals = arr.GetTuple(i)
+                iNewBeg, iNewEnd = newCellBegEndInds[i]
+                for j in range(iNewBeg, iNewEnd):
+                    newArr.SetTuple(j, vals)
+            newPolyData.GetCellData().AddArray(newArr)
 
         # Reset the polydata struct
         self.polydata = newPolyData
