@@ -211,6 +211,17 @@ class RefineSurface:
             # need at least three points
             return []
 
+        area = self.getPolygonArea(polyPtIds)
+        if area < 1.e-15:
+            return []
+
+        self.removeDegeneratePoints(polyPtIds)
+
+        # reset
+        numPolyPts = len(polyPtIds)
+        if numPolyPts < 3:
+            return []
+
         # reference position
         p0 = numpy.array(self.points.GetPoint(polyPtIds[0]))
 
@@ -226,25 +237,6 @@ class RefineSurface:
             pts.append((pos.dot(uVec), pos.dot(vVec)))
             for name, pd in pointData.items():
                 pd.append(tuple(self.pointData[name].GetTuple(ptId)))
-
-        # remove duplicate points, which can cause triangle to crash
-        indicesToDelete = []
-        for i in range(numPolyPts):
-            i1 = (i + 1)%numPolyPts
-            edgeLenSqr = (pts[i1][0] - pts[i][0])**2 + (pts[i1][1] - pts[i][1])**2
-            if edgeLenSqr < 1.e-15:
-                indicesToDelete.append(i)
-        for i in range(len(indicesToDelete) - 1, -1, -1):
-            j = indicesToDelete[i]
-            del pts[j]
-            # remove degenerate scalar field values
-            for pd in pointData.values():
-                del pd[j]
-
-        # reset
-        numPolyPts = len(pts)
-        if numPolyPts < 3:
-            return []
 
         # list of segments
         segs = [(i, (i + 1)%numPolyPts) for i in range(numPolyPts)]
@@ -306,6 +298,37 @@ class RefineSurface:
             cells.append(cell)
 
         return cells
+
+    def getPolygonArea(self, polyPtIds):
+        """
+        Compute the (scalar) area of a polygon
+        @param polyPtIds list of point indices
+        @return area
+        """
+        area = numpy.zeros((3,), numpy.float64)
+        p0 = numpy.array(self.points.GetPoint(polyPtIds[0]))
+        numPolyPts = len(polyPtIds)
+        for i in range(1, numPolyPts - 1):
+            p1 = numpy.array(self.points.GetPoint(polyPtIds[i]))
+            p2 = numpy.array(self.points.GetPoint(polyPtIds[i + 1]))
+            area += numpy.cross(p1 - p0, p2 - p0)
+        return numpy.linalg.norm(area)
+
+    def removeDegeneratePoints(self, polyPtIds):
+        """
+        Remove degenerate points
+        @param polyPtIds list of point indices (modified on output)
+        """
+        indicesToDelete = []
+        numPolyPts = len(polyPtIds)
+        for i in range(numPolyPts):
+            p0 = numpy.array(self.points.GetPoint(polyPtIds[i]))
+            p1 = numpy.array(self.points.GetPoint(polyPtIds[(i + 1)%numPolyPts]))
+            if numpy.linalg.norm(p1 - p0) < 1.e-15:
+                indicesToDelete.append(i)
+        for j in range(len(indicesToDelete) - 1, -1, -1):
+            i = indicesToDelete[j]
+            del polyPtIds[i]
         
     def pointDataToAttributes(self, pointData):
         """
