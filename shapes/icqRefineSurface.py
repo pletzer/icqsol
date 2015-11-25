@@ -243,6 +243,8 @@ class RefineSurface:
 
         # reset
         numPolyPts = len(pts)
+        if numPolyPts < 3:
+            return []
 
         # list of segments
         segs = [(i, (i + 1)%numPolyPts) for i in range(numPolyPts)]
