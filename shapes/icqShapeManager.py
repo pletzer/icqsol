@@ -346,6 +346,35 @@ class ShapeManager(object):
         """
         vtk_poly_data = self.loadAsVtkPolyData(file_name)
         return self.shapeFromVTKPolyData(vtk_poly_data)
+        
+    def rotateVtkPolyData(self, pdata, axis=(1., 0., 0.), angleDeg=0.0):
+        """
+        Rotate vtkPolyData object along given axis
+        @param pdata vtkPolyData instance (modified on output)
+        @param axis rotation axis
+        @param angleDeg angle in degrees
+        """
+        transform = vtk.vtkTransform()
+        transform.RotateWXYZ(angleDeg, axis[0], axis[1], axis[2])
+        transformFilter = vtk.vtkTransformPolyDataFilter()
+        transformFilter.SetTransform(transform)
+        transformFilter.SetInput(pdata)
+        transformFilter.Update()
+        pdata.DeepCopy(transformFilter.GetOutput())
+        
+    def translateVtkPolyData(self, pdata, displ=(0., 0., 0.)):
+        """
+        Translate vtkPolyData 
+        @param pdata vtkPolyData instance (modified on output)
+        @param displ displacement vector
+        """
+        transform = vtk.vtkTransform()
+        transform.Translate(displ[0], displ[1], displ[2])
+        transformFilter = vtk.vtkTransformPolyDataFilter()
+        transformFilter.SetTransform(transform)
+        transformFilter.SetInput(pdata)
+        transformFilter.Update()
+        pdata.DeepCopy(transformFilter.GetOutput())
 
     def rotateShape(self, shape, axis=(1., 0., 0.), angleDeg=0.0):
         """

@@ -55,8 +55,8 @@ if file_format == util.VTK_FORMAT:
 else:
     shape_mgr = ShapeManager(file_format=file_format)
 
-shp = shape_mgr.loadAsShape(args.input)
+pdata = shape_mgr.loadAsVtkPolyData(args.input)
 axis = eval(args.axis)
-shape_mgr.rotateShape(shp, angleDeg=args.angle, axis=axis)
+shape_mgr.rotateVtkPolyData(pdata, angleDeg=args.angle, axis=axis)
 if args.output:
-    shape_mgr.saveShape(shape=shp, file_name=args.output, file_type=file_type)
+    shape_mgr.saveVtkPolyData(pdata, file_name=args.output, file_type=file_type)

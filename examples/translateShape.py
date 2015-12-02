@@ -55,8 +55,8 @@ if file_format == util.VTK_FORMAT:
 else:
     shape_mgr = ShapeManager(file_format=file_format)
 
-shp = shape_mgr.loadAsShape(args.input)
+pdata = shape_mgr.loadAsVtkPolyData(args.input)
 transVec = eval(args.translation)
-shape_mgr.translateShape(shp, transVec)
+shape_mgr.translateVtkPolyData(pdata, transVec)
 if args.output:
-    shape_mgr.saveShape(shape=shp, file_name=args.output, file_type=file_type)
+    shape_mgr.saveVtkPolyData(pdata, file_name=args.output, file_type=file_type)
