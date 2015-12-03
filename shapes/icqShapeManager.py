@@ -25,7 +25,7 @@ class ShapeManager(object):
     def __init__(self, file_format=None, vtk_dataset_type=None):
         """
         This class incorporates features from 2 primary classes: CSG and
-        VTK.  It uses CSG to assemble shapes, which have no knowledge of
+        VTK.  It uses CSG to assemble shapes, which has no knowledge of
         fields.  VTK data objects are grids with fields typically attached
         to them, but not always.
 

@@ -188,6 +188,12 @@ add_test(NAME testRotate2
          --input testPrimitiveCylinder.ply
          --angle 45.0 --axis "1,0,0"
          --output testRotatedCylinder.ply)
+add_test(NAME testRotate3
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/rotateShape.py" 
+         --input testRemove2.vtk
+         --angle 45.0 --axis "0, 0, 1"
+         --output testRotatedRemoved.vtk)
 add_test(NAME testRefine
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/refineShape.py"
