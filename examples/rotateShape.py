@@ -49,7 +49,7 @@ else:
     file_type = util.BINARY
 
 if file_format == util.VTK_FORMAT:
-    # We have a VTK file, so Get the dataset type.
+    # We have a VTK file, so get the dataset type.
     vtk_dataset_type = util.getVtkDatasetType(args.input)
     shape_mgr = ShapeManager(file_format=file_format, vtk_dataset_type=vtk_dataset_type)
 else:
@@ -57,6 +57,9 @@ else:
 
 pdata = shape_mgr.loadAsVtkPolyData(args.input)
 axis = eval(args.axis)
+
+# Rotate.
 shape_mgr.rotateVtkPolyData(pdata, angleDeg=args.angle, axis=axis)
+
 if args.output:
     shape_mgr.saveVtkPolyData(pdata, file_name=args.output, file_type=file_type)

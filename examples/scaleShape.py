@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 """
-Translate shape
+Scale shape
 """
 
 import argparse
 import time
 import sys
 import re
+import operator
 
 from icqsol.shapes.icqShapeManager import ShapeManager
 from icqsol import util
@@ -15,13 +16,13 @@ from icqsol import util
 # time stamp
 tid = re.sub(r'\.', '', str(time.time()))
 
-parser = argparse.ArgumentParser(description='Translate shape.')
+parser = argparse.ArgumentParser(description='scale shape.')
 
 parser.add_argument('--input', dest='input', default='',
                     help='List of input files (PLY or VTK)')
 
-parser.add_argument('--translate', dest='translate',
-                    help='Specify the translation vector as three floats')
+parser.add_argument('--scale', dest='scale',
+                    help='Specify the scaling vector as three floats')
 
 parser.add_argument('--ascii', dest='ascii', action='store_true',
                     help='Save data in ASCII format (default is binary)')
@@ -32,8 +33,8 @@ parser.add_argument('--output', dest='output',
 
 args = parser.parse_args()
 
-if not args.translate:
-    print 'ERROR: must specify --translate <float, float, float>'
+if not args.scale:
+    print 'ERROR: must specify --scale <float, float, float>'
     sys.exit(2)
 
 if not args.input:
@@ -56,8 +57,10 @@ else:
     shape_mgr = ShapeManager(file_format=file_format)
 
 pdata = shape_mgr.loadAsVtkPolyData(args.input)
-transVec = eval(args.translate)
-shape_mgr.translateVtkPolyData(pdata, transVec)
+scaleVec = eval(args.scale)
+if reduce(operator.and_, [fact > 0.0 for fact in scaleVec], True):
+     # All scaling factors must be > 0
+     shape_mgr.scaleVtkPolyData(pdata, scaleVec)
 
 if args.output:
     shape_mgr.saveVtkPolyData(pdata, file_name=args.output, file_type=file_type)

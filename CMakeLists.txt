@@ -194,6 +194,12 @@ add_test(NAME testRotate3
          --input testRemove2.vtk
          --angle 45.0 --axis "0, 0, 1"
          --output testRotatedRemoved.vtk)
+add_test(NAME testScale
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/scaleShape.py" 
+         --input testRemove2.vtk
+         --scale "1.3, 2.1, 4.5"
+         --output testScaledRemoved.vtk)
 add_test(NAME testRefine
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/refineShape.py"

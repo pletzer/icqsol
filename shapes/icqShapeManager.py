@@ -376,6 +376,20 @@ class ShapeManager(object):
         transformFilter.Update()
         pdata.DeepCopy(transformFilter.GetOutput())
 
+    def scaleVtkPolyData(self, pdata, ampl=(1., 1., 1.)):
+        """
+        Translate vtkPolyData 
+        @param pdata vtkPolyData instance (modified on output)
+        @param amplification vector
+        """
+        transform = vtk.vtkTransform()
+        transform.Scale(ampl[0], ampl[1], ampl[2])
+        transformFilter = vtk.vtkTransformPolyDataFilter()
+        transformFilter.SetTransform(transform)
+        transformFilter.SetInput(pdata)
+        transformFilter.Update()
+        pdata.DeepCopy(transformFilter.GetOutput())
+
     def rotateShape(self, shape, axis=(1., 0., 0.), angleDeg=0.0):
         """
         Rotate along axis
