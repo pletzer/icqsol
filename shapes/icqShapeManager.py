@@ -382,14 +382,14 @@ class ShapeManager(object):
         transformFilter.Update()
         pdata.DeepCopy(transformFilter.GetOutput())
 
-    def scaleVtkPolyData(self, pdata, ampl=(1., 1., 1.)):
+    def scaleVtkPolyData(self, pdata, factors=(1., 1., 1.)):
         """
         Translate vtkPolyData 
         @param pdata vtkPolyData instance (modified on output)
         @param amplification vector
         """
         transform = vtk.vtkTransform()
-        transform.Scale(ampl[0], ampl[1], ampl[2])
+        transform.Scale(factors[0], factors[1], factors[2])
         transformFilter = vtk.vtkTransformPolyDataFilter()
         transformFilter.SetTransform(transform)
         if vtk.VTK_MAJOR_VERSION >= 6:

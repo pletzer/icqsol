@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(description='scale shape.')
 parser.add_argument('--input', dest='input', default='',
                     help='List of input files (PLY or VTK)')
 
-parser.add_argument('--scale', dest='scale',
+parser.add_argument('--scale', dest='scale', default='1, 1, 1',
                     help='Specify the scaling vector as three floats')
 
 parser.add_argument('--ascii', dest='ascii', action='store_true',
