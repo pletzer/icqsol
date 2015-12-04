@@ -358,7 +358,10 @@ class ShapeManager(object):
         transform.RotateWXYZ(angleDeg, axis[0], axis[1], axis[2])
         transformFilter = vtk.vtkTransformPolyDataFilter()
         transformFilter.SetTransform(transform)
-        transformFilter.SetInput(pdata)
+        if vtk.VTK_MAJOR_VERSION >= 6:
+            transformFilter.SetInputData(pdata)
+        else:
+            transformFilter.SetInput(pdata)
         transformFilter.Update()
         pdata.DeepCopy(transformFilter.GetOutput())
         
@@ -372,7 +375,10 @@ class ShapeManager(object):
         transform.Translate(displ[0], displ[1], displ[2])
         transformFilter = vtk.vtkTransformPolyDataFilter()
         transformFilter.SetTransform(transform)
-        transformFilter.SetInput(pdata)
+        if vtk.VTK_MAJOR_VERSION >= 6:
+            transformFilter.SetInputData(pdata)
+        else:
+            transformFilter.SetInput(pdata)
         transformFilter.Update()
         pdata.DeepCopy(transformFilter.GetOutput())
 
@@ -386,7 +392,10 @@ class ShapeManager(object):
         transform.Scale(ampl[0], ampl[1], ampl[2])
         transformFilter = vtk.vtkTransformPolyDataFilter()
         transformFilter.SetTransform(transform)
-        transformFilter.SetInput(pdata)
+        if vtk.VTK_MAJOR_VERSION >= 6:
+            transformFilter.SetInputData(pdata)
+        else:
+            transformFilter.SetInput(pdata)
         transformFilter.Update()
         pdata.DeepCopy(transformFilter.GetOutput())
 
