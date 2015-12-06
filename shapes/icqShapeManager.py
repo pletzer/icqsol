@@ -97,6 +97,7 @@ class ShapeManager(object):
         reader = vtk.vtkJPEGReader()
         if texture_file.find('.png') >= 0:
             reader = vtk.vtkPNGReader()
+        reader.SetFileName(texture_file)
         reader.Update()
             
         imageData = reader.GetOutput()
@@ -189,13 +190,14 @@ class ShapeManager(object):
         numPoints = vtk_poly_data.GetNumberOfPoints()
         rgbArray.SetNumberOfTuples(numPoints)
         rgbArray.SetName('Colors')
+        point_data_array = imageData.GetPointData().GetArray(0)
         for i in range(numPoints):
             xyz = vtk_poly_data.GetPoint(i)
             i0, i1 = getImageIndices(xyz)
-            rgb = imageData.GetPointData().GetTuple(i0 + n0*i1)
-            rgbArray.SetTuple(i, rgb)
+            rgba = point_data_array.GetTuple(i0 + n0*i1)
+            rgbArray.SetTuple(i, rgba[:3])
 
-        vtk_poly_data.GetPointData().SetArray(rgbArray)       
+        vtk_poly_data.GetPointData().AddArray(rgbArray)       
 
     def addSurfaceFieldFromExpressionToVtkPolyData(self, vtk_poly_data, field_name, 
                                                    expression, time_points, 

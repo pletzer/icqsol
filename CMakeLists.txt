@@ -173,9 +173,10 @@ add_test(NAME testCompositeRemoval
 add_test(NAME textAddTexturePng
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/addTexture.py" 
-         --texture "${CMAKE_SOURCE_DIR}/textures/checkboard.png"
+         --texture "${CMAKE_SOURCE_DIR}/textures/checkerboard.png"
+         --maxedge 0.1
          --input testPrimitiveBox.vtk 
-         --output testprimitiveBoxWithTexture.vtk
+         --output testPrimitiveBoxWithTexture.vtk
          --ascii)
 add_test(NAME testTranslate
          COMMAND "${PYTHON_EXECUTABLE}" 
