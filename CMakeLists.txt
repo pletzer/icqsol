@@ -170,6 +170,13 @@ add_test(NAME testCompositeRemoval
          --shapeTuples "a, testPrimitiveSphere.vtk" "b, testPrimitiveCylinder.ply"
          --compose "a - b"
          --output testCompositeRemoval.vtk)
+add_test(NAME textAddTexturePng
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addTexture.py" 
+         --texture "${CMAKE_SOURCE_DIR}/textures/checkboard.png"
+         --input testPrimitiveBox.vtk 
+         --output testprimitiveBoxWithTexture.vtk
+         --ascii)
 add_test(NAME testTranslate
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/translateShape.py" 

@@ -111,26 +111,26 @@ class ShapeManager(object):
         xmid = (xmin + xmax)/2.       
         ymid = (ymin + ymax)/2.       
         zmid = (zmin + zmax)/2.
-        midPos = numpy.array(xmid, ymid, zmid)
+        midPos = numpy.array([xmid, ymid, zmid])
 
         # face normals of the box
-        faceUnitVecs = [numpy.array(+1., 0., 0.), 
-                        numpy.array(0., +1., 0.), 
-                        numpy.array(0., 0., +1.), 
-                        numpy.array(-1., 0., 0.), 
-                        numpy.array(0., -1., 0.), 
-                        numpy.array(0., 0., -1.),]
+        faceUnitVecs = [numpy.array([+1., 0., 0.]), 
+                        numpy.array([0., +1., 0.]), 
+                        numpy.array([0., 0., +1.]), 
+                        numpy.array([-1., 0., 0.]), 
+                        numpy.array([0., -1., 0.]), 
+                        numpy.array([0., 0., -1.]),]
 
         # the index that does not vary (index where the above normals are non-zero)
         constIndex = [0, 1, 2, 0, 1, 2]
 
         # the parametric u, v unit vector tangential to each face. u cross v 
         # gives the normal
-        uvVecs = [(numpy.array([0., +1., 0.]), numpy.array([0., 0., +1.]),
-                  (numpy.array([-1., 0., 0.]), numpy.array([0., 0., +1.]),
-                  (numpy.array([-1., 0., 0.]), numpy.array([0., -1., 0.]),
-                  (numpy.array([0., 0., -1.]), numpy.array([0., -1., 0.]),
-                  (numpy.array([0., 0., -1.]), numpy.array([+1., 0., 0.]),
+        uvVecs = [(numpy.array([0., +1., 0.]), numpy.array([0., 0., +1.])),
+                  (numpy.array([-1., 0., 0.]), numpy.array([0., 0., +1.])),
+                  (numpy.array([-1., 0., 0.]), numpy.array([0., -1., 0.])),
+                  (numpy.array([0., 0., -1.]), numpy.array([0., -1., 0.])),
+                  (numpy.array([0., 0., -1.]), numpy.array([+1., 0., 0.])),
                   (numpy.array([0., +1., 0.]), numpy.array([+1., 0., 0.]))]
 
         # the low end start points for each face
@@ -168,7 +168,7 @@ class ShapeManager(object):
             # find the intersection point of the ray with the face
             ci = constIndex[faceIndex]
             lambd = (startPos[ci] - midPos[ci])/(direction[ci] + 1.e-8)
-            projectedPoint = midPos + lamd*direction
+            projectedPoint = midPos + lambd*direction
 
             # global tile indices, the tiles are arranged in staircase fashion
             tileI = (faceIndex + 1) // 2
