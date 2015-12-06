@@ -84,6 +84,118 @@ class ShapeManager(object):
         if type == 'sphere':
             return Sphere(radius, origin, n_theta, n_phi)
         return None
+        
+    def addTextureToVtkPolyData(self, vtk_poly_data, texture_file, 
+                                max_edge_length=float('inf')):
+        """
+        Add texture to a vtkPolyData object
+        @param vtk_poly_data, VTKPolyData object
+        @param texture_file texture file (jpg or png)
+        """
+
+        # read the file
+        reader = vtk.vtkJPEGReader()
+        if texture_file.find('.png') >= 0:
+            reader = vtk.vtkPNGReader()
+        reader.Update()
+            
+        imageData = reader.GetOutput()
+
+        # number of pixels
+        n0, n1, one = imageData.GetDimensions()
+        
+        # box bounds
+        xmin, xmax, ymin, ymax, zmin, zmax = vtk_poly_data.GetBounds()
+
+        # mid position of the box
+        xmid = (xmin + xmax)/2.       
+        ymid = (ymin + ymax)/2.       
+        zmid = (zmin + zmax)/2.
+        midPos = numpy.array(xmid, ymid, zmid)
+
+        # face normals of the box
+        faceUnitVecs = [numpy.array(+1., 0., 0.), 
+                        numpy.array(0., +1., 0.), 
+                        numpy.array(0., 0., +1.), 
+                        numpy.array(-1., 0., 0.), 
+                        numpy.array(0., -1., 0.), 
+                        numpy.array(0., 0., -1.),]
+
+        # the index that does not vary (index where the above normals are non-zero)
+        constIndex = [0, 1, 2, 0, 1, 2]
+
+        # the parametric u, v unit vector tangential to each face. u cross v 
+        # gives the normal
+        uvVecs = [(numpy.array([0., +1., 0.]), numpy.array([0., 0., +1.]),
+                  (numpy.array([-1., 0., 0.]), numpy.array([0., 0., +1.]),
+                  (numpy.array([-1., 0., 0.]), numpy.array([0., -1., 0.]),
+                  (numpy.array([0., 0., -1.]), numpy.array([0., -1., 0.]),
+                  (numpy.array([0., 0., -1.]), numpy.array([+1., 0., 0.]),
+                  (numpy.array([0., +1., 0.]), numpy.array([+1., 0., 0.]))]
+
+        # the low end start points for each face
+        startPoints = [numpy.array([xmax, ymin, zmin]),
+                       numpy.array([xmax, ymax, zmin]),
+                       numpy.array([xmax, ymax, zmax]),
+                       numpy.array([xmin, ymax, zmax]),
+                       numpy.array([xmin, ymin, zmax]),
+                       numpy.array([xmin, ymin, zmin])]
+
+
+        # d0 and d1 are the number of local indices on each tile (along u and
+        # v respectively)
+        d0 = n0 // 4
+        d1 = n1 // 3
+        def getImageIndices(xyz):
+            """
+            Map a position on the object to a set of two indices 
+            which can be used to retrieve the color from the texture
+            file
+            @param xyz a point 
+            @return i0, i1 indices, 0 <= i0 < n0 and 0 <= i1 < n1
+            """
+
+            # direction of the ray
+            direction = xyz - midPos
+
+            # find  the face that is most aligned to the ray
+            faceIndex = numpy.argmax([fUnit.dot(direction) for fUnit in faceUnitVecs])
+
+            uVec = uvVecs[faceIndex][0]
+            vVec = uvVecs[faceIndex][1]
+            startPos = startPoints[faceIndex]
+
+            # find the intersection point of the ray with the face
+            ci = constIndex[faceIndex]
+            lambd = (startPos[ci] - midPos[ci])/(direction[ci] + 1.e-8)
+            projectedPoint = midPos + lamd*direction
+
+            # global tile indices, the tiles are arranged in staircase fashion
+            tileI = (faceIndex + 1) // 2
+            tileJ = faceIndex // 2
+
+            # local indices on the tile
+            j0 = int(d0 * uVec.dot(projectedPoint))
+            j1 = int(d0 * vVec.dot(projectedPoint))
+
+            # the image indices
+            i0, i1 = tileI*d0 + j0, tileJ*d1 + j1
+
+            return i0, i1
+        
+        # set the colors from the texture file
+        rgbArray = vtk.vtkUnsignedCharArray()
+        rgbArray.SetNumberOfComponents(3)
+        numPoints = vtk_poly_data.GetNumberOfPoints()
+        rgbArray.SetNumberOfTuples(numPoints)
+        rgbArray.SetName('Colors')
+        for i in range(numPoints):
+            xyz = vtk_poly_data.GetPoint(i)
+            i0, i1 = getImageIndices(xyz)
+            rgb = imageData.GetPointData().GetTuple(i0 + n0*i1)
+            rgbArray.SetTuple(i, rgb)
+
+        vtk_poly_data.GetPointData().SetArray(rgbArray)       
 
     def addSurfaceFieldFromExpressionToVtkPolyData(self, vtk_poly_data, field_name, 
                                                    expression, time_points, 
@@ -97,6 +209,7 @@ class ShapeManager(object):
         @param expression, expression consisting of legal variables x, y, z, and t
         @param time_points, list of floating point values defining
                snapshots in a time sequence
+        @param max_edge_length maximum edge length, refine if need be
         @param location location of field within cell, either 'POINT' or 'CELL'
         @return vtkPolyData instance
         """
