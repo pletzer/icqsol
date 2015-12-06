@@ -60,7 +60,7 @@ else:
     shape_mgr = ShapeManager(file_format=file_format)
 
 pdata = shape_mgr.loadAsVtkPolyData(args.input)
-shape_mgr.addTextureToVtkPolyData(pdata, args.texture, args.maxedge)
+pdataOut = shape_mgr.addTextureToVtkPolyData(pdata, args.texture, args.maxedge)
 
 if args.output:
-    shape_mgr.saveVtkPolyData(pdata, file_name=args.output, file_type=file_type)
+    shape_mgr.saveVtkPolyData(pdataOut, file_name=args.output, file_type=file_type)

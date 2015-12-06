@@ -91,6 +91,8 @@ class ShapeManager(object):
         Add texture to a vtkPolyData object
         @param vtk_poly_data, VTKPolyData object
         @param texture_file texture file (jpg or png)
+        @param max_edge_length maximum edge length, refine if need be
+        @return new vtkPolyDataObject
         """
 
         # read the file
@@ -104,7 +106,6 @@ class ShapeManager(object):
 
         # number of pixels
         n0, n1, one = imageData.GetDimensions()
-        print '*** number of pixels = ', n0, n1
         
         # box bounds
         xmin, xmax, ymin, ymax, zmin, zmax = vtk_poly_data.GetBounds()
@@ -159,7 +160,6 @@ class ShapeManager(object):
         # v respectively)
         d0 = n0 // 4
         d1 = n1 // 3
-        print '*** d0, d1 = ', d0, d1
         def getImageIndices(xyz):
             """
             Map a position on the object to a set of two indices 
@@ -189,29 +189,34 @@ class ShapeManager(object):
             tileJ = faceIndex // 2
 
             # local indices on the tile
-            j0 = int(d0 * uVec.dot(projectedPoint))
-            j1 = int(d0 * vVec.dot(projectedPoint))
+            j0 = int(d0 * uVec.dot(projectedPoint - startPos))
+            j1 = int(d0 * vVec.dot(projectedPoint - startPos))
 
             # the image indices
             i0, i1 = tileI*d0 + j0, tileJ*d1 + j1
 
-            print '..... i0, i1 = ', i0, i1
             return i0, i1
         
+        # Refine if need be.
+        pdata = self.refineVtkPolyData(vtk_poly_data,
+                                       max_edge_length=max_edge_length)
+
         # set the colors from the texture file
         rgbArray = vtk.vtkUnsignedCharArray()
         rgbArray.SetNumberOfComponents(3)
-        numPoints = vtk_poly_data.GetNumberOfPoints()
+        numPoints = pdata.GetNumberOfPoints()
         rgbArray.SetNumberOfTuples(numPoints)
         rgbArray.SetName('Colors')
         point_data_array = imageData.GetPointData().GetArray(0)
         for i in range(numPoints):
-            xyz = vtk_poly_data.GetPoint(i)
+            xyz = pdata.GetPoint(i)
             i0, i1 = getImageIndices(xyz)
             rgba = point_data_array.GetTuple(i0 + n0*i1)
             rgbArray.SetTuple(i, rgba[:3])
 
-        vtk_poly_data.GetPointData().AddArray(rgbArray)       
+        pdata.GetPointData().AddArray(rgbArray)
+
+        return pdata       
 
     def addSurfaceFieldFromExpressionToVtkPolyData(self, vtk_poly_data, field_name, 
                                                    expression, time_points, 
