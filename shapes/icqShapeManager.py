@@ -104,6 +104,7 @@ class ShapeManager(object):
 
         # number of pixels
         n0, n1, one = imageData.GetDimensions()
+        print '*** number of pixels = ', n0, n1
         
         # box bounds
         xmin, xmax, ymin, ymax, zmin, zmax = vtk_poly_data.GetBounds()
@@ -112,7 +113,18 @@ class ShapeManager(object):
         xmid = (xmin + xmax)/2.       
         ymid = (ymin + ymax)/2.       
         zmid = (zmin + zmax)/2.
+        xlen = (xmax - xmin)
+        ylen = (ymax - ymin)
+        zlen = (zmax - zmin)
         midPos = numpy.array([xmid, ymid, zmid])
+
+        # extrude a little to ensure that the projection bos lie beyond the object
+        xmin = xmid - 0.51*xlen
+        xmax = xmid + 0.51*xlen
+        ymin = ymid - 0.51*ylen
+        ymax = ymid + 0.51*ylen
+        zmin = zmid - 0.51*zlen
+        zmax = zmid + 0.51*zlen
 
         # face normals of the box
         faceUnitVecs = [numpy.array([+1., 0., 0.]), 
@@ -147,6 +159,7 @@ class ShapeManager(object):
         # v respectively)
         d0 = n0 // 4
         d1 = n1 // 3
+        print '*** d0, d1 = ', d0, d1
         def getImageIndices(xyz):
             """
             Map a position on the object to a set of two indices 
@@ -168,7 +181,7 @@ class ShapeManager(object):
 
             # find the intersection point of the ray with the face
             ci = constIndex[faceIndex]
-            lambd = (startPos[ci] - midPos[ci])/(direction[ci] + 1.e-8)
+            lambd = (startPos[ci] - midPos[ci])/direction[ci]
             projectedPoint = midPos + lambd*direction
 
             # global tile indices, the tiles are arranged in staircase fashion
@@ -182,6 +195,7 @@ class ShapeManager(object):
             # the image indices
             i0, i1 = tileI*d0 + j0, tileJ*d1 + j1
 
+            print '..... i0, i1 = ', i0, i1
             return i0, i1
         
         # set the colors from the texture file
