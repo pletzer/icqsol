@@ -18,7 +18,7 @@ setup(name='icqsol',
                         'http://github.com/pletzer/pycsg/tarball/master#egg=pycsg-0.2.1',
       ],
       package_dir = {'icqsol': ''}, # the present working directory maps to icqsol below
-      data_files = [('textures', ['textures/Swietenia_macrophylla_wood.jpg',
+      data_files = [('icqsol/textures', ['textures/Swietenia_macrophylla_wood.jpg',
                                   'textures/220px-COnglomerate-sandstone_layers_Nerriga.jpg',
                                   'textures/checkerboard.png',])],
       packages=['icqsol',
