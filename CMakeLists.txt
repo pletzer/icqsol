@@ -170,13 +170,29 @@ add_test(NAME testCompositeRemoval
          --shapeTuples "a, testPrimitiveSphere.vtk" "b, testPrimitiveCylinder.ply"
          --compose "a - b"
          --output testCompositeRemoval.vtk)
-add_test(NAME textAddTexturePng
+add_test(NAME textAddTextureCheckerboard
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/addTexture.py" 
          --texture "${CMAKE_SOURCE_DIR}/textures/checkerboard.png"
          --maxedge 0.1
          --input testPrimitiveBox.vtk 
-         --output testPrimitiveBoxWithTexture.vtk
+         --output testPrimitiveBoxCheckerboard.vtk
+         --ascii)
+add_test(NAME textAddTextureWood
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addTexture.py" 
+         --texture "${CMAKE_SOURCE_DIR}/textures/Swietenia_macrophylla_wood.jpg"
+         --maxedge 0.1
+         --input testPrimitiveBox.vtk 
+         --output testPrimitiveBoxWood.vtk
+         --ascii)
+add_test(NAME textAddTextureStone
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addTexture.py" 
+         --texture "${CMAKE_SOURCE_DIR}/textures/220px-COnglomerate-sandstone_layers_Nerriga.jpg"
+         --maxedge 0.1
+         --input testPrimitiveBox.vtk 
+         --output testPrimitiveBoxStone.vtk
          --ascii)
 add_test(NAME testTranslate
          COMMAND "${PYTHON_EXECUTABLE}" 
