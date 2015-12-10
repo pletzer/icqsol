@@ -45,9 +45,13 @@ class RefineSurface:
     def refine(self, max_edge_length):
         """
         Refine each cell by adding points on edges longer than max_edge_length
-        @param max_edge_length maximum edge length
+        @param max_edge_length maximum edge length (> 0)
         @note operation is in place
         """
+
+        # no operation if max_edge_length is not strictly positive
+        if max_edge_length <= 0:
+            return
 
         # iterate over the polys
         polys = self.polydata.GetPolys()
