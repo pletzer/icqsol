@@ -245,6 +245,12 @@ add_test(NAME testRefineSurface2
          --maxedge 0.05
          --output testBoltFine2.vtk
          --ascii)
+add_test(NAME testRefineSurfaceInfiniteEdgeCondition
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/refineSurface.py"
+         --input testBoltFine.vtk
+         --output testBoltFine2.vtk
+         --ascii)
 add_test(NAME testAddSurfaceFieldFromExpressionBolt
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
