@@ -214,7 +214,7 @@ class ShapeManager(object):
             rgba = point_data_array.GetTuple(i0 + n0*i1)
             rgbArray.SetTuple(i, rgba[:3])
 
-        pdata.GetPointData().AddArray(rgbArray)
+        pdata.GetPointData().SetScalars(rgbArray)
 
         return pdata       
 
@@ -342,10 +342,10 @@ class ShapeManager(object):
                 raise NotImplementedError, \
                     'Could not find field "{0}"!'.format(field_name)
         numComps = array.GetNumberOfComponents()
-        assert field_component < numComps, "Field component should be < %d" % numComps
+        assert(field_component < numComps, "Field component should be < {0}".format(numComps))
         # Get the min/max field values.
         fmin, fmax = array.GetRange()
-        # Prepare for coloring the points.
+        # Prepare for coloring.
         rgbArray = vtk.vtkUnsignedCharArray()
         rgbArray.SetNumberOfComponents(3)
         numElements = array.GetNumberOfTuples()
