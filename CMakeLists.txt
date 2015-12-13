@@ -190,7 +190,7 @@ add_test(NAME textAddTextureStone
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/addTexture.py" 
          --texture "${CMAKE_SOURCE_DIR}/textures/220px-COnglomerate-sandstone_layers_Nerriga.jpg"
-         --maxedge 0.1
+         --maxedge 0.01
          --input testPrimitiveBox.vtk 
          --output testPrimitiveBoxStone.vtk
          --ascii)
