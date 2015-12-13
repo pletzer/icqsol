@@ -8,6 +8,7 @@ import numpy
 # We need the following to handle expressions received from callers.
 from numpy import linspace
 from math import sqrt, sin, cos, tan, log, exp, pi, asin, acos, atan, atan2, e
+
 from csg.geom import Vector, Vertex, Polygon, BSPNode
 from csg.core import CSG
 from icqShape import Box, Cone, Cylinder, Sphere
@@ -39,7 +40,9 @@ class ShapeManager(object):
             self.reader = None
             self.writer = None
         elif self.file_format == 'vtk':
-            assert self.vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str( self.vtk_dataset_type )
+            assert(self.vtk_dataset_type in
+              VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s"
+                % str(self.vtk_dataset_type))
             self.setVtkGeometryFilter()
             self.setReader(self.file_format, self.vtk_dataset_type)
             self.setWriter(self.file_format, self.vtk_dataset_type)
@@ -53,13 +56,13 @@ class ShapeManager(object):
         """
         Create a primitive shape which can be one of box, cone, cylinder or
         sphere.
-        @param type, the type of shape: box, cone, cylinder or sphere
-        @param origin, an (x,y,z) tuple consisting of float origin coordinates
-        @param lengths, (optional) an (x,y,z) tuple consisting of float length coordinates
-        @param radius, (optional) float radius
-        @param angle, (optional) float angle
-        @param n_theta, (optional) float that controls tessellation along longitude
-        @param n_phi, (optional) float that controls tessellation along latitude
+        @param type the type of shape: box, cone, cylinder or sphere
+        @param origin an (x,y,z) tuple consisting of float origin coordinates
+        @param lengths (optional) float lengths in the (x,y,z) directions
+        @param radius (optional) float radius
+        @param angle (optional) float angle
+        @param n_theta (optional) number of longitudes (if applicable)
+        @param n_phi (optional) number of latitudes (if applicable)
         """
         # Set defaults if necessary.
         if origin is None:
@@ -84,42 +87,56 @@ class ShapeManager(object):
         if type == 'sphere':
             return Sphere(radius, origin, n_theta, n_phi)
         return None
-        
-    def addTextureToVtkPolyData(self, vtk_poly_data, texture_file, 
-                                max_edge_length=float('inf')):
+
+    def addTextureToVtkPolyData(self, vtk_poly_data,
+                                texture_file,
+                                max_edge_length=float('inf'),
+                                texture_file_format=''):
         """
         Add texture to a vtkPolyData object
         @param vtk_poly_data, VTKPolyData object
         @param texture_file texture file (jpg or png)
         @param max_edge_length maximum edge length, refine if need be
+        @param texture_file_format texture file format (jpg or png)
         @return new vtkPolyDataObject
         """
 
-        # read the file
-        reader = vtk.vtkJPEGReader()
-        if texture_file.find('.png') >= 0:
-            reader = vtk.vtkPNGReader()
+        # Select the reader. The user can either explicitly set the format
+        # or the reader can be selected implicitly from the file suffix.
+        reader = None
+        if texture_file_format.lower().find('jp') >= 0 \
+             or texture_file.lower().find('.jp') > 0:
+                reader = vtk.vtkJPEGReader()
+        elif texture_file_format.lower().find('png') >= 0 \
+             or texture_file.lower().find('.png') > 0:
+                reader = vtk.vtkPNGReader()
+        if not reader:
+            msg = 'Could not choose reader from file format {0} or file name {1}'
+            raise(NotImplementedError,
+                  msg.format(texture_file_format, texture_file))
+
         reader.SetFileName(texture_file)
         reader.Update()
-            
+
         imageData = reader.GetOutput()
 
         # number of pixels
         n0, n1, one = imageData.GetDimensions()
-        
+
         # box bounds
         xmin, xmax, ymin, ymax, zmin, zmax = vtk_poly_data.GetBounds()
 
         # mid position of the box
-        xmid = (xmin + xmax)/2.       
-        ymid = (ymin + ymax)/2.       
+        xmid = (xmin + xmax)/2.
+        ymid = (ymin + ymax)/2.
         zmid = (zmin + zmax)/2.
         xlen = (xmax - xmin)
         ylen = (ymax - ymin)
         zlen = (zmax - zmin)
         midPos = numpy.array([xmid, ymid, zmid])
 
-        # extrude a little to ensure that the projection bos lie beyond the object
+        # extrude a little to ensure that the projection box
+        # lie beyond the object
         xmin = xmid - 0.51*xlen
         xmax = xmid + 0.51*xlen
         ymin = ymid - 0.51*ylen
@@ -128,17 +145,18 @@ class ShapeManager(object):
         zmax = zmid + 0.51*zlen
 
         # face normals of the box
-        faceUnitVecs = [numpy.array([+1., 0., 0.]), 
-                        numpy.array([0., +1., 0.]), 
-                        numpy.array([0., 0., +1.]), 
-                        numpy.array([-1., 0., 0.]), 
-                        numpy.array([0., -1., 0.]), 
-                        numpy.array([0., 0., -1.]),]
+        faceUnitVecs = [numpy.array([+1., 0., 0.]),
+                        numpy.array([0., +1., 0.]),
+                        numpy.array([0., 0., +1.]),
+                        numpy.array([-1., 0., 0.]),
+                        numpy.array([0., -1., 0.]),
+                        numpy.array([0., 0., -1.])]
 
-        # the index that does not vary (index where the above normals are non-zero)
+        # the index that does not vary (index where the above
+        # normals are non-zero)
         constIndex = [0, 1, 2, 0, 1, 2]
 
-        # the parametric u, v unit vector tangential to each face. u cross v 
+        # the parametric u, v unit vector tangential to each face. u cross v
         # gives the normal
         uvVecs = [(numpy.array([0., +1., 0.]), numpy.array([0., 0., +1.])),
                   (numpy.array([-1., 0., 0.]), numpy.array([0., 0., +1.])),
@@ -155,17 +173,17 @@ class ShapeManager(object):
                        numpy.array([xmin, ymin, zmax]),
                        numpy.array([xmin, ymin, zmin])]
 
-
         # d0 and d1 are the number of local indices on each tile (along u and
         # v respectively)
         d0 = n0 // 4
         d1 = n1 // 3
+
         def getImageIndices(xyz):
             """
-            Map a position on the object to a set of two indices 
+            Map a position on the object to a set of two indices
             which can be used to retrieve the color from the texture
             file
-            @param xyz a point 
+            @param xyz a point
             @return i0, i1 indices, 0 <= i0 < n0 and 0 <= i1 < n1
             """
 
@@ -173,7 +191,8 @@ class ShapeManager(object):
             direction = xyz - midPos
 
             # find  the face that is most aligned to the ray
-            faceIndex = numpy.argmax([fUnit.dot(direction) for fUnit in faceUnitVecs])
+            faceIndex = numpy.argmax([fUnit.dot(direction) for
+                                      fUnit in faceUnitVecs])
 
             uVec = uvVecs[faceIndex][0]
             vVec = uvVecs[faceIndex][1]
@@ -196,7 +215,7 @@ class ShapeManager(object):
             i0, i1 = tileI*d0 + j0, tileJ*d1 + j1
 
             return i0, i1
-        
+
         # Refine if need be.
         pdata = self.refineVtkPolyData(vtk_poly_data,
                                        max_edge_length=max_edge_length)
@@ -216,10 +235,12 @@ class ShapeManager(object):
 
         pdata.GetPointData().SetScalars(rgbArray)
 
-        return pdata       
+        return pdata
 
-    def addSurfaceFieldFromExpressionToVtkPolyData(self, vtk_poly_data, field_name, 
-                                                   expression, time_points, 
+    def addSurfaceFieldFromExpressionToVtkPolyData(self, vtk_poly_data,
+                                                   field_name,
+                                                   expression,
+                                                   time_points,
                                                    max_edge_length=float('inf'),
                                                    location='POINT'):
         """
@@ -227,7 +248,7 @@ class ShapeManager(object):
         legal variables x,y,z (shape point coordinates) and t (time).
         @param vtk_poly_data, VTKPolyData converted from shape
         @param field_name, the name of the surface field
-        @param expression, expression consisting of legal variables x, y, z, and t
+        @param expression, expression of variables x, y, z, and t
         @param time_points, list of floating point values defining
                snapshots in a time sequence
         @param max_edge_length maximum edge length, refine if need be
@@ -238,7 +259,7 @@ class ShapeManager(object):
         pdata = self.refineVtkPolyData(vtk_poly_data,
                                        max_edge_length=max_edge_length)
         # The field name cannot have spaces.
-        valid_field_name = field_name.replace( ' ', '_' )
+        valid_field_name = field_name.replace(' ', '_')
         # Get the points from the shape.
         points = pdata.GetPoints()
         num_points = points.GetNumberOfPoints()
@@ -270,7 +291,8 @@ class ShapeManager(object):
                 avrgPosition = numpy.zeros((3,), numpy.float64)
                 num_pts = ptIds.GetNumberOfIds()
                 for k in range(num_pts):
-                    avrgPosition += numpy.array(points.GetPoint(ptIds.GetId(k)))
+                    avrgPosition += numpy.array(
+                        points.GetPoint(ptIds.GetId(k)))
                 avrgPosition /= num_pts
                 x, y, z = avrgPosition
                 for j in range(num_time_points):
@@ -279,10 +301,11 @@ class ShapeManager(object):
                     data.SetComponent(i, j, field_value)
             # Add the field.
             pdata.GetCellData().AddArray(data)
-        
+
         return pdata
 
-    def addSurfaceFieldFromExpressionToShape(self, shape, field_name, expression,
+    def addSurfaceFieldFromExpressionToShape(self, shape, field_name,
+                                             expression,
                                              time_points,
                                              max_edge_length=float('inf'),
                                              location='POINT'):
@@ -290,21 +313,19 @@ class ShapeManager(object):
         Add a surface field to a shape using an expression consisting of
         legal variables x,y,z (shape point coordinates) and t (time).
         @param shape
-        @param field_name, the name of the surface field
-        @param expression, expression consisting of legal variables x, y, z, and t
-        @param time_points, list of floating point values defining
+        @param field_name the name of the surface field
+        @param expression expression consisting containing variables
+                          x, y, z, and t
+        @param time_points list of floating point values defining
                snapshots in a time sequence
         @param max_edge_length max edge length for refinement
-        @param location location of field within cell, either 'POINT' or 'CELL' 
+        @param location location of field within cell, either 'POINT' or 'CELL'
                         (capitalization does not matter)
-        @return pdata, VTKPolyData converted from shape with added surface field
+        @return pdata VTKPolyData converted from shape with added surface field
         """
-        # When we attach a surface field, we can no longer use CSG objects
-        # so this method returns just the data.
-        valid_field_name = field_name.replace( ' ', '_' )
         # Get the points from the shape.
         pdataInput = self.shapeToVTKPolyData(shape)
-            
+
         # Refine if need be.
         pdata = self.refineVtkPolyData(pdataInput,
                                        max_edge_length=max_edge_length)
@@ -319,7 +340,8 @@ class ShapeManager(object):
                           field_name='', field_component=0):
         """
         Color a selected surface field of a shape.
-        @param vtk_poly_data, data defining the shape with surface field information
+        @param vtk_poly_data data defining the shape with
+                             surface field information
         @param color_map, name of the color map to use
         @param field_name, the name of the surface field to color
         @param field_component field component
@@ -342,7 +364,8 @@ class ShapeManager(object):
                 raise NotImplementedError, \
                     'Could not find field "{0}"!'.format(field_name)
         numComps = array.GetNumberOfComponents()
-        assert(field_component < numComps, "Field component should be < {0}".format(numComps))
+        assert(field_component < numComps,
+               "Field component should be < {0}".format(numComps))
         # Get the min/max field values.
         fmin, fmax = array.GetRange()
         # Prepare for coloring.
@@ -369,7 +392,7 @@ class ShapeManager(object):
         """
         Remove vertices that are degenerate
         @param verts list of Vertex instances (input and output)
-        @param min_triangle_area minimum triangle area 
+        @param min_triangle_area minimum triangle area
         """
         numVerts = len(verts)
         if numVerts < 3:
@@ -397,12 +420,12 @@ class ShapeManager(object):
         for i in range(refine):
             s = s.refine()
         return s
-    
+
     def refineVtkPolyData(self, polydata, max_edge_length):
         """
         Refine a vtkPolyData object by adding points along cell edges
         @param polydata vtkPolyData instance
-        @param max_edge_length maximum edge length, edges smaller than 
+        @param max_edge_length maximum edge length, edges smaller than
                                this value will not be segmented
         @return vtkPolyData instance
         """
@@ -450,7 +473,7 @@ class ShapeManager(object):
         @return a subclass of a VtkData object
         """
         if not os.path.exists(file_name):
-            raise IOError, 'File {} not found'.format(file_name)
+            raise IOError, 'File {0} not found'.format(file_name)
         self.reader.SetFileName(file_name)
         self.reader.Update()
         return self.reader.GetOutput()
@@ -480,7 +503,7 @@ class ShapeManager(object):
         """
         vtk_poly_data = self.loadAsVtkPolyData(file_name)
         return self.shapeFromVTKPolyData(vtk_poly_data)
-        
+
     def rotateVtkPolyData(self, pdata, axis=(1., 0., 0.), angleDeg=0.0):
         """
         Rotate vtkPolyData object along given axis
@@ -498,10 +521,10 @@ class ShapeManager(object):
             transformFilter.SetInput(pdata)
         transformFilter.Update()
         pdata.DeepCopy(transformFilter.GetOutput())
-        
+
     def translateVtkPolyData(self, pdata, displ=(0., 0., 0.)):
         """
-        Translate vtkPolyData 
+        Translate vtkPolyData
         @param pdata vtkPolyData instance (modified on output)
         @param displ displacement vector
         """
@@ -518,7 +541,7 @@ class ShapeManager(object):
 
     def scaleVtkPolyData(self, pdata, factors=(1., 1., 1.)):
         """
-        Translate vtkPolyData 
+        Translate vtkPolyData
         @param pdata vtkPolyData instance (modified on output)
         @param amplification vector
         """
@@ -548,7 +571,8 @@ class ShapeManager(object):
         @param shape for saving
         @param file_name file name
         @param file_type either 'ascii' or 'binary'
-        @param normals resolve features (corners) and save normal vectors if True
+        @param normals resolve features (corners) and save
+                       normal vectors if True
         """
         vtk_poly_data = self.shapeToVTKPolyData(shape)
         self.saveVtkPolyData(vtk_poly_data, file_name, file_type)
@@ -560,7 +584,8 @@ class ShapeManager(object):
         @param vtk_poly_data for saving
         @param file_name file name
         @param file_type either 'ascii' or 'binary'
-        @param normals resolve features (corners) and save normal vectors if True
+        @param normals resolve features (corners) and save
+                       normal vectors if True
         """
         # compute the vertex nrmals
         if normals:
@@ -642,8 +667,9 @@ class ShapeManager(object):
         """
         Compute the vertex normals
         @param pdata vtkPolyData instance
-        @param min_feature_angle angle above which a sharp feature is detected. Additional 
-                                 points will be added to resolve the feature
+        @param min_feature_angle angle above which a sharp feature
+                                 is detected. Additional points
+                                 will be added to resolve the feature
         @return new vtkPolyData object
         """
         normalsFilter = vtk.vtkPolyDataNormals()
@@ -669,8 +695,9 @@ class ShapeManager(object):
         """
         pdata = self.shapeToVTKPolyData(shape)
         self.showVtkPolyData(pdata, windowSizeX, windowSizeY, filename)
-        
-    def showVtkPolyData(self, pdata, windowSizeX=600, windowSizeY=400, filename=''):
+
+    def showVtkPolyData(self, pdata, windowSizeX=600,
+                        windowSizeY=400, filename=''):
         """
         Show the boundary surface or write image to file
         @param pdata vtkPolyData instance
@@ -788,8 +815,8 @@ class ShapeManager(object):
     def convertToPolyData(self, vtk_data):
         """
         Convert vtk_data to vtk.vtkPolyData().
-        @param vtk_data, data whose vtk_dataset_type one of the VTK_DATASET_TYPES
-               besides POLYDATA
+        @param vtk_data data whose vtk_dataset_type is one of
+                         the VTK_DATASET_TYPES besides POLYDATA
         """
         if vtk.VTK_MAJOR_VERSION >= 6:
             self.vtk_geometry_filter.SetInputData(vtk_data)
@@ -829,7 +856,7 @@ class ShapeManager(object):
     def getReader(self):
         return self.reader
 
-    def setReader(self, file_format=None, vtk_dataset_type=None ):
+    def setReader(self, file_format=None, vtk_dataset_type=None):
         """
         Set the reader.
         @param file_format, one of vtk or ply - default to self.file_format
@@ -837,11 +864,13 @@ class ShapeManager(object):
         """
         if file_format is None:
             file_format = self.file_format
-        assert file_format in FILE_FORMATS, "Invalid file_format %s" % str( file_format )
+        assert(file_format in FILE_FORMATS,
+               "Invalid file_format %s" % str(file_format))
         if file_format == 'vtk':
             if vtk_dataset_type is None:
                 vtk_dataset_type = self.vtk_dataset_type
-            assert vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str(vtk_dataset_type)
+            assert(vtk_dataset_type in VTK_DATASET_TYPES,
+                   "Invalid vtk_dataset_type %s" % str(vtk_dataset_type))
         self.reader = self.chooseReader(file_format, vtk_dataset_type)
 
     def chooseWriter(self, file_format, vtk_dataset_type):
@@ -852,8 +881,7 @@ class ShapeManager(object):
         if file_format == 'ply':
             return vtk.vtkPLYWriter()
         # For now we'll just return the POLYDATA writer since methods work
-        # only with that vtk_dataset_type.  The rest is here for possible future
-        # use.
+        # only with that vtk_dataset_type.
         return vtk.vtkPolyDataWriter()
         if vtk_dataset_type == 'STRUCTURED_GRID':
             return vtk.vtkStructuredGridWriter()
@@ -873,11 +901,13 @@ class ShapeManager(object):
         """
         if file_format is None:
             file_format = self.file_format
-        assert file_format in FILE_FORMATS, "Invalid file_format %s" % str( file_format )
+        assert(file_format in FILE_FORMATS,
+               "Invalid file_format %s" % str(file_format))
         if file_format == 'vtk':
             if vtk_dataset_type is None:
                 vtk_dataset_type = self.vtk_dataset_type
-            assert vtk_dataset_type in VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s" % str(vtk_dataset_type)
+            assert(vtk_dataset_type in VTK_DATASET_TYPES,
+                   "Invalid vtk_dataset_type %s" % str(vtk_dataset_type))
         self.writer = self.chooseWriter(file_format, vtk_dataset_type)
 
 
@@ -886,32 +916,38 @@ def testPrimitiveShapes():
     shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
 
     # Box
-    box = shape_mgr.createShape('box', origin=(0.,  0.,  0.), lengths=(0.5,  1.,  2.))
+    box = shape_mgr.createShape('box', origin=(0.,  0.,  0.),
+                                lengths=(0.5,  1.,  2.))
     shape_mgr.saveShape(shape=box, file_name='box.vtk', file_type='ascii')
     shape_mgr.show(box)
 
     # Cone
-    con = shape_mgr.createShape('cone', radius=1.0, origin=(0.,  0.,  0.), lengths=[1., 0., 0.], n_theta=8)
+    con = shape_mgr.createShape('cone', radius=1.0, origin=(0.,  0.,  0.),
+                                lengths=[1., 0., 0.], n_theta=8)
     shape_mgr.saveShape(shape=con, file_name='con.vtk', file_type='ascii')
     shape_mgr.show(con)
 
     # Cylinder
-    cyl = shape_mgr.createShape('cylinder', radius=1.0, origin=(0., 0., 0.), lengths=(1., 0., 0.), n_theta=8)
+    cyl = shape_mgr.createShape('cylinder', radius=1.0, origin=(0., 0., 0.),
+                                lengths=(1., 0., 0.), n_theta=8)
     shape_mgr.saveShape(shape=cyl, file_name='cyl.vtk', file_type='ascii')
     shape_mgr.show(cyl)
 
     # Sphere
-    sph = shape_mgr.createShape('shpere', radius=1.0, origin=(0., 0., 0.), n_theta=8, n_phi=4)
+    sph = shape_mgr.createShape('sphere', radius=1.0, origin=(0., 0., 0.),
+                                n_theta=8, n_phi=4)
     shape_mgr.saveShape(shape=sph, file_name='sph.vtk', file_type='ascii')
     shape_mgr.show(sph)
 
 
 def testSaveLoad():
     shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
-    s = shape_mgr.createShape('shpere', radius=0.7, origin=(0., 0., 0.), n_theta=8, n_phi=4)
+    s = shape_mgr.createShape('shpere', radius=0.7, origin=(0., 0., 0.),
+                              n_theta=8, n_phi=4)
     shape_mgr.saveShape(shape=s, file_name='t.vtk', file_type='ascii')
     s2 = shape_mgr.loadAsShape('t.vtk')
-    s3 = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3), lengths=(1.1, 1.2, 1.3))
+    s3 = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3),
+                               lengths=(1.1, 1.2, 1.3))
     s4 = s2 + s3
     s4.debug()
 
@@ -920,8 +956,10 @@ def testConstructiveGeometry():
     shape_mgr = ShapeManager(file_format='ply')
     s1 = shape_mgr.createShape('sphere', radius=0.7, origin=(0., 0., 0.))
     s2 = shape_mgr.createShape('sphere', radius=0.2, origin=(0.1, 0.2, 0.3))
-    b = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3), lengths=(1.1, 1.2, 1.3))
-    c = shape_mgr.createShape('cylinder', radius=0.5, origin=(0.3, 0.4, 0.5), lengths=(1.0, 0.0, 0.0))
+    b = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3),
+                              lengths=(1.1, 1.2, 1.3))
+    c = shape_mgr.createShape('cylinder', radius=0.5, origin=(0.3, 0.4, 0.5),
+                              lengths=(1.0, 0.0, 0.0))
     geom = c*b - s2 - s1
     shape_mgr.saveShape(shape=geom, file_name='geom.ply', file_type='binary')
     geom2 = shape_mgr.loadAsShape('geom.ply')

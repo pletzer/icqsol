@@ -186,6 +186,15 @@ add_test(NAME textAddTextureWood
          --input testPrimitiveBox.vtk 
          --output testPrimitiveBoxWood.vtk
          --ascii)
+add_test(NAME textAddTextureWoodSpecifyFormat
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addTexture.py" 
+         --texture "${CMAKE_SOURCE_DIR}/textures/Swietenia_macrophylla_wood.jpg"
+         --texture_file_format jpeg
+         --maxedge 0.1
+         --input testPrimitiveBox.vtk 
+         --output testPrimitiveBoxWood2.vtk
+         --ascii)
 add_test(NAME textAddTextureStone
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/addTexture.py" 
@@ -194,6 +203,16 @@ add_test(NAME textAddTextureStone
          --input testPrimitiveBox.vtk 
          --output testPrimitiveBoxStone.vtk
          --ascii)
+# should fail because we don’t support gif format
+add_test(NAME textAddTextureGif
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addTexture.py" 
+         --texture "${CMAKE_SOURCE_DIR}/textures/sample.gif"
+         --maxedge 0.01
+         --input testPrimitiveBox.vtk 
+         --output testPrimitiveBoxGif.vtk
+         --ascii)
+set_tests_properties(textAddTextureGif PROPERTIES WILL_FAIL TRUE)
 add_test(NAME testTranslate
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/translateShape.py" 

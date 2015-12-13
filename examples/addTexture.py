@@ -23,6 +23,9 @@ parser.add_argument('--input', dest='input', default='',
 parser.add_argument('--texture', dest='texture', default='',
                     help='Specify texture file')
 
+parser.add_argument('--texture_file_format', dest='texture_file_format', default='',
+                    help='Specify texture file format (jpeg or png)')                    
+
 parser.add_argument('--ascii', dest='ascii', action='store_true',
                     help='Save data in ASCII format (default is binary)')
 
@@ -60,7 +63,9 @@ else:
     shape_mgr = ShapeManager(file_format=file_format)
 
 pdata = shape_mgr.loadAsVtkPolyData(args.input)
-pdataOut = shape_mgr.addTextureToVtkPolyData(pdata, args.texture, args.maxedge)
+pdataOut = shape_mgr.addTextureToVtkPolyData(pdata, args.texture,
+                                             args.maxedge,
+                                             args.texture_file_format)
 
 if args.output:
     shape_mgr.saveVtkPolyData(pdataOut, file_name=args.output, file_type=file_type)
