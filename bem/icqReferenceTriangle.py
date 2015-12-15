@@ -26,9 +26,7 @@ class ReferenceTriangle:
         self.normal = xbPrimeCrossxaPrime / numpy.linalg.norm(xbPrimeCrossxaPrime)
         self.r1 = numpy.linalg.norm(xbPrime)
         self.r2 = numpy.linalg.norm(xcPrime)
-        self.bigTheta = math.atan2(
-           numpy.linalg.norm(xbPrimeCrossxaPrime), 
-           math.sqrt(xbPrime.dot(xcPrime)))
+        self.bigTheta = math.atan2(numpy.linalg.norm(xbPrimeCrossxaPrime), xbPrime.dot(xcPrime))
         self.a = (self.r2*math.cos(self.bigTheta) - self.r1) / \
                  self.r2/math.sin(self.bigTheta)
 
@@ -69,11 +67,32 @@ class ReferenceTriangle:
 ##########################################################################
 
 def test1():
+    # simple, right-angle triangle
     rt = ReferenceTriangle([0., 0., 0.], [1., 0., 0.], [0., 2., 0.])
     assert(abs(rt.getR1() - 1.0) < 1.e-10)
     assert(abs(rt.getR2() - 2.0) < 1.e-10)
     assert(abs(rt.getA() + 1.0/2.0) < 1.e-10)
     assert(abs(rt.getBigTheta() - math.pi/2.0) < 1.e-10)
+    assert(abs(rt.getElevation([1., 2., 10.]) - 10.) < 1.e-10)
+
+def test2():
+    # triangle with offset
+    rt = ReferenceTriangle([10., 20., 30.], [11., 20., 30.], [10., 22., 30.])
+    assert(abs(rt.getR1() - 1.0) < 1.e-10)
+    assert(abs(rt.getR2() - 2.0) < 1.e-10)
+    assert(abs(rt.getA() + 1.0/2.0) < 1.e-10)
+    assert(abs(rt.getBigTheta() - math.pi/2.0) < 1.e-10)
+    assert(abs(rt.getElevation([1., 2., 40.]) - 10.) < 1.e-10)
+
+def test3():
+    # big angle
+    rt = ReferenceTriangle([10., 20., 30.], [11., 20., 30.], [9.0, 22., 30.])
+    assert(abs(rt.getR1() - 1.0) < 1.e-10)
+    assert(abs(rt.getR2() - math.sqrt(5.)) < 1.e-10)
+    assert(abs(rt.getA() + 1.0) < 1.e-10)
+    assert(abs(rt.getBigTheta() - (math.pi/2.0 + math.atan2(1., 2.))) < 1.e-10)
 
 if __name__ == '__main__':
     test1()
+    test2()
+    test3()
