@@ -7,6 +7,8 @@ http://arxiv.org/pdf/1201.4938.pdf
 import numpy
 from math import cos, sin, log, sqrt, pi, asin
 
+
+
 class PotentialIntegrals:
 
     def __init__(self, z, r1, r2, bigTheta):
@@ -27,14 +29,15 @@ class PotentialIntegrals:
         r2Square = r2**2
         cosBigTheta = cos(bigTheta)
         sinBigTheta = sin(bigTheta)
-        onePlusASquare = 1. + self.a**2
 
-        self.a = (r2*cosbigTheta - r1)/(r2*sinBigTheta)
+        self.a = (r2*cosBigTheta - r1)/(r2*sinBigTheta)
+        onePlusASquare = 1. + self.a**2
         betaSquare = (r1Square + zSquare*onePlusASquare)/onePlusASquare
 
         self.beta = sqrt(betaSquare)
         self.alphaSquare = zSquare/betaSquare
-        self.alphaPrimeSquare = 1. - self.alphaSquare)
+        self.alpha = sqrt(self.alphaSquare)
+        self.alphaPrimeSquare = 1. - self.alphaSquare
         self.alphaPrime = sqrt(self.alphaPrimeSquare)
 
         # m, n
@@ -66,18 +69,31 @@ class PotentialIntegrals:
         (1, 1, 0): lambda t: -bigDelta(t)*cos(t)/2. - self.alphaPrimeSquare*log(self.alpha*cos(t) + bigDelta(t))/2./self.alpha,
         }
 
-    def getOneOverR(self):
+    def getIntegralOneOverR(self):
         if self.z != 0:
-            return self.beta*self.bigI[1, 0, -1] - abs(self.z)*self.bigJ[0, 0]
+            lo = self.beta*self.bigI[1, 0, -1](0.) - abs(self.z)*self.bigJ[0, 0](0.)
+            hi = self.beta*self.bigI[1, 0, -1](self.bigTheta) - abs(self.z)*self.bigJ[0, 0](self.bigTheta)
+            return hi - lo
         else:
-            return self.beta*self.bigJ[0, -1]
+            lo = self.beta*self.bigJ[0, -1](0.)
+            hi = self.beta*self.bigJ[0, -1](self.bigTheta)
+            return hi - lo
 
-
-    def getOneOverRCube(self):
+    def getIntegralOneOverRCube(self):
         if self.z != 0:
-            return -self.bigI[-1, 0, 1]/self.beta + self.bigJ[0, 0]/abs(self.z)
+            lo = -self.bigI[-1, 0, 1](0.)/self.beta + self.bigJ[0, 0](0.)/abs(self.z)
+            hi = -self.bigI[-1, 0, 1](self.bigTheta)/self.beta + self.bigJ[0, 0](self.bigTheta)/abs(self.z)
+            return hi - lo
         else:
-            return -self.bigJ[0, 1]/self.beta
+            lo = -self.bigJ[0, 1](0.)/self.beta
+            hi = -self.bigJ[0, 1](self.bigTheta)/self.beta
+            return hi - lo
+
+##########################################################################
+
+def test():
+    potInt = PotentialIntegrals(0.1, 1., 1., pi/2.)
+    print potInt.getIntegralOneOverR()
 
 if __name__ == '__main__':
     test()
