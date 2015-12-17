@@ -25,15 +25,27 @@ class PotentialIntegrals:
         self.a = rt.getA()
         self.bigTheta = rt.getBigTheta()
         self.order = order
+        
+    def bigR(self, t):
+        return self.r1/(cos(t) - self.a*sin(t))
 
     def getIntegralOneOverR(self, elev):
     	def integrand(t):
-    	    return sqrt( (self.r1/(cos(t) - self.a*sin(t)))**2 + elev**2 )
+    	    return sqrt(self.bigR(t)**2 + elev**2)
     	return lineQuadrature(self.order, 0.0, self.bigTheta, integrand) \
     	       - self.bigTheta * abs(elev)
 
-    def getIntegralOneOverRCube(self, elev):
-        raise NotImplemented, 'Method getIntegralOneOverRCube is not implemented!'
+    def getIntegralMinusOneOverRCube(self, elev):
+        if elev == 0:
+            # hypersingular equation, use Hadamard's regularization
+            def integrand(t):
+                return 1./self.bigR(t)
+        else:
+            # non-zero elevation
+            def integrand(t):
+                return 1./sqrt(self.bigR(t)**2 + elev**2)
+            return lineQuadrature(self.order, 0.0, self.bigTheta, integrand) \
+    	       - self.bigTheta / abs(elev)
 
 ##########################################################################
 
