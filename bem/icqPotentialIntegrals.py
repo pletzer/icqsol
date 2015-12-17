@@ -5,95 +5,46 @@ http://arxiv.org/pdf/1201.4938.pdf
 """
 
 import numpy
-from math import cos, sin, log, sqrt, pi, asin
-
+from math import cos, sin, sqrt
+from icqReferenceTriangle import ReferenceTriangle
+from icqQuadrature1D import lineQuadrature    
 
 
 class PotentialIntegrals:
 
-    def __init__(self, z, r1, r2, bigTheta):
+    def __init__(self, xa, xb, xc, order=5):
         """
         Constructor
-        @param z distance of target normal to the triangle
-        @param r1 distance from a -> b 
-        @param r2 distance from a -> c
-        @param bigTheta angle at reference point a
+        @param xa first triangle vertex
+        @param xb second triangle vertex
+        @param xc third triangle vertex
         """
-        self.r1 = r1
-        self.r2 = r2
-        self.z = z
-        zSquare = z**2
-        self.bigTheta = bigTheta
-        
-        r1Square = r1**2
-        r2Square = r2**2
-        cosBigTheta = cos(bigTheta)
-        sinBigTheta = sin(bigTheta)
+        rt = ReferenceTriangle(xa, xb, xc)
+        self.r1 = rt.getR1()
+        self.r2 = rt.getR2()
+        self.a = rt.getA()
+        self.bigTheta = rt.getBigTheta()
+        self.order = order
 
-        self.a = (r2*cosBigTheta - r1)/(r2*sinBigTheta)
-        onePlusASquare = 1. + self.a**2
-        betaSquare = (r1Square + zSquare*onePlusASquare)/onePlusASquare
+    def getIntegralOneOverR(self, elev):
+    	def integrand(t):
+    	    return sqrt( (self.r1/(cos(t) - self.a*sin(t)))**2 + elev**2 )
+    	return lineQuadrature(self.order, 0.0, self.bigTheta, integrand) \
+    	       - self.bigTheta * abs(elev)
 
-        self.beta = sqrt(betaSquare)
-        self.alphaSquare = zSquare/betaSquare
-        self.alpha = sqrt(self.alphaSquare)
-        self.alphaPrimeSquare = 1. - self.alphaSquare
-        self.alphaPrime = sqrt(self.alphaPrimeSquare)
-
-        # m, n
-        self.bigJ = {
-        (0, 0): lambda t: t,
-        (0, -1): lambda t: log((1. + sin(t))/(1. - sin(t))),
-        (0, 1): lambda t: sin(t),
-        (1, 0): lambda t: -cos(t),
-        (0, 3): lambda t: sin(t) - sin(t)**3/3.,
-        (1, -2): lambda t: 1./cos(t),
-        (1, 2): lambda t: -cos(t)**3/3.,
-        (2, -1): lambda t: -sin(t) + log(pi/4. + t/2.),
-        }
-
-        def bigDelta(t):
-            return 1. - self.alphaSquare*sin(t)**2
-
-        # p, m, n
-        self.bigI = {
-        (-3, 0, 1): lambda t: sin(t)/bigDelta(t),
-        (-3, 1, 0): lambda t: -cos(t)/bigDelta(t)/self.alphaPrimeSquare,
-        (-3, 0, 3): lambda t: -self.alphaPrimeSquare*sin(t)/self.alphaSquare/bigDelta(t) + asin(self.alpha*sin(t))/self.alpha**3,
-        (-1, 0, 1): lambda t: asin(self.alpha*sin(t))/self.alpha,
-        (-1, 1, 0): lambda t: -log(self.alpha*cos(t) + bigDelta(t))/self.alpha,
-        (-1, 2, -1): lambda t: log((bigDelta(t) + self.alphaPrime*sin(t))/(bigDelta(t) - self.alphaPrime*sin(t)))/2./self.alphaPrime - asin(self.alpha*sin(t))/self.alpha,
-        (1, 0, -1): lambda t: self.alphaPrime*log((bigDelta(t) + self.alphaPrime*sin(t))/(bigDelta(t) - self.alphaPrime*sin(t)))/2. - self.alpha*asin(self.alpha*sin(t)),
-        (1, 2, -1): lambda t: -bigDelta(t)*sin(t)/2. + (2.*self.alphaSquare - 1.)*asin(self.alpha*sin(t))/2./self.alpha + self.alphaPrime*log((bigDelta(t) + self.alphaPrime*sin(t))/(bigDelta(t) - self.alphaPrime*sin(t)))/2.,
-        (1, 1, -2): lambda t: bigDelta(t)/cos(t) - self.alpha*log(self.alpha*cos(t) + bigDelta(t)),
-        (1, 1, 0): lambda t: -bigDelta(t)*cos(t)/2. - self.alphaPrimeSquare*log(self.alpha*cos(t) + bigDelta(t))/2./self.alpha,
-        }
-
-    def getIntegralOneOverR(self):
-        if self.z != 0:
-            lo = self.beta*self.bigI[1, 0, -1](0.) - abs(self.z)*self.bigJ[0, 0](0.)
-            hi = self.beta*self.bigI[1, 0, -1](self.bigTheta) - abs(self.z)*self.bigJ[0, 0](self.bigTheta)
-            return hi - lo
-        else:
-            lo = self.beta*self.bigJ[0, -1](0.)
-            hi = self.beta*self.bigJ[0, -1](self.bigTheta)
-            return hi - lo
-
-    def getIntegralOneOverRCube(self):
-        if self.z != 0:
-            lo = -self.bigI[-1, 0, 1](0.)/self.beta + self.bigJ[0, 0](0.)/abs(self.z)
-            hi = -self.bigI[-1, 0, 1](self.bigTheta)/self.beta + self.bigJ[0, 0](self.bigTheta)/abs(self.z)
-            return hi - lo
-        else:
-            lo = -self.bigJ[0, 1](0.)/self.beta
-            hi = -self.bigJ[0, 1](self.bigTheta)/self.beta
-            return hi - lo
+    def getIntegralOneOverRCube(self, elev):
+        raise NotImplemented, 'Method getIntegralOneOverRCube is not implemented!'
 
 ##########################################################################
 
-def test():
-    potInt = PotentialIntegrals(0.1, 1., 1., pi/2.)
-    print potInt.getIntegralOneOverR()
+def testRightTriangle():
+    for order in range(1, 6):
+        potInt = PotentialIntegrals([0., 0., 0.], 
+            [1., 0., 0.], [0., 1., 0.], order)
+        print 'order = ', order
+        for elev in (-1., -0.1, -0.01, 0.0, 0.01, 0.1, 1.):
+        	print '\telev = ', elev, \
+            ' integral of 1/R is ', potInt.getIntegralOneOverR(elev)
 
 if __name__ == '__main__':
-    test()
+    testRightTriangle()
