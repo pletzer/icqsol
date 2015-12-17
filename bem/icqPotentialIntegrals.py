@@ -6,8 +6,8 @@ http://arxiv.org/pdf/1201.4938.pdf
 
 import numpy
 from math import cos, sin, sqrt
-from icqReferenceTriangle import ReferenceTriangle
-from icqQuadrature1D import lineQuadrature    
+from icqsol.bem.icqReferenceTriangle import ReferenceTriangle
+from icqsol.bem.icqQuadrature1D import lineQuadrature    
 
 
 class PotentialIntegrals:
@@ -40,6 +40,7 @@ class PotentialIntegrals:
             # hypersingular equation, use Hadamard's regularization
             def integrand(t):
                 return 1./self.bigR(t)
+            return lineQuadrature(self.order, 0.0, self.bigTheta, integrand)
         else:
             # non-zero elevation
             def integrand(t):
