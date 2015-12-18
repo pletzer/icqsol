@@ -6,7 +6,7 @@ from icqsol.shapes.icqRefineSurface import RefineSurface
 from icqsol.bem.icqPotentialIntegrals import PotentialIntegrals
 
 
-class LaplaceMatrices:
+class LaplaceMatrices2:
 
     def __init__(self, pdata, max_edge_length, order):
         """
@@ -70,15 +70,18 @@ class LaplaceMatrices:
         pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
         pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
         pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
+        sign = -1
+        if iObs == jSrc:
+            sign = 1
         
         self.gMat[iObs, jSrc] = pot0ab.getIntegralOneOverR(elev) + \
                                 pot0bc.getIntegralOneOverR(elev) + \
-                                pot0ca.getIntegralOneOverR(elev)
+                                sign*pot0ca.getIntegralOneOverR(elev)
         self.gMat[iObs, jSrc] /= (4. * numpy.pi)
         
         self.kMat[iObs, jSrc] = pot0ab.getIntegralMinusOneOverRCube(elev) + \
                                 pot0bc.getIntegralMinusOneOverRCube(elev) + \
-                                pot0ca.getIntegralMinusOneOverRCube(elev)
+                                sign*pot0ca.getIntegralMinusOneOverRCube(elev)
         self.kMat[iObs, jSrc] *= elev/(4. * numpy.pi) # NEED TO CHECK SIGN!
 
 
@@ -152,6 +155,8 @@ class LaplaceMatrices:
 
 def test():
 
+    "Single triangle"
+
     h = 0.1
     # create set of points
     points = vtk.vtkPoints()
@@ -172,12 +177,50 @@ def test():
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
     for order in range(1, 6):
-        lslm = LaplaceMatrices(pdata,
-                               max_edge_length=1000.,
-                               order=order)
+        lslm = LaplaceMatrices2(pdata,
+                                max_edge_length=1000.,
+                                order=order)
+        print 'order = ', order
+        print 'g matrix: ', lslm.getGreenMatrix()
+        print 'k matrix: ', lslm.getNormalDerivativeGreenMatrix()
+
+def test2():
+
+    "Two triangles"
+
+    # create set of points
+    points = vtk.vtkPoints()
+    points.SetNumberOfPoints(4)
+    points.SetPoint(0, [0., 0., 0.])
+    points.SetPoint(1, [1., 0., 0.])
+    points.SetPoint(2, [0., 1., 0.])
+    points.SetPoint(3, [1., 1., 0.])
+
+    # create vtkPolyData object
+    pdata = vtk.vtkPolyData()
+    pdata.SetPoints(points)
+    
+    pdata.Allocate(2, 1)
+    ptIds = vtk.vtkIdList()
+    ptIds.SetNumberOfIds(3)
+    
+    ptIds.SetId(0, 0)
+    ptIds.SetId(1, 1)
+    ptIds.SetId(2, 2)
+    pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+    ptIds.SetId(0, 1)
+    ptIds.SetId(1, 3)
+    ptIds.SetId(2, 2)
+    pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+
+    for order in range(1, 6):
+        lslm = LaplaceMatrices2(pdata,
+                                max_edge_length=1000.,
+                                order=order)
         print 'order = ', order
         print 'g matrix: ', lslm.getGreenMatrix()
         print 'k matrix: ', lslm.getNormalDerivativeGreenMatrix()
 
 if __name__ == '__main__':
-    test()
+    #test()
+    test2()

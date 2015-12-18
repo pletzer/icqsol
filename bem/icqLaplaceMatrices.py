@@ -289,6 +289,8 @@ class LaplaceMatrices:
 
 def test():
 
+    "Single triangle"
+
     h = 0.1
     # create set of points
     points = vtk.vtkPoints()
@@ -316,5 +318,44 @@ def test():
         print 'g matrix: ', lslm.getGreenMatrix()
         print 'k matrix: ', lslm.getNormalDerivativeGreenMatrix()
 
+
+def test2():
+
+    "Two triangles"
+
+    # create set of points
+    points = vtk.vtkPoints()
+    points.SetNumberOfPoints(4)
+    points.SetPoint(0, [0., 0., 0.])
+    points.SetPoint(1, [1., 0., 0.])
+    points.SetPoint(2, [0., 1., 0.])
+    points.SetPoint(3, [1., 1., 0.])
+
+    # create vtkPolyData object
+    pdata = vtk.vtkPolyData()
+    pdata.SetPoints(points)
+    
+    pdata.Allocate(2, 1)
+    ptIds = vtk.vtkIdList()
+    ptIds.SetNumberOfIds(3)
+    
+    ptIds.SetId(0, 0)
+    ptIds.SetId(1, 1)
+    ptIds.SetId(2, 2)
+    pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+    ptIds.SetId(0, 1)
+    ptIds.SetId(1, 3)
+    ptIds.SetId(2, 2)
+    pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+
+    for order in range(1, 9):
+        lslm = LaplaceMatrices(pdata,
+                               max_edge_length=1000.,
+                               order=order, maxN=20)
+        print 'order = ', order
+        print 'g matrix: ', lslm.getGreenMatrix()
+        print 'k matrix: ', lslm.getNormalDerivativeGreenMatrix()
+
 if __name__ == '__main__':
-    test()
+    #test()
+    test2()
