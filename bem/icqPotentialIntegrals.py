@@ -9,7 +9,6 @@ from math import cos, sin, sqrt
 from icqsol.bem.icqReferenceTriangle import ReferenceTriangle
 from icqsol.bem.icqQuadrature1D import lineQuadrature    
 
-
 class PotentialIntegrals:
 
     def __init__(self, xa, xb, xc, order=5):

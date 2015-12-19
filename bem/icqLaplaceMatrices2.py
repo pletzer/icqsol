@@ -4,6 +4,21 @@ import vtk
 import numpy
 from icqsol.shapes.icqRefineSurface import RefineSurface
 from icqsol.bem.icqPotentialIntegrals import PotentialIntegrals
+from icqsol.bem.icqQuadrature import triangleQuadrature
+
+FOUR_PI = 4. * numpy.pi
+
+def getIntegralOneOverROff(xObs, paSrc, pbSrc, pcSrc, order):
+    def green(x):
+        r = xObs - x
+        return 1.0/numpy.sqrt(r.dot(r))
+    return triangleQuadrature(order, paSrc, pbSrc, pcSrc, green)
+
+def getIntegralMinusOneOverRCubeOff(xObs, paSrc, pbSrc, pcSrc, normalSrc, order):
+    def kreen(x):
+        r = xObs - x
+        return normalSrc.dot(r)/numpy.sqrt(r.dot(r))**3
+    return triangleQuadrature(order, paSrc, pbSrc, pcSrc, kreen)
 
 
 class LaplaceMatrices2:
@@ -67,23 +82,35 @@ class LaplaceMatrices2:
         normal /= numpy.linalg.norm(normal)
         elev = (xObs - paSrc).dot(normal)
         
-        pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
-        pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
-        pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
-        sign = -1
         if iObs == jSrc:
-            sign = 1
+            
+            # singular term
+            
+            pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
+            pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
+            pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
         
-        self.gMat[iObs, jSrc] = pot0ab.getIntegralOneOverR(elev) + \
-                                pot0bc.getIntegralOneOverR(elev) + \
-                                sign*pot0ca.getIntegralOneOverR(elev)
-        self.gMat[iObs, jSrc] /= (4. * numpy.pi)
+            self.gMat[iObs, jSrc] = pot0ab.getIntegralOneOverR(elev) + \
+                                    pot0bc.getIntegralOneOverR(elev) + \
+                                    pot0ca.getIntegralOneOverR(elev)
+            self.gMat[iObs, jSrc] /= FOUR_PI
         
-        self.kMat[iObs, jSrc] = pot0ab.getIntegralMinusOneOverRCube(elev) + \
-                                pot0bc.getIntegralMinusOneOverRCube(elev) + \
-                                sign*pot0ca.getIntegralMinusOneOverRCube(elev)
-        self.kMat[iObs, jSrc] *= elev/(4. * numpy.pi) # NEED TO CHECK SIGN!
+            self.kMat[iObs, jSrc] = pot0ab.getIntegralMinusOneOverRCube(elev) + \
+                                    pot0bc.getIntegralMinusOneOverRCube(elev) + \
+                                    pot0ca.getIntegralMinusOneOverRCube(elev)
+            self.kMat[iObs, jSrc] *= elev/FOUR_PI
+        
+        else:
+        
+            # off diagonal term 
 
+            self.gMat[iObs, jSrc] = getIntegralOneOverROff(xObs,
+                paSrc, pbSrc, pcSrc, self.order)
+            self.gMat[iObs, jSrc] /= FOUR_PI
+            
+            self.kMat[iObs, jSrc] = getIntegralMinusOneOverRCubeOff(xObs,
+                paSrc, pbSrc, pcSrc, normal, self.order)
+            self.kMat[iObs, jSrc] /= FOUR_PI
 
     def __computeMatrices(self):
 
@@ -123,7 +150,7 @@ class LaplaceMatrices2:
         v = numpy.zeros((n,), numpy.float64)
         # add residue
         for i in range(n):
-            kMat[i, i] += 0.5
+            kMat[i, i] -= 0.5
         
         # evaluate potential on each triangle center
         ptIds = vtk.vtkIdList()
@@ -153,7 +180,7 @@ class LaplaceMatrices2:
 ###############################################################################
 
 
-def test():
+def testSingTriangle():
 
     "Single triangle"
 
@@ -184,7 +211,7 @@ def test():
         print 'g matrix: ', lslm.getGreenMatrix()
         print 'k matrix: ', lslm.getNormalDerivativeGreenMatrix()
 
-def test2():
+def testTwoTrianglesCoplanar():
 
     "Two triangles"
 
@@ -221,6 +248,44 @@ def test2():
         print 'g matrix: ', lslm.getGreenMatrix()
         print 'k matrix: ', lslm.getNormalDerivativeGreenMatrix()
 
+def testTwoTriangles():
+
+    "Two triangles"
+
+    # create set of points
+    points = vtk.vtkPoints()
+    points.SetNumberOfPoints(4)
+    points.SetPoint(0, [0., 0., 0.])
+    points.SetPoint(1, [1., 0., 0.])
+    points.SetPoint(2, [0., 1., 0.])
+    points.SetPoint(3, [0., 0., 1.])
+
+    # create vtkPolyData object
+    pdata = vtk.vtkPolyData()
+    pdata.SetPoints(points)
+    
+    pdata.Allocate(2, 1)
+    ptIds = vtk.vtkIdList()
+    ptIds.SetNumberOfIds(3)
+    
+    ptIds.SetId(0, 0)
+    ptIds.SetId(1, 1)
+    ptIds.SetId(2, 3)
+    pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+    ptIds.SetId(0, 0)
+    ptIds.SetId(1, 3)
+    ptIds.SetId(2, 2)
+    pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+
+    for order in range(1, 6):
+        lslm = LaplaceMatrices2(pdata,
+                                max_edge_length=1000.,
+                                order=order)
+        print 'order = ', order
+        print 'g matrix: ', lslm.getGreenMatrix()
+        print 'k matrix: ', lslm.getNormalDerivativeGreenMatrix()
+
 if __name__ == '__main__':
-    #test()
-    test2()
+    #testSingleTriangle()
+    #testTwoTrianglesCoplanar()
+    testTwoTriangles()

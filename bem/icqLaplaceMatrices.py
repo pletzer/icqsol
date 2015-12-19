@@ -257,7 +257,7 @@ class LaplaceMatrices:
         v = numpy.zeros((n,), numpy.float64)
         # add residue
         for i in range(n):
-            kMat[i, i] += 0.5
+            kMat[i, i] -= 0.5
         
         # evaluate potential on each triangle center
         ptIds = vtk.vtkIdList()
