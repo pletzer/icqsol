@@ -95,10 +95,7 @@ class LaplaceMatrices2:
                                     pot0ca.getIntegralOneOverR(elev)
             self.gMat[iObs, jSrc] /= FOUR_PI
         
-            self.kMat[iObs, jSrc] = pot0ab.getIntegralMinusOneOverRCube(elev) + \
-                                    pot0bc.getIntegralMinusOneOverRCube(elev) + \
-                                    pot0ca.getIntegralMinusOneOverRCube(elev)
-            self.kMat[iObs, jSrc] *= elev/FOUR_PI
+            self.kMat[iObs, jSrc] = 0.0
         
         else:
         
@@ -118,9 +115,11 @@ class LaplaceMatrices2:
         for iObs in range(self.numTriangles):
 
             # iterate over source triangles
-            for jSrc in range(self.numTriangles):
+            for jSrc in range(iObs, self.numTriangles):
                 
                 self.__computeCoupling(iObs, jSrc)
+                self.gMat[jSrc, iObs] = self.gMat[iObs, jSrc]
+                self.kMat[jSrc, iObs] = self.kMat[iObs, jSrc]
 
     def getGreenMatrix(self):
         """
