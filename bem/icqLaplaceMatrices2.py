@@ -29,10 +29,10 @@ class LaplaceMatrices2:
         @param pdata instance of vtkPolyData
         @param max_edge_length maximum edge length, used to turn
                                polygons into triangles
-        @param order order of the expansion (in the range 1 to 8)
+        @param order order of the Gauss quadrature scheme
         """
 
-        assert(order > 0 and order <= 8)
+        assert(order > 0 and order <= 5)
 
         # triangulate
         rs = RefineSurface(pdata)
@@ -115,11 +115,12 @@ class LaplaceMatrices2:
         for iObs in range(self.numTriangles):
 
             # iterate over source triangles
-            for jSrc in range(iObs, self.numTriangles):
+            for jSrc in range(0, self.numTriangles):
+            #for jSrc in range(0, self.numTriangles):
                 
                 self.__computeCoupling(iObs, jSrc)
-                self.gMat[jSrc, iObs] = self.gMat[iObs, jSrc]
-                self.kMat[jSrc, iObs] = self.kMat[iObs, jSrc]
+                #self.gMat[jSrc, iObs] = self.gMat[iObs, jSrc]
+                #self.kMat[jSrc, iObs] = self.kMat[iObs, jSrc]
 
     def getGreenMatrix(self):
         """
@@ -147,7 +148,8 @@ class LaplaceMatrices2:
         n = kMat.shape[0]
         
         v = numpy.zeros((n,), numpy.float64)
-        # add residue
+        
+        # subtract residue
         for i in range(n):
             kMat[i, i] -= 0.5
         
@@ -173,7 +175,20 @@ class LaplaceMatrices2:
         
         # solve
         gM1 = numpy.linalg.inv(gMat)
-        return gM1.dot(kMat).dot(v)
+        
+        normalDerivative = gM1.dot(kMat).dot(v)
+        
+        # add field
+        cellData = self.pdata.GetCellData()
+        vtkData = vtk.vtkDoubleArray()
+        vtkData.SetNumberOfComponents(1)
+        vtkData.SetNumberOfTuples(n)
+        vtkData.SetName('normalDerivative')
+        for i in range(n):
+            vtkData.SetTuple(i, [normalDerivative[i],])
+        cellData.AddArray(vtkData)
+        
+        return normalDerivative 
 
 
 ###############################################################################
