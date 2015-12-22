@@ -8,7 +8,7 @@ pletzer@psu.edu
 from setuptools import setup
 
 setup(name='icqsol',
-      version='0.3.0',
+      version='0.3.1',
       description='Solving engineering problems on the web',
       author='Alex Pletzer',
       author_email='alexander@gokliya.net',

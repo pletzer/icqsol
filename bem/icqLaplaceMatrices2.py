@@ -33,6 +33,9 @@ class LaplaceMatrices2:
         """
 
         assert(order > 0 and order <= 5)
+        
+        self.normalDerivativeName = 'normal_derivative'
+        self.potentialName = 'potential'
 
         # triangulate
         rs = RefineSurface(pdata)
@@ -61,7 +64,12 @@ class LaplaceMatrices2:
         
         self.order = order
         self.__computeMatrices()
-            
+
+    def setPotentialName(self, name):
+        self.potentialName = name
+
+    def setNormalDerivativeName(self, name):
+        self.normalDerivativeName = name
 
     def __computeCoupling(self, iObs, jSrc):
                 
@@ -180,13 +188,23 @@ class LaplaceMatrices2:
         
         # add field
         cellData = self.pdata.GetCellData()
-        vtkData = vtk.vtkDoubleArray()
-        vtkData.SetNumberOfComponents(1)
-        vtkData.SetNumberOfTuples(n)
-        vtkData.SetName('normalDerivative')
+        
+        potentialData = vtk.vtkDoubleArray()
+        potentialData.SetNumberOfComponents(1)
+        potentialData.SetNumberOfTuples(n)
+        potentialData.SetName(self.potentialName)
+
+        normalDerivData = vtk.vtkDoubleArray()
+        normalDerivData.SetNumberOfComponents(1)
+        normalDerivData.SetNumberOfTuples(n)
+        normalDerivData.SetName(self.normalDerivativeName)
+
         for i in range(n):
-            vtkData.SetTuple(i, [normalDerivative[i],])
-        cellData.AddArray(vtkData)
+            potentialData.SetTuple(i, [v[i],])
+            normalDerivData.SetTuple(i, [normalDerivative[i],])
+
+        cellData.AddArray(potentialData)
+        cellData.AddArray(normalDerivData)
         
         return normalDerivative 
 
