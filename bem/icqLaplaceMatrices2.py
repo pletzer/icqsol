@@ -116,6 +116,13 @@ class LaplaceMatrices2:
             self.kMat[iObs, jSrc] = getIntegralMinusOneOverRCubeOff(xObs,
                 paSrc, pbSrc, pcSrc, normal, self.order)
             self.kMat[iObs, jSrc] /= FOUR_PI
+            
+    def getVtkPolyData(self):
+        """
+        Get the (modified) vtkPolyData object
+        @return object
+        """
+        return self.pdata
 
     def __computeMatrices(self):
 
@@ -123,12 +130,8 @@ class LaplaceMatrices2:
         for iObs in range(self.numTriangles):
 
             # iterate over source triangles
-            for jSrc in range(0, self.numTriangles):
-            #for jSrc in range(0, self.numTriangles):
-                
+            for jSrc in range(self.numTriangles):                
                 self.__computeCoupling(iObs, jSrc)
-                #self.gMat[jSrc, iObs] = self.gMat[iObs, jSrc]
-                #self.kMat[jSrc, iObs] = self.kMat[iObs, jSrc]
 
     def getGreenMatrix(self):
         """
