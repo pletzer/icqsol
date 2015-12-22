@@ -44,6 +44,7 @@ s = shape_mgr.createShape('sphere',
                           n_phi=args.n_phi)
 
 pdata = shape_mgr.shapeToVTKPolyData(s)
+
 response = LaplaceMatrices2(pdata,
                             max_edge_length=float('inf'),
                             order=args.order)

@@ -645,22 +645,27 @@ class ShapeManager(object):
         Convert shape to a VTK polydata object
         """
         verts, polys, count = shape.toVerticesAndPolygons()
-        shape.points = vtk.vtkPoints()
+
+        points = vtk.vtkPoints()
         numPoints = len(verts)
-        shape.points.SetNumberOfPoints(numPoints)
+        points.SetNumberOfPoints(numPoints)
         for i in range(numPoints):
-            shape.points.SetPoint(i, verts[i])
+            points.SetPoint(i, verts[i])
+
         pdata = vtk.vtkPolyData()
-        pdata.SetPoints(shape.points)
-        numCells = len(polys)
-        pdata.Allocate(numCells, 1)
+        pdata.SetPoints(points)
+        
+        # build the connectivity
+        numPolys = len(polys)
+        pdata.Allocate(numPolys, 1)
         ptIds = vtk.vtkIdList()
         for poly in polys:
-            npts = len(poly)
-            ptIds.SetNumberOfIds(npts)
-            for j in range(npts):
+            numPolyPts = len(poly)
+            ptIds.SetNumberOfIds(numPolyPts)
+            for j in range(numPolyPts):
                 ptIds.SetId(j, poly[j])
             pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
+
         return pdata
 
     def computeVertexNormals(self, pdata, min_feature_angle=60.0):

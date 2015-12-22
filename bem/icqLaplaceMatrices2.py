@@ -157,9 +157,10 @@ class LaplaceMatrices2:
         ptIds = vtk.vtkIdList()
         polys = self.pdata.GetPolys()
         points = self.pdata.GetPoints()
+        polys.InitTraversal()
         for i in range(n):
             
-            polys.GetCell(i, ptIds)
+            polys.GetNextCell(ptIds)
             ia, ib, ic = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
             pa = numpy.array(points.GetPoint(ia))
             pb = numpy.array(points.GetPoint(ib))
@@ -167,11 +168,10 @@ class LaplaceMatrices2:
             pMid = (pa + pb + pc)/3.
             x, y, z = pMid
             
+            # set the Dirichlet value
             v[i] = eval(dirichletExpr)
         
         gMat = self.getGreenMatrix()
-        print 'g = ', gMat
-        print 'k = ', kMat
         
         # solve
         gM1 = numpy.linalg.inv(gMat)
