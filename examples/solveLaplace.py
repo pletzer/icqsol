@@ -10,7 +10,7 @@ import re
 from numpy import linspace
 
 from icqsol.shapes.icqShapeManager import ShapeManager
-from icqsol.bem.icqLaplaceMatrices2 import LaplaceMatrices2
+from icqsol.bem.icqLaplaceMatrices import LaplaceMatrices
 from icqsol import util
 
 # time stamp
@@ -81,7 +81,7 @@ maxEdgeLength = float('inf')
 if args.refine > 0:
     maxEdgeLength = args.refine
 
-solver = LaplaceMatrices2(pdata, maxEdgeLength, order=args.order)
+solver = LaplaceMatrices(pdata, maxEdgeLength, order=args.order)
 
 # set the output field names
 solver.setPotentialName(args.input_name)
