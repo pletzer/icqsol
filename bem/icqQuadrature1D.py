@@ -33,8 +33,9 @@ def lineQuadrature(order, pa, pb, func):
     @return integral
     """
     pba = pb - pa
+    gpws = gaussPtsAndWeights[order]
     return pba * reduce(operator.add, [gpw[1]*func(pa + gpw[0]*pba) \
-        for gpw in gaussPtsAndWeights[order]])
+        for gpw in gpws])
 
 ##############################################################################
 

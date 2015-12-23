@@ -87,10 +87,12 @@ def triangleQuadrature(order, pa, pb, pc, func):
     if area == 0:
         return res
 
-    res = reduce(operator.add, [gpw[2]*func(pa + gpw[0]*pb2 + gpw[1]*pc2) \
-        for gpw in gaussPtsAndWeights[order]])
-        
-    return 0.5 * area * res
+    gpws = gaussPtsAndWeights[order]
+    funcs = numpy.array([func(pa + gpw[0]*pb2 + gpw[1]*pc2) \
+        for gpw in gpws])
+    weights = numpy.array([gpw[2] for gpw in gpws])
+    
+    return 0.5 * area * weights.dot(funcs)
 
 ##############################################################################
 
