@@ -83,8 +83,7 @@ def triangleQuadrature(order, pa, pb, pc, func):
     res = 0
     pb2 = pb - pa
     pc2 = pc - pa
-    areaVec = numpy.cross(pb2, pc2)
-    area = numpy.sqrt(areaVec.dot(areaVec))
+    area = numpy.linalg.norm(numpy.cross(pb2, pc2))
     if area == 0:
         return res
 
