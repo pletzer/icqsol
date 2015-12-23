@@ -8,16 +8,25 @@ from icqsol.bem.icqQuadrature import triangleQuadrature
 
 FOUR_PI = 4. * numpy.pi
 
-def getIntegralOneOverROff(xObs, paSrc, pbSrc, pcSrc, order):
-    def green(x):
-        r = xObs - x
+class GreenFunctor:
+    def __init__(self, xObs):
+        self.xObs = xObs
+    def __call__(self, x):
+        r = self.xObs - x
         return 1.0/numpy.sqrt(r.dot(r))
+
+class KreenFunctor:
+    def __init__(self, xObs, normalSrc):
+        self.xObs = xObs
+        self.normalSrc = normalSrc
+    def __call__(self, x):
+        r = self.xObs - x
+        return self.normalSrc.dot(r)/numpy.sqrt(r.dot(r))**3
+
+def getIntegralOneOverROff(xObs, paSrc, pbSrc, pcSrc, order, green):
     return triangleQuadrature(order, paSrc, pbSrc, pcSrc, green)
 
-def getIntegralMinusOneOverRCubeOff(xObs, paSrc, pbSrc, pcSrc, normalSrc, order):
-    def kreen(x):
-        r = xObs - x
-        return normalSrc.dot(r)/numpy.sqrt(r.dot(r))**3
+def getIntegralMinusOneOverRCubeOff(xObs, paSrc, pbSrc, pcSrc, normalSrc, order, kreen):
     return triangleQuadrature(order, paSrc, pbSrc, pcSrc, kreen)
 
 
@@ -89,6 +98,10 @@ class LaplaceMatrices:
         normal = numpy.cross(pbSrc - paSrc, pcSrc - paSrc)
         normal /= numpy.linalg.norm(normal)
         elev = (xObs - paSrc).dot(normal)
+
+        green = GreenFunctor(xObs)
+        kreen = KreenFunctor(xObs, normal)
+
         
         if iObs == jSrc:
             
@@ -110,11 +123,11 @@ class LaplaceMatrices:
             # off diagonal term 
 
             self.gMat[iObs, jSrc] = getIntegralOneOverROff(xObs,
-                paSrc, pbSrc, pcSrc, self.order)
+                paSrc, pbSrc, pcSrc, self.order, green)
             self.gMat[iObs, jSrc] /= FOUR_PI
             
             self.kMat[iObs, jSrc] = getIntegralMinusOneOverRCubeOff(xObs,
-                paSrc, pbSrc, pcSrc, normal, self.order)
+                paSrc, pbSrc, pcSrc, normal, self.order, kreen)
             self.kMat[iObs, jSrc] /= FOUR_PI
             
     def getVtkPolyData(self):
