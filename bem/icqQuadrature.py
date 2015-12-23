@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy
+import operator
 
 # from http://math2.uncc.edu/~shaodeng/TEACHING/math5172/Lectures/Lect_15.PDF
 # u, v, weight
@@ -86,12 +87,11 @@ def triangleQuadrature(order, pa, pb, pc, func):
     area = numpy.sqrt(areaVec.dot(areaVec))
     if area == 0:
         return res
-    for gpw in gaussPtsAndWeights[order]:
-        xi, eta, weight = gpw
-        x = pa + xi*pb2 + eta*pc2
-        res += weight * func(x)
-    res *= 0.5*area
-    return res
+
+    res = reduce(operator.add, [gpw[2]*func(pa + gpw[0]*pb2 + gpw[1]*pc2) \
+        for gpw in gaussPtsAndWeights[order]])
+        
+    return 0.5 * area * res
 
 ##############################################################################
 

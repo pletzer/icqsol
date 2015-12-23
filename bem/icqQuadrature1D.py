@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import operator
+
 # https://pomax.github.io/bezierinfo/legendre-gauss.html
 # u, weight
 gaussPtsAndWeights = {
@@ -30,13 +32,9 @@ def lineQuadrature(order, pa, pb, func):
     @param func function of position -> real
     @return integral
     """
-    res = 0
     pba = pb - pa
-    for gpw in gaussPtsAndWeights[order]:
-        xi, weight = gpw
-        x = pa + xi*pba
-        res += weight * func(x)
-    return res*pba
+    return pba * reduce(operator.add, [gpw[1]*func(pa + gpw[0]*pba) \
+        for gpw in gaussPtsAndWeights[order]])
 
 ##############################################################################
 
