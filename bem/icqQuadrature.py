@@ -71,31 +71,21 @@ gaussPtsAndWeights = {
         (0.00839477740996, 0.72849239295540, 0.02723031417443))),
 }
 
-def triangleQuadrature(order, pa, pb, pc, func):
+def triangleQuadrature(order, pa, pb2, pc2, func):
     """
     Compute the integral of a function over a triangle
     @param order integration order (1 <= order 8)
     @param pa first triangle vertex (3 floats)
-    @param pb second triangle vertex (3 floats)
-    @param pc third triangle vertex (3 floats)
+    @param pb vector from reference vertex to the second vertex (3 floats)
+    @param pc vector from reference vertex to the third vertex (3 floats)
     @param func function of position -> real
-    @return integral
+    @return integral (must multiply by area/2)
     """
-    res = 0
-    pb2 = pb - pa
-    pc2 = pc - pa
-    #area = numpy.linalg.norm(numpy.cross(pb2, pc2))
-    area = math.sqrt((pb2[1]*pc2[2]-pb2[2]*pc2[1])**2 + \
-                     (pb2[2]*pc2[0]-pb2[0]*pc2[2])**2 + \
-                     (pb2[0]*pc2[1]-pb2[1]*pc2[0])**2)
-    if area == 0:
-        return res
-
     gpws = gaussPtsAndWeights[order]
     npts = gpws.shape[1]
     xsis, etas, weights = gpws[0, :], gpws[1, :], gpws[2, :]
 
-    return 0.5 * area * weights.dot([func(pa + xsis[i]*pb2 + etas[i]*pc2) \
+    return weights.dot([func(pa + pb2*xsis[i] + pc2*etas[i]) \
         for i in range(npts)])
 
 ##############################################################################

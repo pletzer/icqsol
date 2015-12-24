@@ -102,7 +102,12 @@ class LaplaceMatrices:
         green = GreenFunctor(xObs)
         kreen = KreenFunctor(xObs, normal)
 
-        
+        pb2 = pbSrc - paSrc
+        pc2 = pcSrc - paSrc
+        areaSrc = numpy.sqrt((pb2[1]*pc2[2]-pb2[2]*pc2[1])**2 + \
+                             (pb2[2]*pc2[0]-pb2[0]*pc2[2])**2 + \
+                             (pb2[0]*pc2[1]-pb2[1]*pc2[0])**2)
+
         if iObs == jSrc:
             
             # singular term
@@ -123,12 +128,12 @@ class LaplaceMatrices:
             # off diagonal term 
 
             self.gMat[iObs, jSrc] = getIntegralOneOverROff(xObs,
-                paSrc, pbSrc, pcSrc, self.order, green)
-            self.gMat[iObs, jSrc] /= FOUR_PI
+                paSrc, pb2, pc2, self.order, green)
+            self.gMat[iObs, jSrc] /= 0.5 * areaSrc / FOUR_PI
             
             self.kMat[iObs, jSrc] = getIntegralMinusOneOverRCubeOff(xObs,
-                paSrc, pbSrc, pcSrc, normal, self.order, kreen)
-            self.kMat[iObs, jSrc] /= FOUR_PI
+                paSrc, pb2, pc2, normal, self.order, kreen)
+            self.kMat[iObs, jSrc] /= 0.5 * areaSrc / FOUR_PI
             
     def getVtkPolyData(self):
         """
