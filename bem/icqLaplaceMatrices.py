@@ -4,7 +4,7 @@ import vtk
 import numpy
 from icqsol.shapes.icqRefineSurface import RefineSurface
 from icqsol.bem.icqPotentialIntegrals import PotentialIntegrals
-from icqsol.bem.icqQuadrature import triangleQuadrature
+from icqsol.bem.icqQuadrature import gaussPtsAndWeights
 
 FOUR_PI = 4. * numpy.pi
 
@@ -127,12 +127,24 @@ class LaplaceMatrices:
                          / numpy.sqrt(areaSrc)
             offDiagonalOrder = min(8, max(1, int(8 * 2 / normDistance)))
 
-            self.gMat[iObs, jSrc] = getIntegralOneOverROff(xObs,
-                paSrc, pbSrc, pcSrc, offDiagonalOrder, green)
+            # Gauss quadrature
+            gpws = gaussPtsAndWeights[offDiagonalOrder]
+
+            # number of Gauss points
+            npts = gpws.shape[1]
+
+            # triangle (normalized) positions and weights
+            xsis, etas, weights = gpws[0, :], gpws[1, :], gpws[2, :]
+
+            self.gMat[iObs, jSrc] = 0.5 * areaSrc * weights.dot(\
+                [1./numpy.linalg.norm(paSrc + pb2*xsis[i] + pc2*etas[i] - xObs) \
+                for i in range(npts)])
             self.gMat[iObs, jSrc] /= FOUR_PI
             
-            self.kMat[iObs, jSrc] = getIntegralMinusOneOverRCubeOff(xObs,
-                paSrc, pbSrc, pcSrc, normal, offDiagonalOrder, kreen)
+            self.kMat[iObs, jSrc] = 0.5 * areaSrc * weights.dot(\
+                [normal.dot(xObs - paSrc + pb2*xsis[i] + pc2*etas[i]) / \
+                 numpy.linalg.norm(paSrc + pb2*xsis[i] + pc2*etas[i] - xObs)**3 \
+                 for i in range(npts)])
             self.kMat[iObs, jSrc] /= FOUR_PI
             
     def getVtkPolyData(self):
