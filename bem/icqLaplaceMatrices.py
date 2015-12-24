@@ -120,13 +120,19 @@ class LaplaceMatrices:
         else:
         
             # off diagonal term 
+            pb2 = pbSrc - paSrc
+            pc2 = pcSrc - paSrc
+            areaSrc = numpy.linalg.norm(numpy.cross(pb2, pc2))
+            normDistance = numpy.linalg.norm((paSrc + pbSrc + pcSrc)/3. - xObs) \
+                         / numpy.sqrt(areaSrc)
+            offDiagonalOrder = min(8, max(1, int(8 * 2 / normDistance)))
 
             self.gMat[iObs, jSrc] = getIntegralOneOverROff(xObs,
-                paSrc, pbSrc, pcSrc, self.order, green)
+                paSrc, pbSrc, pcSrc, offDiagonalOrder, green)
             self.gMat[iObs, jSrc] /= FOUR_PI
             
             self.kMat[iObs, jSrc] = getIntegralMinusOneOverRCubeOff(xObs,
-                paSrc, pbSrc, pcSrc, normal, self.order, kreen)
+                paSrc, pbSrc, pcSrc, normal, offDiagonalOrder, kreen)
             self.kMat[iObs, jSrc] /= FOUR_PI
             
     def getVtkPolyData(self):
