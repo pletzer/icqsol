@@ -8,28 +8,6 @@ from icqsol.bem.icqQuadrature import gaussPtsAndWeights
 
 FOUR_PI = 4. * numpy.pi
 
-class GreenFunctor:
-    def __init__(self, xObs):
-        self.xObs = xObs
-    def __call__(self, x):
-        r = self.xObs - x
-        return 1.0/numpy.sqrt(r.dot(r))
-
-class KreenFunctor:
-    def __init__(self, xObs, normalSrc):
-        self.xObs = xObs
-        self.normalSrc = normalSrc
-    def __call__(self, x):
-        r = self.xObs - x
-        return self.normalSrc.dot(r)/numpy.sqrt(r.dot(r))**3
-
-def getIntegralOneOverROff(xObs, paSrc, pbSrc, pcSrc, order, green):
-    return triangleQuadrature(order, paSrc, pbSrc, pcSrc, green)
-
-def getIntegralMinusOneOverRCubeOff(xObs, paSrc, pbSrc, pcSrc, normalSrc, order, kreen):
-    return triangleQuadrature(order, paSrc, pbSrc, pcSrc, kreen)
-
-
 class LaplaceMatrices:
 
     def __init__(self, pdata, max_edge_length, order):
@@ -99,9 +77,6 @@ class LaplaceMatrices:
         normal /= numpy.linalg.norm(normal)
         elev = (xObs - paSrc).dot(normal)
 
-        green = GreenFunctor(xObs)
-        kreen = KreenFunctor(xObs, normal)
-        
         if iObs == jSrc:
             
             # singular term
@@ -127,25 +102,25 @@ class LaplaceMatrices:
                          / numpy.sqrt(areaSrc)
             offDiagonalOrder = min(8, max(1, int(8 * 2 / normDistance)))
 
-            # Gauss quadrature
+            # Gauss quadrature weights
             gpws = gaussPtsAndWeights[offDiagonalOrder]
 
             # number of Gauss points
             npts = gpws.shape[1]
 
-            # triangle (normalized) positions and weights
+            # triangle positions and weights
             xsis, etas, weights = gpws[0, :], gpws[1, :], gpws[2, :]
-
-            self.gMat[iObs, jSrc] = 0.5 * areaSrc * weights.dot(\
-                [1./numpy.linalg.norm(paSrc + pb2*xsis[i] + pc2*etas[i] - xObs) \
-                for i in range(npts)])
-            self.gMat[iObs, jSrc] /= FOUR_PI
             
-            self.kMat[iObs, jSrc] = 0.5 * areaSrc * weights.dot(\
-                [normal.dot(xObs - paSrc + pb2*xsis[i] + pc2*etas[i]) / \
-                 numpy.linalg.norm(paSrc + pb2*xsis[i] + pc2*etas[i] - xObs)**3 \
-                 for i in range(npts)])
-            self.kMat[iObs, jSrc] /= FOUR_PI
+            self.gMat[iObs, jSrc] = 0.0
+            self.kMat[iObs, jSrc] = 0.0
+            for k in range(npts):
+                dr = xObs - paSrc - pb2*xsis[k] - pc2*etas[k]
+                drNorm = numpy.sqrt(dr.dot(dr))
+                self.gMat[iObs, jSrc] += weights[k] / drNorm
+                self.kMat[iObs, jSrc] += weights[k] * normal.dot(dr) / drNorm**3
+
+            self.gMat[iObs, jSrc] *= 0.5 * areaSrc / FOUR_PI
+            self.kMat[iObs, jSrc] *= 0.5 * areaSrc / FOUR_PI
             
     def getVtkPolyData(self):
         """
