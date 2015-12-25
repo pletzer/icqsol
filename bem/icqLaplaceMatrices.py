@@ -56,71 +56,7 @@ class LaplaceMatrices:
         self.potentialName = name
 
     def setNormalDerivativeName(self, name):
-        self.normalDerivativeName = name
-
-    def __computeCoupling(self, iObs, jSrc):
-                
-        # observer
-        cellObs = self.ptIdList[iObs]
-        paObs = numpy.array(self.points.GetPoint(cellObs[0]))
-        pbObs = numpy.array(self.points.GetPoint(cellObs[1]))
-        pcObs = numpy.array(self.points.GetPoint(cellObs[2]))
-        xObs = (paObs + pbObs + pcObs) / 3.0
-
-        # source
-        cellSrc = self.ptIdList[jSrc]
-        paSrc = numpy.array(self.points.GetPoint(cellSrc[0]))
-        pbSrc = numpy.array(self.points.GetPoint(cellSrc[1]))
-        pcSrc = numpy.array(self.points.GetPoint(cellSrc[2]))
-        
-        normal = numpy.cross(pbSrc - paSrc, pcSrc - paSrc)
-        normal /= numpy.linalg.norm(normal)
-        elev = (xObs - paSrc).dot(normal)
-
-        if iObs == jSrc:
-            
-            # singular term
-            
-            pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
-            pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
-            pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
-        
-            self.gMat[iObs, jSrc] = pot0ab.getIntegralOneOverR(elev) + \
-                                    pot0bc.getIntegralOneOverR(elev) + \
-                                    pot0ca.getIntegralOneOverR(elev)
-            self.gMat[iObs, jSrc] /= FOUR_PI
-        
-            self.kMat[iObs, jSrc] = 0.0
-        
-        else:
-        
-            # off diagonal term 
-            pb2 = pbSrc - paSrc
-            pc2 = pcSrc - paSrc
-            areaSrc = numpy.linalg.norm(numpy.cross(pb2, pc2))
-            normDistance = numpy.linalg.norm((paSrc + pbSrc + pcSrc)/3. - xObs) \
-                         / numpy.sqrt(areaSrc)
-            offDiagonalOrder = min(8, max(1, int(8 * 2 / normDistance)))
-
-            # Gauss quadrature weights
-            gpws = gaussPtsAndWeights[offDiagonalOrder]
-
-            # number of Gauss points
-            npts = gpws.shape[1]
-
-            # triangle positions and weights
-            xsis, etas, weights = gpws[0, :], gpws[1, :], gpws[2, :]
-            
-            self.gMat[iObs, jSrc] = 0.0
-            self.kMat[iObs, jSrc] = 0.0
-            for k in range(npts):
-                dr = xObs - paSrc - pb2*xsis[k] - pc2*etas[k]
-                drNorm = numpy.sqrt(dr.dot(dr))
-                self.gMat[iObs, jSrc] += weights[k] / drNorm
-                self.kMat[iObs, jSrc] += weights[k] * normal.dot(dr) / drNorm**3
-
-            self.gMat[iObs, jSrc] *= 0.5 * areaSrc / FOUR_PI
-            self.kMat[iObs, jSrc] *= 0.5 * areaSrc / FOUR_PI
+        self.normalDerivativeName = name                
             
     def getVtkPolyData(self):
         """
@@ -131,12 +67,75 @@ class LaplaceMatrices:
 
     def __computeMatrices(self):
 
-        # iterate over the observer triangles
-        for iObs in range(self.numTriangles):
+        # iterate over the source triangles
+        for jSrc in range(self.numTriangles):
 
-            # iterate over source triangles
-            for jSrc in range(self.numTriangles):                
-                self.__computeCoupling(iObs, jSrc)
+            cellSrc = self.ptIdList[jSrc]
+            paSrc = numpy.array(self.points.GetPoint(cellSrc[0]))
+            pbSrc = numpy.array(self.points.GetPoint(cellSrc[1]))
+            pcSrc = numpy.array(self.points.GetPoint(cellSrc[2]))
+        
+            normalSrc = numpy.cross(pbSrc - paSrc, pcSrc - paSrc)
+            normalSrc /= numpy.linalg.norm(normalSrc)
+
+            # iterate the observer triangles
+            for iObs in range(self.numTriangles):
+
+                cellObs = self.ptIdList[iObs]
+                paObs = numpy.array(self.points.GetPoint(cellObs[0]))
+                pbObs = numpy.array(self.points.GetPoint(cellObs[1]))
+                pcObs = numpy.array(self.points.GetPoint(cellObs[2]))
+
+                # observer is at mid point
+                xObs = (paObs + pbObs + pcObs) / 3.0
+
+                elev = (xObs - paSrc).dot(normalSrc)
+
+                if iObs == jSrc:
+            
+                    # singular term
+                    pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
+                    pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
+                    pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
+        
+                    self.gMat[iObs, jSrc] = pot0ab.getIntegralOneOverR(elev) + \
+                                    pot0bc.getIntegralOneOverR(elev) + \
+                                    pot0ca.getIntegralOneOverR(elev)
+                    self.gMat[iObs, jSrc] /= FOUR_PI
+        
+                    self.kMat[iObs, jSrc] = 0.0
+        
+                else:
+        
+                    # off diagonal term 
+                    pb2Src = pbSrc - paSrc
+                    pc2Src = pcSrc - paSrc
+                    areaSrc = numpy.linalg.norm(numpy.cross(pb2Src, pc2Src))
+            
+                    normDistance = numpy.linalg.norm((paSrc + pbSrc + pcSrc)/3. - xObs) \
+                         / numpy.sqrt(areaSrc)
+                    offDiagonalOrder = min(8, max(1, int(8 * 2 / normDistance)))
+
+                    # Gauss quadrature weights
+                    gpws = gaussPtsAndWeights[offDiagonalOrder]
+
+                    # number of Gauss points
+                    npts = gpws.shape[1]
+
+                    # triangle positions and weights
+                    xsis, etas, weights = gpws[0, :], gpws[1, :], gpws[2, :]
+            
+                    self.gMat[iObs, jSrc] = 0.0
+                    self.kMat[iObs, jSrc] = 0.0
+                    for k in range(npts):
+                        dr = xObs - paSrc - pb2Src*xsis[k] - pc2Src*etas[k]
+                        drNorm = numpy.sqrt(dr.dot(dr))
+                        self.gMat[iObs, jSrc] += weights[k] / drNorm
+                        self.kMat[iObs, jSrc] += weights[k] * normalSrc.dot(dr) / drNorm**3
+
+                    self.gMat[iObs, jSrc] *= 0.5 * areaSrc / FOUR_PI
+                    self.kMat[iObs, jSrc] *= 0.5 * areaSrc / FOUR_PI
+
 
     def getGreenMatrix(self):
         """
