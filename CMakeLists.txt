@@ -399,14 +399,22 @@ add_test(NAME testRefineWithCellField
          --output testRefineWithCellField.vtk
          --maxedge 0.1
          --ascii)
-add_test(NAME testPrimitiveBoxSolveLaplace
+add_test(NAME testPrimitiveBoxSolveLaplaceConst
          COMMAND time "${PYTHON_EXECUTABLE}"
          "${CMAKE_SOURCE_DIR}/examples/solveLaplace.py"
          --input testPrimitiveBox.vtk 
          --dirichlet "1.0" 
          --refine 0.5 --order 5 
          --input_name "v" --output_name "dv/dn" --verbose
-         --output testPrimitiveBoxSolveLaplace.vtk --ascii)
+         --output testPrimitiveBoxSolveLaplaceConst.vtk --ascii)
+add_test(NAME testPrimitiveSphereSolveLaplaceConst
+         COMMAND time "${PYTHON_EXECUTABLE}"
+         "${CMAKE_SOURCE_DIR}/examples/solveLaplace.py"
+         --input testPrimitiveSphere.vtk 
+         --dirichlet "1.0" 
+         --refine 0.5 --order 5 
+         --input_name "v" --output_name "dv/dn" --verbose
+         --output testPrimitiveSphereSolveLaplaceConst.vtk --ascii)
 add_test(NAME testPrimitiveSphereSolveLaplace
          COMMAND time "${PYTHON_EXECUTABLE}"
          "${CMAKE_SOURCE_DIR}/examples/solveLaplace.py"
