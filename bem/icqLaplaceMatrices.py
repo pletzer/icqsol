@@ -74,9 +74,12 @@ class LaplaceMatrices:
             paSrc = numpy.array(self.points.GetPoint(cellSrc[0]))
             pbSrc = numpy.array(self.points.GetPoint(cellSrc[1]))
             pcSrc = numpy.array(self.points.GetPoint(cellSrc[2]))
-        
-            normalSrc = numpy.cross(pbSrc - paSrc, pcSrc - paSrc)
-            normalSrc /= numpy.linalg.norm(normalSrc)
+
+            pb2Src = pbSrc - paSrc
+            pc2Src = pcSrc - paSrc
+            areaSrcVec = numpy.cross(pb2Src, pc2Src)
+            areaSrc = numpy.linalg.norm(areaSrcVec)
+            normalSrc = areaSrcVec / areaSrc
 
             # iterate the observer triangles
             for iObs in range(self.numTriangles):
@@ -108,12 +111,10 @@ class LaplaceMatrices:
                 else:
         
                     # off diagonal term 
-                    pb2Src = pbSrc - paSrc
-                    pc2Src = pcSrc - paSrc
-                    areaSrc = numpy.linalg.norm(numpy.cross(pb2Src, pc2Src))
             
+                    # Gauss wuadrature order estimate
                     normDistance = numpy.linalg.norm((paSrc + pbSrc + pcSrc)/3. - xObs) \
-                         / numpy.sqrt(areaSrc)
+                        / numpy.sqrt(areaSrc)
                     offDiagonalOrder = min(8, max(1, int(8 * 2 / normDistance)))
 
                     # Gauss quadrature weights
@@ -124,7 +125,7 @@ class LaplaceMatrices:
 
                     # triangle positions and weights
                     xsis, etas, weights = gpws[0, :], gpws[1, :], gpws[2, :]
-            
+
                     self.gMat[iObs, jSrc] = 0.0
                     self.kMat[iObs, jSrc] = 0.0
                     for k in range(npts):
