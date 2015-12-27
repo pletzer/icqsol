@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Solving Laplace equation
+Solve Laplace equation on sphere
 @author alexander@gokliya.net
 """
 
@@ -10,7 +10,7 @@ from icqsol.shapes.icqShapeManager import ShapeManager
 from icqsol.bem.icqLaplaceMatrices import LaplaceMatrices
 from icqsol import util
 
-description = 'Apply a surface field to a shape'
+description = 'Solve Laplace equation on sphere'
 parser = argparse.ArgumentParser(description=description)
 
 parser.add_argument('--n_theta', dest='n_theta', default=4, type=int,
