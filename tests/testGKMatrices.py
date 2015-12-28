@@ -17,18 +17,20 @@ print g
 print 'k = '
 print k
 
+gExact = numpy.array([[0.191561, 0.0378501], [0.0378501, 0.191561]])
+kExact = numpy.array([[0, -0.0344229], [-0.0344229, 0]])
 print 'g Mathematica = '
-print numpy.array([[0.191561, 0.0378501], [0.0378501, 0.191561]])
+print gExact
 print 'k Mathematica = '
-print numpy.array([[0, 0.0344229], [0.0344229, 0]])
+print kExact
+
+print 'g error = '
+print g - gExact
+print 'k error = ',
+print k - kExact
 
 print 'g^{-1} = ', numpy.linalg.inv(g)
 
 # residue
 k[0, 0] = -0.5
 k[1, 1] = -0.5
-
-normalDerivResponseMat = numpy.linalg.inv(g).dot(k)
-print 'normal deriv response = ', normalDerivResponseMat
-
-print 'normal deriv to [0, 1] = ', normalDerivResponseMat.dot([0, 1.])

@@ -87,9 +87,6 @@ solver = LaplaceMatrices(pdata, maxEdgeLength, order=args.order)
 solver.setPotentialName(args.input_name)
 solver.setNormalDerivativeName(args.output_name)
 
-# compute the response matrices
-solver.getNormalDerivativeGreenMatrix()
-
 # in place operation, pdata will be modified
 normalDeriv = solver.computeNeumannFromDirichlet(args.dirichlet)
 
@@ -100,6 +97,23 @@ if args.verbose:
     print 'normal derivative min/avg/max: {0}/{1}/{2}'.format(minNormDeriv, 
                                                               avgNormDeriv,
                                                               maxNormDeriv)
+    # compute the response matrices
+    gMat = solver.getGreenMatrix()
+    kMat = solver.getNormalDerivativeGreenMatrix()
+
+    # compute the potential
+    import numpy
+    from math import pi, sin, cos, log, exp, sqrt
+    potential = numpy.zeros(kMat.shape[0], numpy.float64)
+    pointArray = solver.getPoints()
+    cellArray = solver.getCells()
+    numCells = cellArray.shape[0]
+    for i in range(numCells):
+        ia, ib, ic = cellArray[i, :]
+        x, y, z = (pointArray[ia, :] + pointArray[ib, :] + pointArray[ic, :]) / 3.
+        potential[i] = eval(args.dirichlet)
+    error = gMat.dot(normalDeriv) - kMat.dot(potential) - 0.5*potential
+    print 'total error: ', error.sum()
 
 if args.output:
     # Always produce VTK POLYDATA.

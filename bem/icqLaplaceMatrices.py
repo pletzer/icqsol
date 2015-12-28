@@ -93,7 +93,10 @@ class LaplaceMatrices:
                 xObs = (paObs + pbObs + pcObs) / 3.0
 
                 elev = (xObs - paSrc).dot(normalSrc)
-
+                
+                self.gMat[iObs, jSrc] = 0.0
+                self.kMat[iObs, jSrc] = 0.0
+               
                 if iObs == jSrc:
             
                     # singular term
@@ -101,12 +104,12 @@ class LaplaceMatrices:
                     pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
                     pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
         
-                    self.gMat[iObs, jSrc] = pot0ab.getIntegralOneOverR(elev) + \
+                    self.gMat[iObs, jSrc] += pot0ab.getIntegralOneOverR(elev) + \
                                     pot0bc.getIntegralOneOverR(elev) + \
                                     pot0ca.getIntegralOneOverR(elev)
                     self.gMat[iObs, jSrc] /= FOUR_PI
-        
-                    self.kMat[iObs, jSrc] = 0.0
+
+                    # no contribution for kMat
         
                 else:
         
@@ -126,8 +129,6 @@ class LaplaceMatrices:
                     # triangle positions and weights
                     xsis, etas, weights = gpws[0, :], gpws[1, :], gpws[2, :]
 
-                    self.gMat[iObs, jSrc] = 0.0
-                    self.kMat[iObs, jSrc] = 0.0
                     for k in range(npts):
                         dr = xObs - paSrc - pb2Src*xsis[k] - pc2Src*etas[k]
                         drNorm = numpy.sqrt(dr.dot(dr))
@@ -152,6 +153,33 @@ class LaplaceMatrices:
         """
         return self.kMat
 
+    def getPoints(self):
+        """
+        Get grid points
+        @return points
+        """
+        points = self.pdata.GetPoints()
+        numPoints = points.GetNumberOfPoints()
+        res = numpy.zeros((numPoints, 3), numpy.float64)
+        for i in range(numPoints):
+            res[i, :] = points.GetPoint(i)
+        return res
+
+    def getCells(self):
+        """
+        Get cell connectivity
+        @return cells
+        """
+        polys = self.pdata.GetPolys()
+        numCells = polys.GetNumberOfCells()
+        res = numpy.zeros((numCells, 3), numpy.int)
+        polys.InitTraversal()
+        ptIds = vtk.vtkIdList()
+        for i in range(numCells):
+            polys.GetNextCell(ptIds)
+            res[i, :] = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
+        return res
+
     def computeNeumannFromDirichlet(self, dirichletExpr):
         """
         Get the Neumann boundary values from the Dirichlet boundary conditions
@@ -160,30 +188,22 @@ class LaplaceMatrices:
         """
         from math import pi, sin, cos, log, exp, sqrt
         
-        kMat = self.getNormalDerivativeGreenMatrix()
+        # copy the matrix
+        kMat = self.getNormalDerivativeGreenMatrix().copy()
         n = kMat.shape[0]
         
         v = numpy.zeros((n,), numpy.float64)
         
-        # subtract residue
+        # add residue. Note: Green function is 1/(4*pi*R), del^2 G = - delta
         for i in range(n):
-            kMat[i, i] -= 0.5
-        
-        # evaluate potential on each triangle center
-        ptIds = vtk.vtkIdList()
-        polys = self.pdata.GetPolys()
-        points = self.pdata.GetPoints()
-        polys.InitTraversal()
+            kMat[i, i] += 0.5
+
+        pointArray = self.getPoints()
+        cellArray = self.getCells()
+
         for i in range(n):
-            
-            polys.GetNextCell(ptIds)
-            ia, ib, ic = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
-            pa = numpy.array(points.GetPoint(ia))
-            pb = numpy.array(points.GetPoint(ib))
-            pc = numpy.array(points.GetPoint(ic))
-            pMid = (pa + pb + pc)/3.
-            x, y, z = pMid
-            
+            ia, ib, ic = cellArray[i, :]
+            x, y, z = (pointArray[ia, :] + pointArray[ib, :] + pointArray[ic, :])/3.            
             # set the Dirichlet value
             v[i] = eval(dirichletExpr)
         
@@ -193,7 +213,7 @@ class LaplaceMatrices:
         gM1 = numpy.linalg.inv(gMat)
         
         normalDerivative = gM1.dot(kMat).dot(v)
-        
+
         # add field
         cellData = self.pdata.GetCellData()
         
