@@ -405,7 +405,7 @@ add_test(NAME testPrimitiveBoxSolveLaplaceConst
          --input testPrimitiveBox.vtk 
          --dirichlet "1.0" 
          --refine 0.5 --order 5 
-         --input_name "v" --output_name "dv/dn" --verbose
+         --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveBoxSolveLaplaceConst.vtk --ascii)
 add_test(NAME testPrimitiveSphereSolveLaplaceConst
          COMMAND time "${PYTHON_EXECUTABLE}"
@@ -413,7 +413,7 @@ add_test(NAME testPrimitiveSphereSolveLaplaceConst
          --input testPrimitiveSphere.vtk 
          --dirichlet "1.0" 
          --refine 0.5 --order 5 
-         --input_name "v" --output_name "dv/dn" --verbose
+         --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveSphereSolveLaplaceConst.vtk --ascii)
 add_test(NAME testPrimitiveSphereSolveLaplace1
          COMMAND time "${PYTHON_EXECUTABLE}"
@@ -421,7 +421,7 @@ add_test(NAME testPrimitiveSphereSolveLaplace1
          --input testPrimitiveSphere.vtk 
          --dirichlet "1./sqrt(x**2 + (y-2.)**2 + (z-4.)**2)" 
          --refine 0.5 --order 5 
-         --input_name "v" --output_name "dv/dn" --verbose
+         --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveSphereSolveLaplace1.vtk --ascii)
 add_test(NAME testPrimitiveSphereSolveLaplaceOffset
          COMMAND time "${PYTHON_EXECUTABLE}"
@@ -429,7 +429,7 @@ add_test(NAME testPrimitiveSphereSolveLaplaceOffset
          --input testPrimitiveSphere.vtk 
          --dirichlet "1./sqrt((x+10.)**2 + (y-2.)**2 + (z-4.)**2)" 
          --refine 0.5 --order 5 
-         --input_name "v" --output_name "dv/dn" --verbose
+         --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveSphereSolveLaplaceOffset.vtk --ascii)
 add_test(NAME testPrimitiveSphereSolveLaplace2
          COMMAND time "${PYTHON_EXECUTABLE}"
@@ -437,6 +437,6 @@ add_test(NAME testPrimitiveSphereSolveLaplace2
          --input testPrimitiveSphere.vtk 
          --dirichlet "1.0" 
          --refine 0.5 --order 5 
-         --input_name "v" --output_name "dv/dn" --verbose
+         --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveSphereSolveLaplace2.vtk --ascii)
 
