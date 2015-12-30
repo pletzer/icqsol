@@ -55,7 +55,7 @@ class LaplaceMatrices:
         self.potentialName = name
 
     def setNormalDerivativeJumpName(self, name):
-        self.normalDerivativeJumpName             
+        self.normalDerivativeJumpName = name            
             
     def getVtkPolyData(self):
         """
