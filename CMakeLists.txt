@@ -415,14 +415,14 @@ add_test(NAME testPrimitiveSphereSolveLaplaceConst
          --refine 0.5 --order 5 
          --input_name "v" --output_name "dv/dn" --verbose
          --output testPrimitiveSphereSolveLaplaceConst.vtk --ascii)
-add_test(NAME testPrimitiveSphereSolveLaplace
+add_test(NAME testPrimitiveSphereSolveLaplace1
          COMMAND time "${PYTHON_EXECUTABLE}"
          "${CMAKE_SOURCE_DIR}/examples/solveLaplace.py"
          --input testPrimitiveSphere.vtk 
          --dirichlet "1./sqrt(x**2 + (y-2.)**2 + (z-4.)**2)" 
          --refine 0.5 --order 5 
          --input_name "v" --output_name "dv/dn" --verbose
-         --output testPrimitiveSphereSolveLaplace.vtk --ascii)
+         --output testPrimitiveSphereSolveLaplace1.vtk --ascii)
 add_test(NAME testPrimitiveSphereSolveLaplaceOffset
          COMMAND time "${PYTHON_EXECUTABLE}"
          "${CMAKE_SOURCE_DIR}/examples/solveLaplace.py"

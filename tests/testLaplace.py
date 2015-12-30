@@ -42,6 +42,6 @@ response = LaplaceMatrices(pdata,
                            order=args.order)
 
 # compute the normal electric field from the potential
-expr = '1.0/(4.*pi*sqrt(x**2 + y**2 + z**2))'
-en = response.computeNeumannFromDirichlet(expr)
-print 'normal electric field: ', en
+expr = '-1.0/(4.*pi*sqrt(x**2 + y**2 + z**2))'
+en = response.computeNeumannJumpFromDirichlet(expr)
+print 'normal electric field jump: ', en

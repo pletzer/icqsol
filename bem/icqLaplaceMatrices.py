@@ -21,7 +21,7 @@ class LaplaceMatrices:
 
         assert(order > 0 and order <= 5)
         
-        self.normalDerivativeName = 'normal_derivative'
+        self.normalDerivativeJumpName = 'normal_derivative_jump'
         self.potentialName = 'potential'
 
         # triangulate
@@ -47,7 +47,6 @@ class LaplaceMatrices:
 
         shp = (self.numTriangles, self.numTriangles)
         self.gMat = numpy.zeros(shp, numpy.float64)
-        self.kMat = numpy.zeros(shp, numpy.float64)
         
         self.order = order
         self.__computeMatrices()
@@ -55,8 +54,8 @@ class LaplaceMatrices:
     def setPotentialName(self, name):
         self.potentialName = name
 
-    def setNormalDerivativeName(self, name):
-        self.normalDerivativeName = name                
+    def setNormalDerivativeJumpName(self, name):
+        self.normalDerivativeJumpName             
             
     def getVtkPolyData(self):
         """
@@ -70,18 +69,21 @@ class LaplaceMatrices:
         # iterate over the source triangles
         for jSrc in range(self.numTriangles):
 
-            cellSrc = self.ptIdList[jSrc]
-            paSrc = numpy.array(self.points.GetPoint(cellSrc[0]))
-            pbSrc = numpy.array(self.points.GetPoint(cellSrc[1]))
-            pcSrc = numpy.array(self.points.GetPoint(cellSrc[2]))
+            ia, ib, ic = self.ptIdList[jSrc]
 
+            # The triangle vertex positions
+            paSrc = numpy.array(self.points.GetPoint(ia))
+            pbSrc = numpy.array(self.points.GetPoint(ib))
+            pcSrc = numpy.array(self.points.GetPoint(ic))
+
+            # The triangle's normal vector and area at the center of the triangle
             pb2Src = pbSrc - paSrc
             pc2Src = pcSrc - paSrc
             areaSrcVec = numpy.cross(pb2Src, pc2Src)
             areaSrc = numpy.linalg.norm(areaSrcVec)
             normalSrc = areaSrcVec / areaSrc
 
-            # iterate the observer triangles
+            # iterate over the observer triangles
             for iObs in range(self.numTriangles):
 
                 cellObs = self.ptIdList[iObs]
@@ -89,31 +91,26 @@ class LaplaceMatrices:
                 pbObs = numpy.array(self.points.GetPoint(cellObs[1]))
                 pcObs = numpy.array(self.points.GetPoint(cellObs[2]))
 
-                # observer is at mid point
+                # Observer is at mid point
                 xObs = (paObs + pbObs + pcObs) / 3.0
-
-                elev = (xObs - paSrc).dot(normalSrc)
                 
-                self.gMat[iObs, jSrc] = 0.0
-                self.kMat[iObs, jSrc] = 0.0
-               
                 if iObs == jSrc:
             
-                    # singular term
+                    # Singular term
                     pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
                     pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
                     pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
         
-                    self.gMat[iObs, jSrc] += pot0ab.getIntegralOneOverR(elev) + \
-                                    pot0bc.getIntegralOneOverR(elev) + \
-                                    pot0ca.getIntegralOneOverR(elev)
-                    self.gMat[iObs, jSrc] /= FOUR_PI
-
-                    # no contribution for kMat
+                    self.gMat[iObs, jSrc] = pot0ab.getIntegralOneOverR() + \
+                                            pot0bc.getIntegralOneOverR() + \
+                                            pot0ca.getIntegralOneOverR()
+                    self.gMat[iObs, jSrc] /= (-FOUR_PI)
         
                 else:
         
-                    # off diagonal term 
+                    #
+                    # Off diagonal term
+                    # 
             
                     # Gauss wuadrature order estimate
                     normDistance = numpy.linalg.norm((paSrc + pbSrc + pcSrc)/3. - xObs) \
@@ -133,11 +130,7 @@ class LaplaceMatrices:
                         dr = xObs - paSrc - pb2Src*xsis[k] - pc2Src*etas[k]
                         drNorm = numpy.sqrt(dr.dot(dr))
                         self.gMat[iObs, jSrc] += weights[k] / drNorm
-                        self.kMat[iObs, jSrc] += weights[k] * normalSrc.dot(dr) / drNorm**3
-
-                    self.gMat[iObs, jSrc] *= 0.5 * areaSrc / FOUR_PI
-                    self.kMat[iObs, jSrc] *= 0.5 * areaSrc / FOUR_PI
-
+                    self.gMat[iObs, jSrc] *= 0.5 * areaSrc / (-FOUR_PI)
 
     def getGreenMatrix(self):
         """
@@ -145,13 +138,6 @@ class LaplaceMatrices:
         @return matrix
         """
         return self.gMat
-
-    def getNormalDerivativeGreenMatrix(self):
-        """
-        Return the normal derivative of the Green function matrix
-        @return matrix
-        """
-        return self.kMat
 
     def getPoints(self):
         """
@@ -180,39 +166,30 @@ class LaplaceMatrices:
             res[i, :] = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
         return res
 
-    def computeNeumannFromDirichlet(self, dirichletExpr):
+    def computeNeumannJumpFromDirichlet(self, dirichletExpr):
         """
-        Get the Neumann boundary values from the Dirichlet boundary conditions
+        Get the jump of the normal potential derivative from the Dirichlet boundary conditions
         @param dirichletExpr expression for the potential values
         @return response
         """
         from math import pi, sin, cos, log, exp, sqrt
+                
         
-        # copy the matrix
-        kMat = self.getNormalDerivativeGreenMatrix().copy()
-        n = kMat.shape[0]
-        
-        v = numpy.zeros((n,), numpy.float64)
-        
-        # add residue. Note: Green function is 1/(4*pi*R), del^2 G = - delta
-        for i in range(n):
-            kMat[i, i] += 0.5
-
         pointArray = self.getPoints()
         cellArray = self.getCells()
+        n = cellArray.shape[0]
 
+        # Set the potential.
+        v = numpy.zeros((n,), numpy.float64)
         for i in range(n):
             ia, ib, ic = cellArray[i, :]
             x, y, z = (pointArray[ia, :] + pointArray[ib, :] + pointArray[ic, :])/3.            
-            # set the Dirichlet value
+            # set the value
             v[i] = eval(dirichletExpr)
         
         gMat = self.getGreenMatrix()
         
-        # solve
-        gM1 = numpy.linalg.inv(gMat)
-        
-        normalDerivative = gM1.dot(kMat).dot(v)
+        normalDerivativeJump = numpy.linalg.inv(gMat).dot(v)
 
         # add field
         cellData = self.pdata.GetCellData()
@@ -225,22 +202,24 @@ class LaplaceMatrices:
         normalDerivData = vtk.vtkDoubleArray()
         normalDerivData.SetNumberOfComponents(1)
         normalDerivData.SetNumberOfTuples(n)
-        normalDerivData.SetName(self.normalDerivativeName)
+        normalDerivData.SetName(self.normalDerivativeJumpName)
 
         for i in range(n):
             potentialData.SetTuple(i, [v[i],])
-            normalDerivData.SetTuple(i, [normalDerivative[i],])
+            normalDerivData.SetTuple(i, [normalDerivativeJump[i],])
 
         cellData.AddArray(potentialData)
         cellData.AddArray(normalDerivData)
         
-        return normalDerivative 
+        return normalDerivativeJump
+
+
 
 
 ###############################################################################
 
 
-def testSingTriangle():
+def testSingleTriangle():
 
     "Single triangle"
 
@@ -269,7 +248,6 @@ def testSingTriangle():
                                order=order)
         print 'order = ', order
         print 'g matrix: ', lslm.getGreenMatrix()
-        print 'k matrix: ', lslm.getNormalDerivativeGreenMatrix()
 
 def testTwoTrianglesCoplanar():
 
@@ -306,7 +284,6 @@ def testTwoTrianglesCoplanar():
                                order=order)
         print 'order = ', order
         print 'g matrix: ', lslm.getGreenMatrix()
-        print 'k matrix: ', lslm.getNormalDerivativeGreenMatrix()
 
 def testTwoTriangles():
 
@@ -343,9 +320,8 @@ def testTwoTriangles():
                                order=order)
         print 'order = ', order
         print 'g matrix: ', lslm.getGreenMatrix()
-        print 'k matrix: ', lslm.getNormalDerivativeGreenMatrix()
 
 if __name__ == '__main__':
-    #testSingleTriangle()
-    #testTwoTrianglesCoplanar()
+    testSingleTriangle()
+    testTwoTrianglesCoplanar()
     testTwoTriangles()

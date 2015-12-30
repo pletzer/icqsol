@@ -83,28 +83,27 @@ if args.refine > 0:
 
 solver = LaplaceMatrices(pdata, maxEdgeLength, order=args.order)
 
-# set the output field names
+# Set the output field names.
 solver.setPotentialName(args.input_name)
-solver.setNormalDerivativeName(args.output_name)
+solver.setNormalDerivativeJumpName(args.output_name)
 
-# in place operation, pdata will be modified
-normalDeriv = solver.computeNeumannFromDirichlet(args.dirichlet)
+# In place operation, pdata will be modified.
+normalDerivJump = solver.computeNeumannJumpFromDirichlet(args.dirichlet)
 
 if args.verbose:
-    minNormDeriv = min(normalDeriv)
-    maxNormDeriv = max(normalDeriv)
-    avgNormDeriv = normalDeriv.sum()/len(normalDeriv)
-    print 'normal derivative min/avg/max: {0}/{1}/{2}'.format(minNormDeriv, 
-                                                              avgNormDeriv,
-                                                              maxNormDeriv)
-    # compute the response matrices
+    minNormDerivJump = min(normalDerivJump)
+    maxNormDerivJump = max(normalDerivJump)
+    avgNormDerivJump = normalDerivJump.sum()/len(normalDerivJump)
+    print 'normal derivative jump min/avg/max: {0}/{1}/{2}'.format(minNormDerivJump, 
+                                                              avgNormDerivJump,
+                                                              maxNormDerivJump)
+    # Compute the response matrix
     gMat = solver.getGreenMatrix()
-    kMat = solver.getNormalDerivativeGreenMatrix()
 
-    # compute the potential
+    # Compute the potential
     import numpy
     from math import pi, sin, cos, log, exp, sqrt
-    potential = numpy.zeros(kMat.shape[0], numpy.float64)
+    potential = numpy.zeros(gMat.shape[0], numpy.float64)
     pointArray = solver.getPoints()
     cellArray = solver.getCells()
     numCells = cellArray.shape[0]
@@ -112,7 +111,7 @@ if args.verbose:
         ia, ib, ic = cellArray[i, :]
         x, y, z = (pointArray[ia, :] + pointArray[ib, :] + pointArray[ic, :]) / 3.
         potential[i] = eval(args.dirichlet)
-    error = gMat.dot(normalDeriv) - kMat.dot(potential) - 0.5*potential
+    error = gMat.dot(normalDerivJump) - potential
     print 'total error: ', error.sum()
 
 if args.output:

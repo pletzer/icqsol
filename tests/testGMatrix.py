@@ -18,7 +18,7 @@ n = k.shape[0]
 for i in range(n):
     k[i, i] += 0.5
 
-print 'g;:'
+print 'g:'
 print g
 
 gM1 = numpy.linalg.inv(g)
@@ -28,7 +28,7 @@ print gM1
 print 'g^{-1} * g: '
 print gM1.dot(g)
 
-print 'k - residue: '
+print 'k + residue: '
 print k
 
 print 'kres eigenvalues'

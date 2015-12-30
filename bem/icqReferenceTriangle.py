@@ -17,21 +17,45 @@ class ReferenceTriangle:
         @param xb second triangle vertex
         @param xc third triangle vertex
         """
-        self.xa = numpy.array(xa)
-        self.xb = numpy.array(xb)
-        self.xc = numpy.array(xc)
-        xbPrime = self.xb - self.xa
-        xcPrime = self.xc - self.xa
-        xbPrimeCrossxaPrime = numpy.cross(xbPrime, xcPrime)
-        self.normal = xbPrimeCrossxaPrime / \
-            numpy.linalg.norm(xbPrimeCrossxaPrime)
-        self.r1 = numpy.linalg.norm(xbPrime)
-        self.r2 = numpy.linalg.norm(xcPrime)
+
+        # triangle edge lengths
+        x0 = numpy.array(xa)
+        self.xbdiff = numpy.array(xb) - x0
+        self.xcdiff = numpy.array(xc) - x0
+
+        xbdiffCrossXcdiff = numpy.cross(self.xbdiff, self.xcdiff)
+
+        # the normal vector at the reference position
+        self.normal = xbdiffCrossXcdiff / numpy.linalg.norm(xbdiffCrossXcdiff)
+
+        # the edge length at theta = 0
+        self.r1 = numpy.linalg.norm(self.xbdiff)
+
+        # the edge length at theta = bigTheta
+        self.r2 = numpy.linalg.norm(self.xcdiff)
+
+        # the max integration angle
         self.bigTheta = math.atan2(
-            numpy.linalg.norm(xbPrimeCrossxaPrime), xbPrime.dot(xcPrime)
+            numpy.linalg.norm(xbdiffCrossXcdiff), self.xbdiff.dot(self.xcdiff)
             )
+
+        # the slope of the b-c triangle edge, x = r1 + a*y
         self.a = (self.r2*math.cos(self.bigTheta) - self.r1) / \
             self.r2/math.sin(self.bigTheta)
+
+    def getPointBDiff(self):
+        """
+        Get the difference between the second and the first vertex points
+        @return vector
+        """
+        return self.xbdiff
+
+    def getPointCDiff(self):
+        """
+        Get the difference between the third and the first vertex points
+        @return vector
+        """
+        return self.xcdiff
 
     def getR1(self):
         """
@@ -56,16 +80,10 @@ class ReferenceTriangle:
 
     def getBigTheta(self):
         """
-        Get the max theta angle
+        Get the max theta angle of integration
         @return angle in radians
         """
         return self.bigTheta
-
-    def getElevation(self, point):
-        """
-        Get the elevation of "point" above (or below) the triangle
-        """
-        return (numpy.array(point) - self.xa).dot(self.normal)
 
 ##########################################################################
 
@@ -77,7 +95,6 @@ def test1():
     assert(abs(rt.getR2() - 2.0) < 1.e-10)
     assert(abs(rt.getA() + 1.0/2.0) < 1.e-10)
     assert(abs(rt.getBigTheta() - math.pi/2.0) < 1.e-10)
-    assert(abs(rt.getElevation([1., 2., 10.]) - 10.) < 1.e-10)
 
 
 def test2():
@@ -87,7 +104,6 @@ def test2():
     assert(abs(rt.getR2() - 2.0) < 1.e-10)
     assert(abs(rt.getA() + 1.0/2.0) < 1.e-10)
     assert(abs(rt.getBigTheta() - math.pi/2.0) < 1.e-10)
-    assert(abs(rt.getElevation([1., 2., 40.]) - 10.) < 1.e-10)
 
 
 def test3():
@@ -96,7 +112,6 @@ def test3():
     assert(abs(rt.getR1() - 1.0) < 1.e-10)
     assert(abs(rt.getR2() - math.sqrt(5.)) < 1.e-10)
     assert(abs(rt.getA() + 1.0) < 1.e-10)
-    assert(abs(rt.getBigTheta() - (math.pi/2.0 + math.atan2(1., 2.))) < 1.e-10)
 
 if __name__ == '__main__':
     test1()

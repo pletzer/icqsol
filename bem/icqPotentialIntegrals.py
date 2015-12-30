@@ -17,22 +17,26 @@ class PotentialIntegrals:
         @param xa first triangle vertex
         @param xb second triangle vertex
         @param xc third triangle vertex
+        @param order Gauss integration order
         """
         rt = ReferenceTriangle(xa, xb, xc)
         self.r1 = rt.getR1()
         self.r2 = rt.getR2()
         self.a = rt.getA()
         self.bigTheta = rt.getBigTheta()
+        self.sinBigTheta = sin(self.bigTheta)
+        self.tanBigTheta = self.sinBigTheta / cos(self.bigTheta)
+        self.xbdiff = rt.getPointBDiff()
+        self.xcdiff = rt.getPointCDiff()
         self.order = order
         
     def bigR(self, t):
         return self.r1/(cos(t) - self.a*sin(t))
 
-    def getIntegralOneOverR(self, elev):
+    def getIntegralOneOverR(self):
     	def integrand(t):
-    	    return sqrt(self.bigR(t)**2 + elev**2)
-    	return lineQuadrature(self.order, 0.0, self.bigTheta, integrand) \
-    	       - self.bigTheta * abs(elev)
+    	    return self.bigR(t)
+    	return lineQuadrature(self.order, 0.0, self.bigTheta, integrand)
 
 ##########################################################################
 
@@ -40,10 +44,8 @@ def testRightTriangle():
     for order in range(1, 6):
         potInt = PotentialIntegrals([0., 0., 0.], 
             [1., 0., 0.], [0., 1., 0.], order)
-        print 'order = ', order
-        for elev in (-1., -0.1, -0.01, 0.0, 0.01, 0.1, 1.):
-        	print '\telev = ', elev, \
-            ' integral of 1/R is ', potInt.getIntegralOneOverR(elev)
+        print 'order = ', order, \
+            ' integral of 1/R is ', potInt.getIntegralOneOverR()
 
 if __name__ == '__main__':
     testRightTriangle()
