@@ -378,8 +378,6 @@ add_test(NAME testColorSurfaceFieldGnu
          --input testPrimitiveCylinderWithField.vtk
          --output testPrimitiveCylinderWithFieldColored.vtk
          --ascii)
-add_test(NAME testOutputFiles
-         COMMAND "sh" "${CMAKE_SOURCE_DIR}/checkOutput.sh")
 add_test(NAME testRemove2
          COMMAND "${PYTHON_EXECUTABLE}"
          "${CMAKE_SOURCE_DIR}/examples/composeShapes.py"
@@ -439,4 +437,6 @@ add_test(NAME testPrimitiveSphereSolveLaplace2
          --refine 0.5
          --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveSphereSolveLaplace2.vtk --ascii)
+add_test(NAME testOutputFiles
+         COMMAND "sh" "${CMAKE_SOURCE_DIR}/checkOutput.sh")
 
