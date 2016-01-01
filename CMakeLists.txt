@@ -404,7 +404,7 @@ add_test(NAME testPrimitiveBoxSolveLaplaceConst
          "${CMAKE_SOURCE_DIR}/examples/solveLaplace.py"
          --input testPrimitiveBox.vtk 
          --dirichlet "1.0" 
-         --refine 0.5 --order 5 
+         --refine 0.5 
          --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveBoxSolveLaplaceConst.vtk --ascii)
 add_test(NAME testPrimitiveSphereSolveLaplaceConst
@@ -412,7 +412,7 @@ add_test(NAME testPrimitiveSphereSolveLaplaceConst
          "${CMAKE_SOURCE_DIR}/examples/solveLaplace.py"
          --input testPrimitiveSphere.vtk 
          --dirichlet "1.0" 
-         --refine 0.5 --order 5 
+         --refine 0.5
          --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveSphereSolveLaplaceConst.vtk --ascii)
 add_test(NAME testPrimitiveSphereSolveLaplace1
@@ -420,7 +420,7 @@ add_test(NAME testPrimitiveSphereSolveLaplace1
          "${CMAKE_SOURCE_DIR}/examples/solveLaplace.py"
          --input testPrimitiveSphere.vtk 
          --dirichlet "1./sqrt(x**2 + (y-2.)**2 + (z-4.)**2)" 
-         --refine 0.5 --order 5 
+         --refine 0.5
          --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveSphereSolveLaplace1.vtk --ascii)
 add_test(NAME testPrimitiveSphereSolveLaplaceOffset
@@ -428,7 +428,7 @@ add_test(NAME testPrimitiveSphereSolveLaplaceOffset
          "${CMAKE_SOURCE_DIR}/examples/solveLaplace.py"
          --input testPrimitiveSphere.vtk 
          --dirichlet "1./sqrt((x+10.)**2 + (y-2.)**2 + (z-4.)**2)" 
-         --refine 0.5 --order 5 
+         --refine 0.5 
          --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveSphereSolveLaplaceOffset.vtk --ascii)
 add_test(NAME testPrimitiveSphereSolveLaplace2
@@ -436,7 +436,7 @@ add_test(NAME testPrimitiveSphereSolveLaplace2
          "${CMAKE_SOURCE_DIR}/examples/solveLaplace.py"
          --input testPrimitiveSphere.vtk 
          --dirichlet "1.0" 
-         --refine 0.5 --order 5 
+         --refine 0.5
          --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveSphereSolveLaplace2.vtk --ascii)
 

@@ -28,9 +28,6 @@ parser.add_argument('--dirichlet', dest='dirichlet', default='sin(pi*x)*cos(pi*y
 parser.add_argument('--refine', dest='refine', default=0.0, type=float,
                     help='Maximum edge length (use 0 if no refinement).')
                     
-parser.add_argument('--order', dest='order', default=5, type=int,
-                    help='Quadrature order (1 <= order <= 5).')
-
 parser.add_argument('--input_name', dest='input_name', default='voltage',
                     help='Set the name of the input field.')
 
@@ -48,9 +45,6 @@ parser.add_argument('--verbose', dest='verbose', action='store_true',
                     help='VTK Output file.')
 
 args = parser.parse_args()
-
-assert(args.order >= 1)
-assert(args.order <= 5)
 
 if not args.dirichlet:
     print 'ERROR: must specify --dirichlet <expression>'
@@ -81,7 +75,7 @@ maxEdgeLength = float('inf')
 if args.refine > 0:
     maxEdgeLength = args.refine
 
-solver = LaplaceMatrices(pdata, maxEdgeLength, order=args.order)
+solver = LaplaceMatrices(pdata, maxEdgeLength)
 
 # Set the output field names.
 solver.setPotentialName(args.input_name)

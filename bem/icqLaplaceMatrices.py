@@ -10,17 +10,14 @@ FOUR_PI = 4. * numpy.pi
 
 class LaplaceMatrices:
 
-    def __init__(self, pdata, max_edge_length, order):
+    def __init__(self, pdata, max_edge_length, order=5):
         """
         Constructor
         @param pdata instance of vtkPolyData
         @param max_edge_length maximum edge length, used to turn
                                polygons into triangles
-        @param order order of the Gauss quadrature scheme
         """
 
-        assert(order > 0 and order <= 5)
-        
         self.normalDerivativeJumpName = 'normal_derivative_jump'
         self.potentialName = 'potential'
 
@@ -243,9 +240,7 @@ def testSingleTriangle():
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
     for order in range(1, 6):
-        lslm = LaplaceMatrices(pdata,
-                               max_edge_length=1000.,
-                               order=order)
+        lslm = LaplaceMatrices(pdata, max_edge_length=1000.)
         print 'order = ', order
         print 'g matrix: ', lslm.getGreenMatrix()
 
