@@ -8,6 +8,7 @@ from icqsol.bem.icqQuadrature import gaussPtsAndWeights
 
 FOUR_PI = 4. * numpy.pi
 
+
 class LaplaceMatrices:
 
     def __init__(self, pdata, max_edge_length, order=5):
@@ -27,15 +28,15 @@ class LaplaceMatrices:
         self.pdata = rs.getVtkPolyData()
 
         # store the point indices for each cell
-        self.ptIdList = [] 
+        self.ptIdList = []
         ptIds = vtk.vtkIdList()
         polys = self.pdata.GetPolys()
         polys.InitTraversal()
         for i in range(polys.GetNumberOfCells()):
             polys.GetNextCell(ptIds)
             assert(ptIds.GetNumberOfIds() == 3)
-            self.ptIdList.append([ptIds.GetId(0), 
-                                  ptIds.GetId(1), 
+            self.ptIdList.append([ptIds.GetId(0),
+                                  ptIds.GetId(1),
                                   ptIds.GetId(2)])
 
         self.points = self.pdata.GetPoints()
@@ -44,7 +45,7 @@ class LaplaceMatrices:
 
         shp = (self.numTriangles, self.numTriangles)
         self.gMat = numpy.zeros(shp, numpy.float64)
-        
+
         self.order = order
         self.__computeMatrices()
 
@@ -52,8 +53,8 @@ class LaplaceMatrices:
         self.potentialName = name
 
     def setNormalDerivativeJumpName(self, name):
-        self.normalDerivativeJumpName = name            
-            
+        self.normalDerivativeJumpName = name
+
     def getVtkPolyData(self):
         """
         Get the (modified) vtkPolyData object
@@ -73,12 +74,12 @@ class LaplaceMatrices:
             pbSrc = numpy.array(self.points.GetPoint(ib))
             pcSrc = numpy.array(self.points.GetPoint(ic))
 
-            # The triangle's normal vector and area at the center of the triangle
+            # The triangle's normal vector and area at the center
+            # of the triangle
             pb2Src = pbSrc - paSrc
             pc2Src = pcSrc - paSrc
             areaSrcVec = numpy.cross(pb2Src, pc2Src)
             areaSrc = numpy.linalg.norm(areaSrcVec)
-            normalSrc = areaSrcVec / areaSrc
 
             # iterate over the observer triangles
             for iObs in range(self.numTriangles):
@@ -90,29 +91,30 @@ class LaplaceMatrices:
 
                 # Observer is at mid point
                 xObs = (paObs + pbObs + pcObs) / 3.0
-                
+
                 if iObs == jSrc:
-            
+
                     # Singular term
                     pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
                     pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
                     pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
-        
+
                     self.gMat[iObs, jSrc] = pot0ab.getIntegralOneOverR() + \
-                                            pot0bc.getIntegralOneOverR() + \
-                                            pot0ca.getIntegralOneOverR()
+                        pot0bc.getIntegralOneOverR() + \
+                        pot0ca.getIntegralOneOverR()
                     self.gMat[iObs, jSrc] /= (-FOUR_PI)
-        
+
                 else:
-        
+
                     #
                     # Off diagonal term
-                    # 
-            
+                    #
+
                     # Gauss wuadrature order estimate
                     normDistance = numpy.linalg.norm((paSrc + pbSrc + pcSrc)/3. - xObs) \
                         / numpy.sqrt(areaSrc)
-                    offDiagonalOrder = min(8, max(1, int(8 * 2 / normDistance)))
+                    offDiagonalOrder = int(8 * 2 / normDistance)
+                    offDiagonalOrder = min(8, max(1, offDiagonalOrder))
 
                     # Gauss quadrature weights
                     gpws = gaussPtsAndWeights[offDiagonalOrder]
@@ -165,13 +167,13 @@ class LaplaceMatrices:
 
     def computeNeumannJumpFromDirichlet(self, dirichletExpr):
         """
-        Get the jump of the normal potential derivative from the Dirichlet boundary conditions
+        Get the jump of the normal potential derivative from the
+        Dirichlet boundary conditions
         @param dirichletExpr expression for the potential values
         @return response
         """
         from math import pi, sin, cos, log, exp, sqrt
-                
-        
+
         pointArray = self.getPoints()
         cellArray = self.getCells()
         n = cellArray.shape[0]
@@ -180,17 +182,19 @@ class LaplaceMatrices:
         v = numpy.zeros((n,), numpy.float64)
         for i in range(n):
             ia, ib, ic = cellArray[i, :]
-            x, y, z = (pointArray[ia, :] + pointArray[ib, :] + pointArray[ic, :])/3.            
+            x, y, z = (pointArray[ia, :] +
+                       pointArray[ib, :] +
+                       pointArray[ic, :])/3.
             # set the value
             v[i] = eval(dirichletExpr)
-        
+
         gMat = self.getGreenMatrix()
-        
+
         normalDerivativeJump = numpy.linalg.inv(gMat).dot(v)
 
         # add field
         cellData = self.pdata.GetCellData()
-        
+
         potentialData = vtk.vtkDoubleArray()
         potentialData.SetNumberOfComponents(1)
         potentialData.SetNumberOfTuples(n)
@@ -202,16 +206,13 @@ class LaplaceMatrices:
         normalDerivData.SetName(self.normalDerivativeJumpName)
 
         for i in range(n):
-            potentialData.SetTuple(i, [v[i],])
-            normalDerivData.SetTuple(i, [normalDerivativeJump[i],])
+            potentialData.SetTuple(i, [v[i]])
+            normalDerivData.SetTuple(i, [normalDerivativeJump[i]])
 
         cellData.AddArray(potentialData)
         cellData.AddArray(normalDerivData)
-        
+
         return normalDerivativeJump
-
-
-
 
 ###############################################################################
 
@@ -244,6 +245,7 @@ def testSingleTriangle():
         print 'order = ', order
         print 'g matrix: ', lslm.getGreenMatrix()
 
+
 def testTwoTrianglesCoplanar():
 
     "Two triangles"
@@ -259,11 +261,11 @@ def testTwoTrianglesCoplanar():
     # create vtkPolyData object
     pdata = vtk.vtkPolyData()
     pdata.SetPoints(points)
-    
+
     pdata.Allocate(2, 1)
     ptIds = vtk.vtkIdList()
     ptIds.SetNumberOfIds(3)
-    
+
     ptIds.SetId(0, 0)
     ptIds.SetId(1, 1)
     ptIds.SetId(2, 2)
@@ -280,6 +282,7 @@ def testTwoTrianglesCoplanar():
         print 'order = ', order
         print 'g matrix: ', lslm.getGreenMatrix()
 
+
 def testTwoTriangles():
 
     "Two triangles"
@@ -295,11 +298,11 @@ def testTwoTriangles():
     # create vtkPolyData object
     pdata = vtk.vtkPolyData()
     pdata.SetPoints(points)
-    
+
     pdata.Allocate(2, 1)
     ptIds = vtk.vtkIdList()
     ptIds.SetNumberOfIds(3)
-    
+
     ptIds.SetId(0, 0)
     ptIds.SetId(1, 1)
     ptIds.SetId(2, 3)
