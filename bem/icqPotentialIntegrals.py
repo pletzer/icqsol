@@ -4,10 +4,10 @@ Analytic expressions for Laplacian singular kernel integrals
 http://arxiv.org/pdf/1201.4938.pdf
 """
 
-import numpy
-from math import cos, sin, sqrt
+from math import cos, sin
 from icqsol.bem.icqReferenceTriangle import ReferenceTriangle
-from icqsol.bem.icqQuadrature1D import lineQuadrature    
+from icqsol.bem.icqQuadrature1D import lineQuadrature
+
 
 class PotentialIntegrals:
 
@@ -29,21 +29,22 @@ class PotentialIntegrals:
         self.xbdiff = rt.getPointBDiff()
         self.xcdiff = rt.getPointCDiff()
         self.order = order
-        
+
     def bigR(self, t):
         return self.r1/(cos(t) - self.a*sin(t))
 
     def getIntegralOneOverR(self):
-    	def integrand(t):
-    	    return self.bigR(t)
-    	return lineQuadrature(self.order, 0.0, self.bigTheta, integrand)
+        def integrand(t):
+            return self.bigR(t)
+        return lineQuadrature(self.order, 0.0, self.bigTheta, integrand)
 
 ##########################################################################
 
+
 def testRightTriangle():
     for order in range(1, 6):
-        potInt = PotentialIntegrals([0., 0., 0.], 
-            [1., 0., 0.], [0., 1., 0.], order)
+        potInt = PotentialIntegrals([0., 0., 0.],
+                                    [1., 0., 0.], [0., 1., 0.], order)
         print 'order = ', order, \
             ' integral of 1/R is ', potInt.getIntegralOneOverR()
 
