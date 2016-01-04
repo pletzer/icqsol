@@ -165,11 +165,13 @@ class LaplaceMatrices:
             res[i, :] = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
         return res
 
-    def computeNeumannJumpFromDirichlet(self, dirichletExpr):
+    def computeNeumannJumpFromDirichlet(self, dirichletExpr, const=1):
         """
         Get the jump of the normal potential derivative from the
         Dirichlet boundary conditions
         @param dirichletExpr expression for the potential values
+        @param const constant multiplication factor, e.g. for the 
+                     electric const=-1
         @return response
         """
         from math import pi, sin, cos, log, exp, sqrt
@@ -190,7 +192,7 @@ class LaplaceMatrices:
 
         gMat = self.getGreenMatrix()
 
-        normalDerivativeJump = numpy.linalg.inv(gMat).dot(v)
+        normalDerivativeJump = const*numpy.linalg.inv(gMat).dot(v)
 
         # add field
         cellData = self.pdata.GetCellData()

@@ -8,9 +8,9 @@ pletzer@psu.edu
 from setuptools import setup
 
 setup(name='icqsol',
-      version='0.3.1',
+      version='0.3.2',
       description='Solving engineering problems on the web',
-      author='Alex Pletzer',
+      author='Alex Pletzer and Greg Von Kuster',
       author_email='alexander@gokliya.net',
       url='https://github.com/pletzer/icqsol/wiki',
       install_requires=['pytriangle>=1.0.6', 'pycsg>=0.2.1'],
