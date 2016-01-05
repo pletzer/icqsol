@@ -82,19 +82,18 @@ solver = LaplaceMatrices(pdata, maxEdgeLength)
 
 # Set the output field names.
 solver.setPotentialName(args.input_name)
-solver.setNormalDerivativeJumpName(args.output_name)
+solver.setNormalElectricFieldJumpName(args.output_name)
 
 # In place operation, pdata will be modified.
-normalDerivJump = solver.computeNeumannJumpFromDirichlet(args.dirichlet,
-                                                         const=-args.diffusivity)
+normalEJump = solver.computeNormalElectricFieldJump(args.dirichlet)
 
 if args.verbose:
-    minNormDerivJump = min(normalDerivJump)
-    maxNormDerivJump = max(normalDerivJump)
-    avgNormDerivJump = normalDerivJump.sum()/len(normalDerivJump)
-    print 'normal derivative jump min/avg/max: {0}/{1}/{2}'.format(minNormDerivJump, 
-                                                              avgNormDerivJump,
-                                                              maxNormDerivJump)
+    minJump = min(normalEJump)
+    maxJump = max(normalEJump)
+    avgJump = normalEJump.sum()/len(normalEJump)
+    print 'normal electric field jump min/avg/max: {0}/{1}/{2}'.format(minJump, 
+                                                                       avgJump,
+                                                                       maxJump)
     # Compute the response matrix
     gMat = solver.getGreenMatrix()
 
@@ -109,7 +108,7 @@ if args.verbose:
         ia, ib, ic = cellArray[i, :]
         x, y, z = (pointArray[ia, :] + pointArray[ib, :] + pointArray[ic, :]) / 3.
         potential[i] = eval(args.dirichlet)
-    error = gMat.dot(normalDerivJump) - potential
+    error = gMat.dot(-normalEJump) - potential
     print 'total error: ', error.sum()
 
 if args.output:

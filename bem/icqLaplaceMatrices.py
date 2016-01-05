@@ -19,7 +19,7 @@ class LaplaceMatrices:
                                polygons into triangles
         """
 
-        self.normalDerivativeJumpName = 'normal_derivative_jump'
+        self.normalEJumpName = 'normal_electric_field_jump'
         self.potentialName = 'potential'
 
         # triangulate
@@ -52,8 +52,8 @@ class LaplaceMatrices:
     def setPotentialName(self, name):
         self.potentialName = name
 
-    def setNormalDerivativeJumpName(self, name):
-        self.normalDerivativeJumpName = name
+    def setNormalElectricFieldJumpName(self, name):
+        self.normalEJumpName = name
 
     def getVtkPolyData(self):
         """
@@ -165,13 +165,11 @@ class LaplaceMatrices:
             res[i, :] = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
         return res
 
-    def computeNeumannJumpFromDirichlet(self, dirichletExpr, const=1):
+    def computeNormalElectricFieldJump(self, potentialExpr):
         """
-        Get the jump of the normal potential derivative from the
-        Dirichlet boundary conditions
-        @param dirichletExpr expression for the potential values
-        @param const constant multiplication factor, e.g. for the 
-                     electric const=-1
+        Get the jump of the normal electric field - dv/dn
+        form potential v
+        @param potentialExpr expression for the potential values
         @return response
         """
         from math import pi, sin, cos, log, exp, sqrt
@@ -188,11 +186,11 @@ class LaplaceMatrices:
                        pointArray[ib, :] +
                        pointArray[ic, :])/3.
             # set the value
-            v[i] = eval(dirichletExpr)
+            v[i] = eval(potentialExpr)
 
         gMat = self.getGreenMatrix()
 
-        normalDerivativeJump = const*numpy.linalg.inv(gMat).dot(v)
+        normalEJump = -numpy.linalg.inv(gMat).dot(v)
 
         # add field
         cellData = self.pdata.GetCellData()
@@ -202,19 +200,19 @@ class LaplaceMatrices:
         potentialData.SetNumberOfTuples(n)
         potentialData.SetName(self.potentialName)
 
-        normalDerivData = vtk.vtkDoubleArray()
-        normalDerivData.SetNumberOfComponents(1)
-        normalDerivData.SetNumberOfTuples(n)
-        normalDerivData.SetName(self.normalDerivativeJumpName)
+        normalEJumpData = vtk.vtkDoubleArray()
+        normalEJumpData.SetNumberOfComponents(1)
+        normalEJumpData.SetNumberOfTuples(n)
+        normalEJumpData.SetName(self.normalEJumpName)
 
         for i in range(n):
             potentialData.SetTuple(i, [v[i]])
-            normalDerivData.SetTuple(i, [normalDerivativeJump[i]])
+            normalEJumpData.SetTuple(i, [normalEJump[i]])
 
         cellData.AddArray(potentialData)
-        cellData.AddArray(normalDerivData)
+        cellData.AddArray(normalEJumpData)
 
-        return normalDerivativeJump
+        return normalEJump
 
 ###############################################################################
 
