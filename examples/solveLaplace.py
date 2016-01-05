@@ -25,9 +25,6 @@ parser.add_argument('--input', dest='input', default='',
 parser.add_argument('--dirichlet', dest='dirichlet', default='sin(pi*x)*cos(pi*y)*z',
                     help='Dirichlet boundary conditions, expression of x, y, and z.')
 
-parser.add_argument('--diffusivity', dest='diffusivity', default=1.0, type=float,
-                    help='Diffusion coefficient.')
-
 parser.add_argument('--refine', dest='refine', default=0.0, type=float,
                     help='Maximum edge length (use 0 if no refinement).')
                     
@@ -48,10 +45,6 @@ parser.add_argument('--verbose', dest='verbose', action='store_true',
                     help='VTK Output file.')
 
 args = parser.parse_args()
-
-if not args.dirichlet:
-    print 'ERROR: must specify --dirichlet <expression>'
-    sys.exit(2)
 
 if not args.input:
     print 'ERROR: must specify input file: --input <file>'
@@ -81,11 +74,11 @@ if args.refine > 0:
 solver = LaplaceMatrices(pdata, maxEdgeLength)
 
 # Set the output field names.
-solver.setPotentialName(args.input_name)
+solver.setPotentialFromExpression(args.dirichlet, args.input_name)
 solver.setNormalElectricFieldJumpName(args.output_name)
 
 # In place operation, pdata will be modified.
-normalEJump = solver.computeNormalElectricFieldJump(args.dirichlet)
+normalEJump = solver.computeNormalElectricFieldJump()
 
 if args.verbose:
     minJump = min(normalEJump)

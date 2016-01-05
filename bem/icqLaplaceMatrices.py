@@ -20,7 +20,6 @@ class LaplaceMatrices:
         """
 
         self.normalEJumpName = 'normal_electric_field_jump'
-        self.potentialName = 'potential'
 
         # triangulate
         rs = RefineSurface(pdata)
@@ -48,11 +47,57 @@ class LaplaceMatrices:
 
         self.order = order
         self.__computeMatrices()
+        
+    def getPotentialArrayIndexFromName(self, name):
+        """
+        Get the potential field array index from its name
+        @param name name
+        @return index >= 0 if name exists or -1 if it does not
+        """
+        cellData = self.pdata.GetCellData()
+        numArrays = cellData.GetNumberOfArrays()
+        index = -1
+        for i in range(numArrays):
+            arr = cellData.GetArray(i)
+            if arr.GetName() == name:
+                index = i
+                break
+        return index
 
-    def setPotentialName(self, name):
-        self.potentialName = name
+    def setPotentialFromExpression(self, expression, potName='v'):
+        """
+        Set the potential from expression
+        @param potName name of the potential field saved in vtkPolyData 
+        @param expression expression of x, y, and z
+        """
+        from math import sqrt, pi, sin, cos, tan, log, exp
+        
+        n = self.pdata.GetNumberOfPolys()
+        potentialData = vtk.vtkDoubleArray()
+        potentialData.SetNumberOfComponents(1)
+        potentialData.SetNumberOfTuples(n)
+        potentialData.SetName(potName)
+        midPoint = numpy.zeros((3,), numpy.float64)
+        ptIds = vtk.vtkIdList()
+        cells = self.pdata.GetPolys()
+        cells.InitTraversal()
+        for i in range(n):
+            cell = cells.GetNextCell(ptIds)
+            npts = ptIds.GetNumberOfIds()
+            midPoint *= 0
+            for j in range(npts):
+                midPoint += self.points.GetPoint(ptIds.GetId(j))
+            midPoint /= float(npts)
+            x, y, z = midPoint
+            v = eval(expression)
+            potentialData.SetTuple(i, [v])
+        self.pdata.GetCellData().AddArray(potentialData)
 
     def setNormalElectricFieldJumpName(self, name):
+        """
+        Set the name of the normal electric field jump
+        @param name name
+        """
         self.normalEJumpName = name
 
     def getVtkPolyData(self):
@@ -165,52 +210,38 @@ class LaplaceMatrices:
             res[i, :] = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
         return res
 
-    def computeNormalElectricFieldJump(self, potentialExpr):
+    def computeNormalElectricFieldJump(self, potName='v'):
         """
         Get the jump of the normal electric field - dv/dn
-        form potential v
-        @param potentialExpr expression for the potential values
+        from potential v
+        @param potName name of the potential field in the vtkPolyData object
         @return response
         """
-        from math import pi, sin, cos, log, exp, sqrt
-
-        pointArray = self.getPoints()
-        cellArray = self.getCells()
-        n = cellArray.shape[0]
+        # Has the potential been set?
+        potIndex = self.getPotentialArrayIndexFromName(potName)
+        if potIndex < 0:
+            raise RuntimeError, \
+                'ERROR: could not find any cell field named {0}!'.format(potName)
+        potArray = self.pdata.GetCellData().GetArray(potIndex)
 
         # Set the potential.
+        n = self.pdata.GetNumberOfPolys()
         v = numpy.zeros((n,), numpy.float64)
         for i in range(n):
-            ia, ib, ic = cellArray[i, :]
-            x, y, z = (pointArray[ia, :] +
-                       pointArray[ib, :] +
-                       pointArray[ic, :])/3.
-            # set the value
-            v[i] = eval(potentialExpr)
+            v[i] = potArray.GetComponent(i, 0)
 
         gMat = self.getGreenMatrix()
 
         normalEJump = -numpy.linalg.inv(gMat).dot(v)
 
-        # add field
-        cellData = self.pdata.GetCellData()
-
-        potentialData = vtk.vtkDoubleArray()
-        potentialData.SetNumberOfComponents(1)
-        potentialData.SetNumberOfTuples(n)
-        potentialData.SetName(self.potentialName)
-
+        # Add normal electric field jump
         normalEJumpData = vtk.vtkDoubleArray()
         normalEJumpData.SetNumberOfComponents(1)
         normalEJumpData.SetNumberOfTuples(n)
         normalEJumpData.SetName(self.normalEJumpName)
-
         for i in range(n):
-            potentialData.SetTuple(i, [v[i]])
             normalEJumpData.SetTuple(i, [normalEJump[i]])
-
-        cellData.AddArray(potentialData)
-        cellData.AddArray(normalEJumpData)
+        self.pdata.GetCellData().AddArray(normalEJumpData)
 
         return normalEJump
 
