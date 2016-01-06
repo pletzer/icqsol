@@ -100,7 +100,7 @@ class LaplaceMatrices:
                     cellArr.SetComponent(i, 0, (va + vb + vc)/3.)
                 # Add the cell array
                 cellData.AddArray(cellArr)
-                return self.getPotentialArrayIndexFromName(self, name)
+                return self.getPotentialArrayIndexFromName(name)
 
         return index
 
