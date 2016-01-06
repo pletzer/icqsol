@@ -76,7 +76,7 @@ class LaplaceMatrices:
         index = self.getArrayIndexFromName(cellData, name)
         if index < 0:
             # Maybe a point array?
-            index2 = self.getArrayIndexFromName(self, pointData, name)
+            index2 = self.getArrayIndexFromName(pointData, name)
 
             if index2 >= 0:
                 # Project from points to cells
