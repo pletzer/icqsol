@@ -343,6 +343,14 @@ add_test(NAME testAddSurfaceFieldFromExpression
          --input testPrimitiveCylinder.ply
          --output testPrimitiveCylinderWithField.vtk
          --ascii)
+add_test(NAME testAddSurfaceFieldFromBooleanExpression
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
+         --expression "(z/4.)*(sqrt(x**2+y**2) > 1 or (z > 2))"
+         --name "my_field"
+         --input testPrimitiveCylinder.ply
+         --output testPrimitiveCylinderWithBooleanField.vtk
+         --ascii)
 add_test(NAME testAddSurfaceFieldFromExpressionTimeDependent
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
