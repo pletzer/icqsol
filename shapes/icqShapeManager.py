@@ -190,6 +190,8 @@ class ShapeManager(object):
 
             # direction of the ray
             direction = xyz - midPos
+            # make sure it is not zero
+            direction += 1.e-10*numpy.array([1.234567, 2.3456789, 3.45678])
 
             # find  the face that is most aligned to the ray
             faceIndex = numpy.argmax([fUnit.dot(direction) for
