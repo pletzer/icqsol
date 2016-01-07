@@ -346,7 +346,7 @@ add_test(NAME testAddSurfaceFieldFromExpression
 add_test(NAME testAddSurfaceFieldFromBooleanExpression
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
-         --expression "(z/4.)*(sqrt(x**2+y**2) > 1 or (z > 2))"
+         --expression "(z/4.)*(sqrt(x**2+y**2) __gt__ 1 or (z __le__ 2))"
          --name "my_field"
          --input testPrimitiveCylinder.ply
          --output testPrimitiveCylinderWithBooleanField.vtk

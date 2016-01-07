@@ -3,6 +3,7 @@
 @brief A base class for constructing shapes
 """
 import os
+import re
 import vtk
 import numpy
 # We need the following to handle expressions received from callers.
@@ -255,6 +256,12 @@ class ShapeManager(object):
         @param location location of field within cell, either 'POINT' or 'CELL'
         @return vtkPolyData instance
         """
+        # Sometimes the received expression has been mangled.
+        for op in [('__gt__', '>'), ('__lt__', '<'),
+                   ('__ge__', '>='), ('__le__', '<='),
+                   ('__eq__', '=='), ('__ne__', '!=')]:
+        	expression = re.sub(op[0], op[1], expression)
+        
         # Refine if need be.
         pdata = self.refineVtkPolyData(vtk_poly_data,
                                        max_edge_length=max_edge_length)
