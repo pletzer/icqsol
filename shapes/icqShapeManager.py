@@ -131,19 +131,22 @@ class ShapeManager(object):
         xmid = (xmin + xmax)/2.
         ymid = (ymin + ymax)/2.
         zmid = (zmin + zmax)/2.
-        xlen = (xmax - xmin)
-        ylen = (ymax - ymin)
-        zlen = (zmax - zmin)
+        xlen = xmax - xmin
+        ylen = ymax - ymin
+        zlen = zmax - zmin
         midPos = numpy.array([xmid, ymid, zmid])
-
+        
         # extrude a little to ensure that the projection box
         # lie beyond the object
-        xmin = xmid - 0.51*xlen
-        xmax = xmid + 0.51*xlen
-        ymin = ymid - 0.51*ylen
-        ymax = ymid + 0.51*ylen
-        zmin = zmid - 0.51*zlen
-        zmax = zmid + 0.51*zlen
+        xlen *= 1.01
+        ylen *= 1.01
+        zlen *= 1.01        
+        xmin = xmid - 0.5*xlen
+        xmax = xmid + 0.5*xlen
+        ymin = ymid - 0.5*ylen
+        ymax = ymid + 0.5*ylen
+        zmin = zmid - 0.5*zlen
+        zmax = zmid + 0.5*zlen
 
         # face normals of the box
         faceUnitVecs = [numpy.array([+1., 0., 0.]),
@@ -165,6 +168,13 @@ class ShapeManager(object):
                   (numpy.array([0., 0., -1.]), numpy.array([0., -1., 0.])),
                   (numpy.array([0., 0., -1.]), numpy.array([+1., 0., 0.])),
                   (numpy.array([0., +1., 0.]), numpy.array([+1., 0., 0.]))]
+                  
+        uvLengths = [(ylen, zlen),
+                     (xlen, zlen),
+                     (xlen, ylen),
+                     (zlen, ylen),
+                     (zlen, xlen),
+                     (ylen, xlen)]
 
         # the low end start points for each face
         startPoints = [numpy.array([xmax, ymin, zmin]),
@@ -174,10 +184,8 @@ class ShapeManager(object):
                        numpy.array([xmin, ymin, zmax]),
                        numpy.array([xmin, ymin, zmin])]
 
-        # d0 and d1 are the number of local indices on each tile (along u and
-        # v respectively)
-        d0 = n0 // 4
-        d1 = n1 // 3
+        # d0 is the number of local indices on each tile (along u and v)
+        d = min(n0 // 4, n1 // 3)
 
         def getImageIndices(xyz):
             """
@@ -211,11 +219,11 @@ class ShapeManager(object):
             tileJ = faceIndex // 2
 
             # local indices on the tile
-            j0 = int(d0 * uVec.dot(projectedPoint - startPos))
-            j1 = int(d0 * vVec.dot(projectedPoint - startPos))
+            j0 = int(d * uVec.dot(projectedPoint - startPos) / uvLengths[faceIndex][0])
+            j1 = int(d * vVec.dot(projectedPoint - startPos) / uvLengths[faceIndex][1])
 
             # the image indices
-            i0, i1 = tileI*d0 + j0, tileJ*d1 + j1
+            i0, i1 = tileI*d + j0, tileJ*d + j1
 
             return i0, i1
 
