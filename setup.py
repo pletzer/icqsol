@@ -5,7 +5,7 @@ Set up script for icqsol
 pletzer@psu.edu
 """
 
-from setuptools import setup
+from setuptools import setup, Extension
 
 setup(name='icqsol',
       version='0.3.7',
@@ -27,5 +27,11 @@ setup(name='icqsol',
                 'icqsol.discretization',
                 'icqsol.shapes',
                 'icqsol.util'],
+      ext_modules = [Extension('icqQuadratureCpp', # name of the shared lib
+                               ['bem/icqQuadrature.cpp'],
+                               define_mactros=[], 
+                               include_dirs=['bem'],
+                               ),
+      ],
       requires = ['numpy', 'vtk',],
      )
