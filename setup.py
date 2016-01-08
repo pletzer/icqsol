@@ -8,7 +8,7 @@ pletzer@psu.edu
 from setuptools import setup, Extension
 
 setup(name='icqsol',
-      version='0.3.7',
+      version='0.3.7.1',
       description='Solving engineering problems on the web',
       author='Alex Pletzer and Greg Von Kuster',
       author_email='alexander@gokliya.net',
@@ -27,7 +27,7 @@ setup(name='icqsol',
                 'icqsol.discretization',
                 'icqsol.shapes',
                 'icqsol.util'],
-      ext_modules = [Extension('icqQuadratureCpp', # name of the shared lib
+      ext_modules = [Extension('icqsol.icqQuadratureCpp', # name of the shared lib
                                ['bem/icqQuadrature.cpp'],
                                define_mactros=[], 
                                include_dirs=['bem'],

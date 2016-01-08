@@ -43,6 +43,8 @@ enable_testing()
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests")
 add_test(NAME testQuadrature 
          COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testQuadrature.py")
+add_test(NAME testQuadratureCpp
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testQuadratureCpp.py")
 add_test(NAME testLaplace 
          COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testLaplace.py")
 add_test(NAME testCreateCylinder 
