@@ -6,12 +6,12 @@
 #include <icqQuadrature.hpp>
 
 extern "C" 
-void icqQuadratureInit(icqQuadratureType **self, double (*f)(const double* pos)) {
+void icqQuadratureInit(icqQuadratureType **self) {
 
     // Allocate 
     *self = new icqQuadratureType();
 
-    (*self)->func = f;
+    (*self)->func = icqLaplaceFunction;
 
     // Fill in the gauss points and weights
     int order;
@@ -36,6 +36,11 @@ void icqQuadratureInit(icqQuadratureType **self, double (*f)(const double* pos))
         (*self)->gaussPtsAndWeights.insert(std::pair<int, std::vector< std::vector<double> > >(order, gw));
     }
 
+}
+
+extern "C"
+void icqQuadratureSetFunction(icqQuadratureType **self, double (*f)(const double*)) {
+    (*self)->func = f;
 }
 
 extern "C"

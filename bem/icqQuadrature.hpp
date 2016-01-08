@@ -8,13 +8,20 @@
 #include <map>
 #include <vector>
 
- struct icqQuadratureType {
+struct icqQuadratureType {
     double (*func)(const double* pos);
     std::map<int, std::vector<std::vector<double> > > gaussPtsAndWeights;
- };
+};
+
+double icqLaplaceFunction(const double* pos) {
+    return 1.0/sqrt(pos[0]*pos[0] + pos[1]*pos[1] + pos[2]*pos[2]);
+};
 
 extern "C" 
-void icqQuadratureInit(icqQuadratureType **self, double (*f)(const double* pos));
+void icqQuadratureInit(icqQuadratureType **self);
+
+extern "C"
+void icqQuadratureSetFucntion(icqQuadratureType **self, double (*f)(const double*));
 
 extern "C"
 int icqQuadratureGetMaxOrder(icqQuadratureType **self);
