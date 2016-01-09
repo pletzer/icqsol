@@ -160,6 +160,36 @@ class LaplaceMatrices:
 
     def __computeMatrices(self):
 
+        self.__computeDiagonalTerms()
+        self.__computeOffDiagonalTerms()
+
+    def __computeDiagonalTerms(self):
+
+       # iterate over the source triangles
+        for jSrc in range(self.numTriangles):
+
+            ia, ib, ic = self.ptIdList[jSrc]
+
+            # The triangle vertex positions
+            paSrc = numpy.array(self.points.GetPoint(ia))
+            pbSrc = numpy.array(self.points.GetPoint(ib))
+            pcSrc = numpy.array(self.points.GetPoint(ic))
+
+            # Observer is at mid point
+            xObs = (paSrc + pbSrc + pcSrc) / 3.0
+
+            # Singular term
+            pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
+            pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
+            pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
+
+            self.gMat[jSrc, jSrc] = pot0ab.getIntegralOneOverR() + \
+                                    pot0bc.getIntegralOneOverR() + \
+                                    pot0ca.getIntegralOneOverR()
+            self.gMat[jSrc, jSrc] /= (-FOUR_PI)
+
+    def __computeOffDiagonalTerms(self):
+
         # Signature of the C function
         self.lib.icqQuadratureEvaluate.restype = c_double
 
@@ -186,6 +216,10 @@ class LaplaceMatrices:
             # iterate over the observer triangles
             for iObs in range(self.numTriangles):
 
+                if iObs == jSrc:
+                    # singular term
+                    continue
+
                 cellObs = self.ptIdList[iObs]
                 paObs = numpy.array(self.points.GetPoint(cellObs[0]))
                 pbObs = numpy.array(self.points.GetPoint(cellObs[1]))
@@ -194,34 +228,19 @@ class LaplaceMatrices:
                 # Observer is at mid point
                 xObs = (paObs + pbObs + pcObs) / 3.0
 
-                if iObs == jSrc:
+                self.lib.icqQuadratureSetObserver(byref(self.handle), xObs.ctypes.data_as(POINTER(c_double)))
 
-                    # Singular term
-                    pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
-                    pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
-                    pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
+                # Gauss quadrature order estimate
+                normDistance = numpy.linalg.norm((paSrc + pbSrc + pcSrc)/3. - xObs) \
+                                                 / numpy.sqrt(areaSrc)
+                offDiagonalOrder = int(8 * 2 / normDistance)
+                offDiagonalOrder = min(8, max(1, offDiagonalOrder))
 
-                    self.gMat[iObs, jSrc] = pot0ab.getIntegralOneOverR() + \
-                        pot0bc.getIntegralOneOverR() + \
-                        pot0ca.getIntegralOneOverR()
-                    self.gMat[iObs, jSrc] /= (-FOUR_PI)
-
-                else:
-
-                    #
-                    # Off diagonal term
-                    #
-                    self.lib.icqQuadratureSetObserver(byref(self.handle), xObs.ctypes.data_as(POINTER(c_double)))
-
-                    # Gauss quadrature order estimate
-                    normDistance = numpy.linalg.norm((paSrc + pbSrc + pcSrc)/3. - xObs) \
-                        / numpy.sqrt(areaSrc)
-                    offDiagonalOrder = int(8 * 2 / normDistance)
-                    offDiagonalOrder = min(8, max(1, offDiagonalOrder))
-
-                    self.gMat[iObs, jSrc] = self.lib.icqQuadratureEvaluate(byref(self.handle), 
-                                                                           offDiagonalOrder, 
-                                                                           paSrcPtr, pbSrcPtr, pcSrcPtr)
+                self.gMat[iObs, jSrc] = self.lib.icqQuadratureEvaluate(byref(self.handle), 
+                                                                        offDiagonalOrder, 
+                                                                        paSrcPtr,
+                                                                        pbSrcPtr,
+                                                                        pcSrcPtr)
 
 
     def getGreenMatrix(self):
