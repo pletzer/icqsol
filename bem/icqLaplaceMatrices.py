@@ -5,6 +5,8 @@ import numpy
 from icqsol.shapes.icqRefineSurface import RefineSurface
 from icqsol.bem.icqPotentialIntegrals import PotentialIntegrals
 from icqsol.bem.icqQuadrature import gaussPtsAndWeights
+import pkg_resources
+from ctypes import cdll, POINTER, byref, c_void_p, c_double, RTLD_GLOBAL
 
 FOUR_PI = 4. * numpy.pi
 
@@ -18,6 +20,12 @@ class LaplaceMatrices:
         @param max_edge_length maximum edge length, used to turn
                                polygons into triangles
         """
+
+        libName = pkg_resources.resource_filename('icqsol', 'icqQuadratureCpp.so')
+        self.lib = cdll.LoadLibrary(libName)
+        # Opaque handle
+        self.handle = c_void_p(0)
+        self.lib.icqQuadratureInit(byref(self.handle))
 
         self.normalEJumpName = 'normal_electric_field_jump'
 
@@ -47,6 +55,9 @@ class LaplaceMatrices:
 
         self.order = order
         self.__computeMatrices()
+
+    def __del__(self):
+        self.lib.icqQuadratureDel(byref(self.handle))
         
     def getArrayIndexFromName(self, data, name):
         """
@@ -149,6 +160,9 @@ class LaplaceMatrices:
 
     def __computeMatrices(self):
 
+        # Signature of the C function
+        self.lib.icqQuadratureEvaluate.restype = c_double
+
         # iterate over the source triangles
         for jSrc in range(self.numTriangles):
 
@@ -158,6 +172,9 @@ class LaplaceMatrices:
             paSrc = numpy.array(self.points.GetPoint(ia))
             pbSrc = numpy.array(self.points.GetPoint(ib))
             pcSrc = numpy.array(self.points.GetPoint(ic))
+            paSrcPtr = paSrc.ctypes.data_as(POINTER(c_double))
+            pbSrcPtr = pbSrc.ctypes.data_as(POINTER(c_double))
+            pcSrcPtr = pcSrc.ctypes.data_as(POINTER(c_double))
 
             # The triangle's normal vector and area at the center
             # of the triangle
@@ -194,27 +211,18 @@ class LaplaceMatrices:
                     #
                     # Off diagonal term
                     #
+                    self.lib.icqQuadratureSetObserver(byref(self.handle), xObs.ctypes.data_as(POINTER(c_double)))
 
-                    # Gauss wuadrature order estimate
+                    # Gauss quadrature order estimate
                     normDistance = numpy.linalg.norm((paSrc + pbSrc + pcSrc)/3. - xObs) \
                         / numpy.sqrt(areaSrc)
                     offDiagonalOrder = int(8 * 2 / normDistance)
                     offDiagonalOrder = min(8, max(1, offDiagonalOrder))
 
-                    # Gauss quadrature weights
-                    gpws = gaussPtsAndWeights[offDiagonalOrder]
+                    self.gMat[iObs, jSrc] = self.lib.icqQuadratureEvaluate(byref(self.handle), 
+                                                                           offDiagonalOrder, 
+                                                                           paSrcPtr, pbSrcPtr, pcSrcPtr)
 
-                    # number of Gauss points
-                    npts = gpws.shape[1]
-
-                    # triangle positions and weights
-                    xsis, etas, weights = gpws[0, :], gpws[1, :], gpws[2, :]
-
-                    for k in range(npts):
-                        dr = xObs - paSrc - pb2Src*xsis[k] - pc2Src*etas[k]
-                        drNorm = numpy.sqrt(dr.dot(dr))
-                        self.gMat[iObs, jSrc] += weights[k] / drNorm
-                    self.gMat[iObs, jSrc] *= 0.5 * areaSrc / (-FOUR_PI)
 
     def getGreenMatrix(self):
         """

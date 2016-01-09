@@ -4,24 +4,26 @@
 
 #ifndef ICQ_QUADRATURE
 #define ICQ_QUADRATURE
+
+#include <icqFunctor.hpp>
  
 #include <map>
 #include <vector>
+#include <cmath>
 
 struct icqQuadratureType {
-    double (*func)(const double* pos);
+    icqFunctor* func;
     std::map<int, std::vector<std::vector<double> > > gaussPtsAndWeights;
-};
-
-double icqLaplaceFunction(const double* pos) {
-    return 1.0/sqrt(pos[0]*pos[0] + pos[1]*pos[1] + pos[2]*pos[2]);
 };
 
 extern "C" 
 void icqQuadratureInit(icqQuadratureType **self);
 
 extern "C"
-void icqQuadratureSetFucntion(icqQuadratureType **self, double (*f)(const double*));
+void icqQuadratureSetObserver(icqQuadratureType **self, const double* pObs);
+
+extern "C"
+void icqQuadratureSetFunctor(icqQuadratureType **self, icqFunctor* func);
 
 extern "C"
 int icqQuadratureGetMaxOrder(icqQuadratureType **self);

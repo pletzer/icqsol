@@ -38,7 +38,5 @@ for order in range(1, maxOrder + 1):
 	print 'order = ', order, ' integral = ', integral, ' integral2 = ', integral2
 	assert(abs(integral - integral2) < 1.e-10)
 
-
-
 # Destructor
 lib.icqQuadratureDel(byref(handle))

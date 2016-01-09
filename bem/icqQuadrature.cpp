@@ -2,8 +2,8 @@
  * Quadrature on triangle 
  */
 
-#include <cmath>
 #include <icqQuadrature.hpp>
+#include <icqLaplaceFunctor.hpp>
 #include <iostream>
 
 extern "C" 
@@ -12,7 +12,7 @@ void icqQuadratureInit(icqQuadratureType **self) {
     // Allocate 
     *self = new icqQuadratureType();
 
-    (*self)->func = icqLaplaceFunction;
+    (*self)->func = new icqLaplaceFunctor();
 
     // Fill in the gauss points and weights
     int order;
@@ -146,8 +146,13 @@ void icqQuadratureInit(icqQuadratureType **self) {
 }
 
 extern "C"
-void icqQuadratureSetFunction(icqQuadratureType **self, double (*f)(const double*)) {
-    (*self)->func = f;
+void icqQuadratureSetObserver(icqQuadratureType **self, const double* pObs) {
+    (*self)->func->setObserver(pObs);
+}
+
+extern "C"
+void icqQuadratureSetFunctor(icqQuadratureType **self, icqFunctor* func) {
+    (*self)->func = func;
 }
 
 extern "C"
@@ -190,7 +195,7 @@ double icqQuadratureEvaluate(icqQuadratureType **self, int order,
         for (size_t i = 0; i < xsi.size(); ++i) {
             for (size_t j = 0; j < 3; ++j)
                 p[j] = pa[j] + xsi[i]*pb2[j] + eta[i]*pc2[j];
-            res += (*self)->func(p) * wgh[i];
+            res += (*self)->func->operator()(p) * wgh[i];
         }
     }
 
@@ -200,6 +205,7 @@ double icqQuadratureEvaluate(icqQuadratureType **self, int order,
 extern "C"
 void icqQuadratureDel(icqQuadratureType **self) {
     
+    delete (*self)->func;
     delete (*self);
 }
 
