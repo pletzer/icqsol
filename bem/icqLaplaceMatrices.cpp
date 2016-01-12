@@ -58,7 +58,7 @@ void computeOffDiagonalTerms(vtkPolyData* pdata, double* gMat) {
     }
     ptIds->Delete();
 
-    // iterate over the source triangles
+    // Iterate over the source triangles
     for (size_t jSrc = 0; jSrc < numTriangles; ++jSrc) {
 
         size_t ia = cells[3*jSrc + 0];
@@ -69,7 +69,7 @@ void computeOffDiagonalTerms(vtkPolyData* pdata, double* gMat) {
         points->GetPoint(ib, &pbSrc[0]);
         points->GetPoint(ic, &pcSrc[0]);
 
-        // The triangle's normal vector and area at the center of the triangle
+        // The triangle's normal vector, mid point, and area at the center of the triangle
         for (size_t j = 0; j < 3; ++j) {
             pb2Src[j] = pbSrc[j] - paSrc[j];
             pc2Src[j] = pcSrc[j] - paSrc[j];
@@ -86,11 +86,11 @@ void computeOffDiagonalTerms(vtkPolyData* pdata, double* gMat) {
         }
         areaSrc = sqrt(areaSrc);
 
-        // iterate over the observer triangles
+        // Iterate over the observer triangles
         for (size_t iObs = 0; iObs < numTriangles; ++iObs) {
 
             if (iObs == jSrc) {
-                // singular term
+                // Singular term, treated elsewhere
                 continue;
             }
 

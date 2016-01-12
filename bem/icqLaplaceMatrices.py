@@ -4,9 +4,8 @@ import vtk
 import numpy
 from icqsol.shapes.icqRefineSurface import RefineSurface
 from icqsol.bem.icqPotentialIntegrals import PotentialIntegrals
-from icqsol.bem.icqQuadrature import gaussPtsAndWeights
 import pkg_resources
-from ctypes import cdll, POINTER, byref, c_void_p, c_double, RTLD_GLOBAL
+from ctypes import cdll, POINTER, byref, c_void_p, c_double, c_long
 
 FOUR_PI = 4. * numpy.pi
 
@@ -21,11 +20,8 @@ class LaplaceMatrices:
                                polygons into triangles
         """
 
-        libName = pkg_resources.resource_filename('icqsol', 'icqQuadratureCpp.so')
+        libName = pkg_resources.resource_filename('icqsol', 'icqLaplaceMatricesCpp.so')
         self.lib = cdll.LoadLibrary(libName)
-        # Opaque handle
-        self.handle = c_void_p(0)
-        self.lib.icqQuadratureInit(byref(self.handle))
 
         self.normalEJumpName = 'normal_electric_field_jump'
 
@@ -55,9 +51,6 @@ class LaplaceMatrices:
 
         self.order = order
         self.__computeMatrices()
-
-    def __del__(self):
-        self.lib.icqQuadratureDel(byref(self.handle))
         
     def getArrayIndexFromName(self, data, name):
         """
@@ -158,14 +151,9 @@ class LaplaceMatrices:
         """
         return self.pdata
 
-    def __computeMatrices(self):
-
-        self.__computeDiagonalTerms()
-        self.__computeOffDiagonalTerms()
-
     def __computeDiagonalTerms(self):
 
-       # iterate over the source triangles
+        # iterate over the source triangles
         for jSrc in range(self.numTriangles):
 
             ia, ib, ic = self.ptIdList[jSrc]
@@ -190,58 +178,14 @@ class LaplaceMatrices:
 
     def __computeOffDiagonalTerms(self):
 
-        # Signature of the C function
-        self.lib.icqQuadratureEvaluate.restype = c_double
+        addr = int(self.pdata.GetAddressAsString('vtkPolyData')[5:], 0)
+        self.lib.computeOffDiagonalTerms(c_long(addr),
+                                         self.gMat.ctypes.data_as(POINTER(c_double)))
 
-        # iterate over the source triangles
-        for jSrc in range(self.numTriangles):
+    def __computeMatrices(self):
 
-            ia, ib, ic = self.ptIdList[jSrc]
-
-            # The triangle vertex positions
-            paSrc = numpy.array(self.points.GetPoint(ia))
-            pbSrc = numpy.array(self.points.GetPoint(ib))
-            pcSrc = numpy.array(self.points.GetPoint(ic))
-            paSrcPtr = paSrc.ctypes.data_as(POINTER(c_double))
-            pbSrcPtr = pbSrc.ctypes.data_as(POINTER(c_double))
-            pcSrcPtr = pcSrc.ctypes.data_as(POINTER(c_double))
-
-            # The triangle's normal vector and area at the center
-            # of the triangle
-            pb2Src = pbSrc - paSrc
-            pc2Src = pcSrc - paSrc
-            areaSrcVec = numpy.cross(pb2Src, pc2Src)
-            areaSrc = numpy.linalg.norm(areaSrcVec)
-
-            # iterate over the observer triangles
-            for iObs in range(self.numTriangles):
-
-                if iObs == jSrc:
-                    # singular term
-                    continue
-
-                cellObs = self.ptIdList[iObs]
-                paObs = numpy.array(self.points.GetPoint(cellObs[0]))
-                pbObs = numpy.array(self.points.GetPoint(cellObs[1]))
-                pcObs = numpy.array(self.points.GetPoint(cellObs[2]))
-
-                # Observer is at mid point
-                xObs = (paObs + pbObs + pcObs) / 3.0
-
-                self.lib.icqQuadratureSetObserver(byref(self.handle), xObs.ctypes.data_as(POINTER(c_double)))
-
-                # Gauss quadrature order estimate
-                normDistance = numpy.linalg.norm((paSrc + pbSrc + pcSrc)/3. - xObs) \
-                                                 / numpy.sqrt(areaSrc)
-                offDiagonalOrder = int(8 * 2 / normDistance)
-                offDiagonalOrder = min(8, max(1, offDiagonalOrder))
-
-                self.gMat[iObs, jSrc] = self.lib.icqQuadratureEvaluate(byref(self.handle), 
-                                                                        offDiagonalOrder, 
-                                                                        paSrcPtr,
-                                                                        pbSrcPtr,
-                                                                        pcSrcPtr)
-
+        self.__computeDiagonalTerms()
+        self.__computeOffDiagonalTerms()
 
     def getGreenMatrix(self):
         """
