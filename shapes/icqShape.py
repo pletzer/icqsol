@@ -53,7 +53,6 @@ def Cylinder(radius, origin, lengths, n_theta=16):
     @param lengths lengths of the cylinder along each axis
     @param n_theta number of theta cells
     """
-
     ori = Vector(origin[0], origin[1], origin[2])
     end = Vector(origin[0] + lengths[0],
                  origin[1] + lengths[1],
