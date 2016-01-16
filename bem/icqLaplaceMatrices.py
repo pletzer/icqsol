@@ -84,7 +84,7 @@ class LaplaceMatrices:
         for i in range(n):
             cell = cells.GetNextCell(ptIds)
             npts = ptIds.GetNumberOfIds()
-            midPoint *= 0
+            midPoint *= 0 # reset
             for j in range(npts):
                 midPoint += self.points.GetPoint(ptIds.GetId(j))
             midPoint /= float(npts)
