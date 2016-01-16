@@ -18,14 +18,18 @@ endif()
 
 option(INSTALL_USER "Install in user directory" OFF)
 option(INSTALL_PREFIX "Install under CMAKE_INSTALL_PREFIX" OFF)
+option(VTK_INCLUDE_DIR "Directory where VTK include files are located" "")
+option(VTK_LIBRARY_DIR "Directory where VTK libraries are located" "")
 
 # run python setup.py install
 if (NOT INSTALL_USER AND NOT INSTALL_PREFIX)
   # let python choose where to install, may require sudo access
-  execute_process(COMMAND "${PYTHON_EXECUTABLE}" setup.py install)
+  execute_process(COMMAND VTK_INCLUDE_DIR="${VTK_INCLUDE_DIR}" VTK_LIBRARY_DIR="${VTK_LIBRARY_DIR}"
+                          "${PYTHON_EXECUTABLE}" setup.py install)
 elseif (INSTALL_USER)
   # install in user directory
-  execute_process(COMMAND "${PYTHON_EXECUTABLE}" setup.py install --user)
+  execute_process(COMMAND VTK_INCLUDE_DIR="${VTK_INCLUDE_DIR}" VTK_LIBRARY_DIR="${VTK_LIBRARY_DIR}" 
+                          "${PYTHON_EXECUTABLE}" setup.py install --user)
 else ()
   # user specifies where to install, must set PYTHONPATH
   message("\n\n*** Installing under ${CMAKE_INSTALL_PREFIX}. Be sure to set PYTHONPATH, e.g. ***")
@@ -43,6 +47,8 @@ enable_testing()
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests")
 add_test(NAME testQuadrature 
          COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testQuadrature.py")
+add_test(NAME testQuadratureCpp
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testQuadratureCpp.py")
 add_test(NAME testLaplace 
          COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testLaplace.py")
 add_test(NAME testCreateCylinder 
@@ -293,6 +299,16 @@ add_test(NAME testColorBoltCell
          --input testBoltFineWithFieldCell.vtk 
          --name "wave"
          --output testColorBoltCell.vtk --ascii)
+add_test(NAME testIntegrateCellField
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/integrateSurfaceField.py"
+         --input testBoltFineWithFieldCell.vtk 
+         --name "wave")
+add_test(NAME testIntegratePointField
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/integrateSurfaceField.py"
+         --input testBoltFineWithField.vtk 
+         --name "wave")
 add_test(NAME testAddSurfaceFieldFromExpressionBolt2
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
@@ -342,6 +358,14 @@ add_test(NAME testAddSurfaceFieldFromExpression
          --name "my_field"
          --input testPrimitiveCylinder.ply
          --output testPrimitiveCylinderWithField.vtk
+         --ascii)
+add_test(NAME testAddSurfaceFieldFromBooleanExpression
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/addSurfaceFieldFromExpression.py"
+         --expression "(z/4.)*(sqrt(x**2+y**2) __gt__ 1 or (z __le__ 2))"
+         --name "my_field"
+         --input testPrimitiveCylinder.ply
+         --output testPrimitiveCylinderWithBooleanField.vtk
          --ascii)
 add_test(NAME testAddSurfaceFieldFromExpressionTimeDependent
          COMMAND "${PYTHON_EXECUTABLE}" 

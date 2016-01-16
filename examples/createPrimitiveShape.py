@@ -14,8 +14,8 @@ options = {
     'sphere': {
         'radius': 1.0,
         'origin': numpy.array([0., 0., 0.]),
-        'n_theta': 8,
-        'n_phi': 16,
+        'n_theta': 16,
+        'n_phi': 8,
     },
     'cylinder': {
         'radius': 1.0,

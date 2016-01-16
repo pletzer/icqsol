@@ -4,7 +4,8 @@ import vtk
 import numpy
 from icqsol.shapes.icqRefineSurface import RefineSurface
 from icqsol.bem.icqPotentialIntegrals import PotentialIntegrals
-from icqsol.bem.icqQuadrature import gaussPtsAndWeights
+import pkg_resources
+from ctypes import cdll, POINTER, byref, c_void_p, c_double, c_long
 
 FOUR_PI = 4. * numpy.pi
 
@@ -18,6 +19,9 @@ class LaplaceMatrices:
         @param max_edge_length maximum edge length, used to turn
                                polygons into triangles
         """
+
+        libName = pkg_resources.resource_filename('icqsol', 'icqLaplaceMatricesCpp.so')
+        self.lib = cdll.LoadLibrary(libName)
 
         self.normalEJumpName = 'normal_electric_field_jump'
 
@@ -48,20 +52,60 @@ class LaplaceMatrices:
         self.order = order
         self.__computeMatrices()
         
+    def getArrayIndexFromName(self, data, name):
+        """
+        Get the array index from its name
+        @param data either a vtkCellData or a vtkPointData object
+        @param name name
+        @return index >= 0 if name exists or -1 if it does not
+        """
+        numArrays = data.GetNumberOfArrays()
+        index = -1
+        for i in range(numArrays):
+            arr = data.GetArray(i)
+            if arr.GetName() == name:
+                index = i
+                break
+        return index
+
     def getPotentialArrayIndexFromName(self, name):
         """
-        Get the potential field array index from its name
+        Get the potential array index from its name, if the array 
+        is a point data type then project onto cells
         @param name name
         @return index >= 0 if name exists or -1 if it does not
         """
         cellData = self.pdata.GetCellData()
-        numArrays = cellData.GetNumberOfArrays()
-        index = -1
-        for i in range(numArrays):
-            arr = cellData.GetArray(i)
-            if arr.GetName() == name:
-                index = i
-                break
+        pointData = self.pdata.GetPointData()
+        index = self.getArrayIndexFromName(cellData, name)
+        if index < 0:
+            # Maybe a point array?
+            index2 = self.getArrayIndexFromName(pointData, name)
+
+            if index2 >= 0:
+                # Project from points to cells
+                pointArr = pointData.GetArray(index2)
+                numCells = self.pdata.GetNumberOfPolys()
+                cellArr = vtk.vtkDoubleArray()
+                cellArr.SetName(name) # same name as the point array
+                cellArr.SetNumberOfComponents(1)
+                cellArr.SetNumberOfTuples(numCells)
+                cells = self.pdata.GetPolys()
+                ptIds = vtk.vtkIdList()
+                cells.InitTraversal()
+                for i in range(numCells):
+                    cells.GetNextCell(ptIds)
+                    # We know for sure that all cells are triangles
+                    ia, ib, ic = ptIds.GetId(0), \
+                        ptIds.GetId(1), ptIds.GetId(2)
+                    va = pointArr.GetComponent(ia, 0)
+                    vb = pointArr.GetComponent(ib, 0)
+                    vc = pointArr.GetComponent(ic, 0)
+                    cellArr.SetComponent(i, 0, (va + vb + vc)/3.)
+                # Add the cell array
+                cellData.AddArray(cellArr)
+                return self.getPotentialArrayIndexFromName(name)
+
         return index
 
     def setPotentialFromExpression(self, expression, potName='v'):
@@ -107,7 +151,7 @@ class LaplaceMatrices:
         """
         return self.pdata
 
-    def __computeMatrices(self):
+    def __computeDiagonalTerms(self):
 
         # iterate over the source triangles
         for jSrc in range(self.numTriangles):
@@ -119,62 +163,29 @@ class LaplaceMatrices:
             pbSrc = numpy.array(self.points.GetPoint(ib))
             pcSrc = numpy.array(self.points.GetPoint(ic))
 
-            # The triangle's normal vector and area at the center
-            # of the triangle
-            pb2Src = pbSrc - paSrc
-            pc2Src = pcSrc - paSrc
-            areaSrcVec = numpy.cross(pb2Src, pc2Src)
-            areaSrc = numpy.linalg.norm(areaSrcVec)
+            # Observer is at mid point
+            xObs = (paSrc + pbSrc + pcSrc) / 3.0
 
-            # iterate over the observer triangles
-            for iObs in range(self.numTriangles):
+            # Singular term
+            pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
+            pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
+            pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
 
-                cellObs = self.ptIdList[iObs]
-                paObs = numpy.array(self.points.GetPoint(cellObs[0]))
-                pbObs = numpy.array(self.points.GetPoint(cellObs[1]))
-                pcObs = numpy.array(self.points.GetPoint(cellObs[2]))
+            self.gMat[jSrc, jSrc] = pot0ab.getIntegralOneOverR() + \
+                                    pot0bc.getIntegralOneOverR() + \
+                                    pot0ca.getIntegralOneOverR()
+            self.gMat[jSrc, jSrc] /= (-FOUR_PI)
 
-                # Observer is at mid point
-                xObs = (paObs + pbObs + pcObs) / 3.0
+    def __computeOffDiagonalTerms(self):
 
-                if iObs == jSrc:
+        addr = int(self.pdata.GetAddressAsString('vtkPolyData')[5:], 0)
+        self.lib.computeOffDiagonalTerms(c_long(addr),
+                                         self.gMat.ctypes.data_as(POINTER(c_double)))
 
-                    # Singular term
-                    pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
-                    pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
-                    pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
+    def __computeMatrices(self):
 
-                    self.gMat[iObs, jSrc] = pot0ab.getIntegralOneOverR() + \
-                        pot0bc.getIntegralOneOverR() + \
-                        pot0ca.getIntegralOneOverR()
-                    self.gMat[iObs, jSrc] /= (-FOUR_PI)
-
-                else:
-
-                    #
-                    # Off diagonal term
-                    #
-
-                    # Gauss wuadrature order estimate
-                    normDistance = numpy.linalg.norm((paSrc + pbSrc + pcSrc)/3. - xObs) \
-                        / numpy.sqrt(areaSrc)
-                    offDiagonalOrder = int(8 * 2 / normDistance)
-                    offDiagonalOrder = min(8, max(1, offDiagonalOrder))
-
-                    # Gauss quadrature weights
-                    gpws = gaussPtsAndWeights[offDiagonalOrder]
-
-                    # number of Gauss points
-                    npts = gpws.shape[1]
-
-                    # triangle positions and weights
-                    xsis, etas, weights = gpws[0, :], gpws[1, :], gpws[2, :]
-
-                    for k in range(npts):
-                        dr = xObs - paSrc - pb2Src*xsis[k] - pc2Src*etas[k]
-                        drNorm = numpy.sqrt(dr.dot(dr))
-                        self.gMat[iObs, jSrc] += weights[k] / drNorm
-                    self.gMat[iObs, jSrc] *= 0.5 * areaSrc / (-FOUR_PI)
+        self.__computeDiagonalTerms()
+        self.__computeOffDiagonalTerms()
 
     def getGreenMatrix(self):
         """

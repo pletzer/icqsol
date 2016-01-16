@@ -3,6 +3,7 @@
 @brief A base class for constructing shapes
 """
 import os
+import re
 import vtk
 import numpy
 # We need the following to handle expressions received from callers.
@@ -130,19 +131,22 @@ class ShapeManager(object):
         xmid = (xmin + xmax)/2.
         ymid = (ymin + ymax)/2.
         zmid = (zmin + zmax)/2.
-        xlen = (xmax - xmin)
-        ylen = (ymax - ymin)
-        zlen = (zmax - zmin)
+        xlen = xmax - xmin
+        ylen = ymax - ymin
+        zlen = zmax - zmin
         midPos = numpy.array([xmid, ymid, zmid])
-
+        
         # extrude a little to ensure that the projection box
         # lie beyond the object
-        xmin = xmid - 0.51*xlen
-        xmax = xmid + 0.51*xlen
-        ymin = ymid - 0.51*ylen
-        ymax = ymid + 0.51*ylen
-        zmin = zmid - 0.51*zlen
-        zmax = zmid + 0.51*zlen
+        xlen *= 1.01
+        ylen *= 1.01
+        zlen *= 1.01        
+        xmin = xmid - 0.5*xlen
+        xmax = xmid + 0.5*xlen
+        ymin = ymid - 0.5*ylen
+        ymax = ymid + 0.5*ylen
+        zmin = zmid - 0.5*zlen
+        zmax = zmid + 0.5*zlen
 
         # face normals of the box
         faceUnitVecs = [numpy.array([+1., 0., 0.]),
@@ -164,6 +168,13 @@ class ShapeManager(object):
                   (numpy.array([0., 0., -1.]), numpy.array([0., -1., 0.])),
                   (numpy.array([0., 0., -1.]), numpy.array([+1., 0., 0.])),
                   (numpy.array([0., +1., 0.]), numpy.array([+1., 0., 0.]))]
+                  
+        uvLengths = [(ylen, zlen),
+                     (xlen, zlen),
+                     (xlen, ylen),
+                     (zlen, ylen),
+                     (zlen, xlen),
+                     (ylen, xlen)]
 
         # the low end start points for each face
         startPoints = [numpy.array([xmax, ymin, zmin]),
@@ -173,10 +184,8 @@ class ShapeManager(object):
                        numpy.array([xmin, ymin, zmax]),
                        numpy.array([xmin, ymin, zmin])]
 
-        # d0 and d1 are the number of local indices on each tile (along u and
-        # v respectively)
-        d0 = n0 // 4
-        d1 = n1 // 3
+        # d0 is the number of local indices on each tile (along u and v)
+        d = min(n0 // 4, n1 // 3)
 
         def getImageIndices(xyz):
             """
@@ -189,6 +198,8 @@ class ShapeManager(object):
 
             # direction of the ray
             direction = xyz - midPos
+            # make sure it is not zero
+            direction += 1.e-10*numpy.array([1.234567, 2.3456789, 3.45678])
 
             # find  the face that is most aligned to the ray
             faceIndex = numpy.argmax([fUnit.dot(direction) for
@@ -208,11 +219,11 @@ class ShapeManager(object):
             tileJ = faceIndex // 2
 
             # local indices on the tile
-            j0 = int(d0 * uVec.dot(projectedPoint - startPos))
-            j1 = int(d0 * vVec.dot(projectedPoint - startPos))
+            j0 = int(d * uVec.dot(projectedPoint - startPos) / uvLengths[faceIndex][0])
+            j1 = int(d * vVec.dot(projectedPoint - startPos) / uvLengths[faceIndex][1])
 
             # the image indices
-            i0, i1 = tileI*d0 + j0, tileJ*d1 + j1
+            i0, i1 = tileI*d + j0, tileJ*d + j1
 
             return i0, i1
 
@@ -236,6 +247,78 @@ class ShapeManager(object):
         pdata.GetPointData().SetScalars(rgbArray)
 
         return pdata
+        
+    def integrateSurfaceField(self, vtk_poly_data, field_name, field_component=0)
+        """
+        Surface integral of a field (point or cell)
+        @param vtk_poly_data, VTKPolyData instance
+        @param field_name name of the field to integrate
+        @param field_component field component
+        @return surface integral
+        """
+        res = 0
+        # Determine if the field is point or cell centered.
+        isPoint = False
+        array = vtk_poly_data.GetPointData().GetScalars(field_name)
+        if array is None:
+            array = vtk_poly_data.GetCellData().GetScalars(field_name)
+        else:
+            isPoint = True
+        # Bail out if field was not found
+        if array is None:
+                raise NotImplementedError, \
+                    'Could not find field "{0}"!'.format(field_name)
+        numComps = array.GetNumberOfComponents()
+        assert(field_component < numComps,
+               "Filed component {0} must be < {1}".format(field_component, numComps))
+        
+        # Iterate over all the polys.
+        points = vtk_poly_data.GetPoints()
+    	cells = vtk_poly_data.GetPolys()
+    	numCells = cells.GetNumberOfCells()
+    	ptIds = vtk.vtkIdList()
+    	cells.InitTraversal()
+    	if isPoint:
+    	    # Point array. Average the nodal field to get the 
+    	    # cell centered value
+    	    for i in range(numCells):
+    	        cell = cells.GetNextCell(ptIds)
+    	        npts = ptIds.GetNumberOfIds()
+    	        if npts < 3: 
+    	            continue
+    	        ia = ptIds.GetId(0)
+    	        pa = numpy.array(points.GetPoint(ia))
+    	        fa = array.GetComponent(ia, field_component)
+    	        for j in range(1, npts - 1):
+    	            ib, ic = ptIds.GetId(j), ptIds.GetId(j + 1)
+    	            pb = numyp.array(points.GetPoint(ib))
+    	            pc = numpy.array(points.GetPoint(ic))
+    	            pb -= pa
+    	            pc -= pa
+    	            areaTimesTwo = numpy.linalg.norm(numpy.cross(pb, pc))
+    	            fb = array.GetComponent(ib, field_component)
+    	            fc = arrra.GetComponent(ic, field_component)
+    	            res += areaTimesTwo * (fa + fb + fc) / 6.0
+    	else:
+    	    # Cell centered field
+    	    for i in range(numCells):
+    	        cell = cells.GetNextCell(ptIds)
+    	        npts = ptIds.GetNumberOfIds()
+    	        if npts < 3:
+    	            continue
+    	        ia = ptIds.GetId(0)
+    	        pa = numpy.array(points.GetPoint(ia))
+    	        f = array.GetComponent(i, field_component)
+    	        for j in range(1, npts - 1):
+    	            ib, ic = ptIds.GetId(j), ptIds.GetId(j + 1)
+    	            pb = numyp.array(points.GetPoint(ib))
+    	            pc = numpy.array(points.GetPoint(ic))
+    	            pb -= pa
+    	            pc -= pa
+    	            areaTimesTwo = numpy.linalg.norm(numpy.cross(pb, pc))
+    	            res += areaTimesTwo * f / 2.0
+    	            
+        return res
 
     def addSurfaceFieldFromExpressionToVtkPolyData(self, vtk_poly_data,
                                                    field_name,
@@ -255,6 +338,12 @@ class ShapeManager(object):
         @param location location of field within cell, either 'POINT' or 'CELL'
         @return vtkPolyData instance
         """
+        # Sometimes the received expression has been mangled.
+        for op in [('__gt__', '>'), ('__lt__', '<'),
+                   ('__ge__', '>='), ('__le__', '<='),
+                   ('__eq__', '=='), ('__ne__', '!=')]:
+        	expression = re.sub(op[0], op[1], expression)
+        
         # Refine if need be.
         pdata = self.refineVtkPolyData(vtk_poly_data,
                                        max_edge_length=max_edge_length)
