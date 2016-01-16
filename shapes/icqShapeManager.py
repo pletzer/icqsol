@@ -247,6 +247,78 @@ class ShapeManager(object):
         pdata.GetPointData().SetScalars(rgbArray)
 
         return pdata
+        
+    def integrateSurfaceField(self, vtk_poly_data, field_name, field_component=0)
+        """
+        Surface integral of a field (point or cell)
+        @param vtk_poly_data, VTKPolyData instance
+        @param field_name name of the field to integrate
+        @param field_component field component
+        @return surface integral
+        """
+        res = 0
+        # Determine if the field is point or cell centered.
+        isPoint = False
+        array = vtk_poly_data.GetPointData().GetScalars(field_name)
+        if array is None:
+            array = vtk_poly_data.GetCellData().GetScalars(field_name)
+        else:
+            isPoint = True
+        # Bail out if field was not found
+        if array is None:
+                raise NotImplementedError, \
+                    'Could not find field "{0}"!'.format(field_name)
+        numComps = array.GetNumberOfComponents()
+        assert(field_component < numComps,
+               "Filed component {0} must be < {1}".format(field_component, numComps))
+        
+        # Iterate over all the polys.
+        points = vtk_poly_data.GetPoints()
+    	cells = vtk_poly_data.GetPolys()
+    	numCells = cells.GetNumberOfCells()
+    	ptIds = vtk.vtkIdList()
+    	cells.InitTraversal()
+    	if isPoint:
+    	    # Point array. Average the nodal field to get the 
+    	    # cell centered value
+    	    for i in range(numCells):
+    	        cell = cells.GetNextCell(ptIds)
+    	        npts = ptIds.GetNumberOfIds()
+    	        if npts < 3: 
+    	            continue
+    	        ia = ptIds.GetId(0)
+    	        pa = numpy.array(points.GetPoint(ia))
+    	        fa = array.GetComponent(ia, field_component)
+    	        for j in range(1, npts - 1):
+    	            ib, ic = ptIds.GetId(j), ptIds.GetId(j + 1)
+    	            pb = numyp.array(points.GetPoint(ib))
+    	            pc = numpy.array(points.GetPoint(ic))
+    	            pb -= pa
+    	            pc -= pa
+    	            areaTimesTwo = numpy.linalg.norm(numpy.cross(pb, pc))
+    	            fb = array.GetComponent(ib, field_component)
+    	            fc = arrra.GetComponent(ic, field_component)
+    	            res += areaTimesTwo * (fa + fb + fc) / 6.0
+    	else:
+    	    # Cell centered field
+    	    for i in range(numCells):
+    	        cell = cells.GetNextCell(ptIds)
+    	        npts = ptIds.GetNumberOfIds()
+    	        if npts < 3:
+    	            continue
+    	        ia = ptIds.GetId(0)
+    	        pa = numpy.array(points.GetPoint(ia))
+    	        f = array.GetComponent(i, field_component)
+    	        for j in range(1, npts - 1):
+    	            ib, ic = ptIds.GetId(j), ptIds.GetId(j + 1)
+    	            pb = numyp.array(points.GetPoint(ib))
+    	            pc = numpy.array(points.GetPoint(ic))
+    	            pb -= pa
+    	            pc -= pa
+    	            areaTimesTwo = numpy.linalg.norm(numpy.cross(pb, pc))
+    	            res += areaTimesTwo * f / 2.0
+    	            
+        return res
 
     def addSurfaceFieldFromExpressionToVtkPolyData(self, vtk_poly_data,
                                                    field_name,

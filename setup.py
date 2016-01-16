@@ -14,7 +14,7 @@ VTK_LIBRARY_DIR = os.environ.get('VTK_LIBRARY_DIR', '')
 VTK_INCLUDE_DIR = os.environ.get('VTK_INCLUDE_DIR', '')
 
 setup(name='icqsol',
-      version='0.3.9',
+      version='0.3.10',
       description='Solving engineering problems on the web',
       author='Alex Pletzer and Greg Von Kuster',
       author_email='alexander@gokliya.net',
