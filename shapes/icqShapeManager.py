@@ -248,7 +248,7 @@ class ShapeManager(object):
 
         return pdata
         
-    def integrateSurfaceField(self, vtk_poly_data, field_name, field_component=0)
+    def integrateSurfaceField(self, vtk_poly_data, field_name, field_component=0):
         """
         Surface integral of a field (point or cell)
         @param vtk_poly_data, VTKPolyData instance
