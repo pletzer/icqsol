@@ -323,13 +323,13 @@ class ShapeManager(object):
     	        fa = array.GetComponent(ia, field_component)
     	        for j in range(1, npts - 1):
     	            ib, ic = ptIds.GetId(j), ptIds.GetId(j + 1)
-    	            pb = numyp.array(points.GetPoint(ib))
+    	            pb = numpy.array(points.GetPoint(ib))
     	            pc = numpy.array(points.GetPoint(ic))
     	            pb -= pa
     	            pc -= pa
     	            areaTimesTwo = numpy.linalg.norm(numpy.cross(pb, pc))
     	            fb = array.GetComponent(ib, field_component)
-    	            fc = arrra.GetComponent(ic, field_component)
+    	            fc = array.GetComponent(ic, field_component)
     	            res += areaTimesTwo * (fa + fb + fc) / 6.0
     	else:
     	    # Cell centered field
@@ -343,7 +343,7 @@ class ShapeManager(object):
     	        f = array.GetComponent(i, field_component)
     	        for j in range(1, npts - 1):
     	            ib, ic = ptIds.GetId(j), ptIds.GetId(j + 1)
-    	            pb = numyp.array(points.GetPoint(ib))
+    	            pb = numpy.array(points.GetPoint(ib))
     	            pc = numpy.array(points.GetPoint(ic))
     	            pb -= pa
     	            pc -= pa
