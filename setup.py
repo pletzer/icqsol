@@ -41,6 +41,11 @@ setup(name='icqsol',
                                include_dirs=['bem', VTK_INCLUDE_DIR],
                                library_dirs=[VTK_LIBRARY_DIR],
                                ),
+                      Extension('icqsol.icqPointInsideVtkPolyDataCpp', 
+                                ['csg/icqPointInsideVtkPolyData.cpp'],
+                                include_dirs=['csg', VTK_INCLUDE_DIR],
+                                library_dirs=[VTK_LIBRARY_DIR]
+                                ),
       ],
       requires = ['numpy', 'vtk',],
      )
