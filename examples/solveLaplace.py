@@ -42,7 +42,7 @@ parser.add_argument('--output', dest='output',
                     help='VTK Output file.')
                     
 parser.add_argument('--verbose', dest='verbose', action='store_true',
-                    help='VTK Output file.')
+                    help='Print info messages.')
 
 args = parser.parse_args()
 

@@ -243,7 +243,7 @@ class LaplaceMatrices:
 
         gMat = self.getGreenMatrix()
 
-        normalEJump = -numpy.linalg.inv(gMat).dot(v)
+        normalEJump = -numpy.linalg.solve(gMat, v)
 
         # Add normal electric field jump
         normalEJumpData = vtk.vtkDoubleArray()
