@@ -248,16 +248,13 @@ class ShapeManager(object):
 
         return pdata
 
-    def getFieldRange(self, vtk_poly_data, field_name,
-                      field_component=0):
+    def getFieldCentering(self, vtk_poly_data, field_name):
         """
-        Get the min/max field values
-        @param vtk_poly_data, VTKPolyData instance
+        Get array centering
+        @param vtk_poly_data, vtkPolyData instance
         @param field_name name of the field to integrate
-        @param field_component field component
-        @return min, max values        
+        return True if array is nodal, False if cell centered        
         """
-        # Determine if the field is point or cell centered.
         isPoint = False
         array = vtk_poly_data.GetPointData().GetScalars(field_name)
         if array is None:
@@ -268,38 +265,45 @@ class ShapeManager(object):
         if array is None:
                 raise NotImplementedError, \
                     'Could not find field "{0}"!'.format(field_name)
+        return isPoint
+
+    def getFieldRange(self, vtk_poly_data, field_name,
+                      field_component=0):
+        """
+        Get the min/max field values
+        @param vtk_poly_data, vtkPolyData instance
+        @param field_name name of the field to integrate
+        @param field_component field component
+        @return min, max values        
+        """
+        # Get array and centering.
+        isPoint = self.getArrayCentering(vtk_poly_data, field_name)
+        array = None
+        if isPoint:
+            array = vtk_poly_data.GetPointData().GetScalars(field_name)
+        else:
+            array = vtk_poly_data.GetCellData().GetScalars(field_name)
         numComps = array.GetNumberOfComponents()
         assert(field_component < numComps,
                "Field component {0} must be < {1}".format(field_component, numComps))
-        numTuples = array.GetNumberOfTuples()
-        minVal, maxVal = float('inf'), -float('inf')(
-        for i in range(numPtuples):
-            minVal = min(array.GetComponent(i, field_component), minVal)
-            maxVal = max(array.GetComponent(i, field_component), maxVal)
-        
-        return minVal, maxVal
+        return array.GetRange(field_component)
         
     def integrateSurfaceField(self, vtk_poly_data, field_name,
                               field_component=0):
         """
         Surface integral of a field (point or cell)
-        @param vtk_poly_data, VTKPolyData instance
+        @param vtk_poly_data, vtkPolyData instance
         @param field_name name of the field to integrate
         @param field_component field component
         @return surface integral
         """
         res = 0
         # Determine if the field is point or cell centered.
-        isPoint = False
-        array = vtk_poly_data.GetPointData().GetScalars(field_name)
-        if array is None:
-            array = vtk_poly_data.GetCellData().GetScalars(field_name)
+        isPoint = self.getFieldCentering(vtk_poly_data, field_name)
+        if isPoint:
+            array = vtk_poly_data.GetPointData().GetScalars(field_name)
         else:
-            isPoint = True
-        # Bail out if field was not found
-        if array is None:
-                raise NotImplementedError, \
-                    'Could not find field "{0}"!'.format(field_name)
+            array = vtk_poly_data.GetCellData().GetScalars(field_name)
         numComps = array.GetNumberOfComponents()
         assert(field_component < numComps,
                "Field component {0} must be < {1}".format(field_component, numComps))
@@ -474,16 +478,11 @@ class ShapeManager(object):
         vtk_poly_data_copy.SetPoints(vtk_poly_data.GetPoints())
         vtk_poly_data_copy.SetPolys(vtk_poly_data.GetPolys())
         # Get information from the data.
-        isPoint = False
-        array = vtk_poly_data.GetPointData().GetScalars(field_name)
-        if array is None:
-            array = vtk_poly_data.GetCellData().GetScalars(field_name)
+        isPoint = self.getFieldCentering(vtk_poly_data, field_name)
+        if isPoint:
+            array = vtk_poly_data.GetPointData().GetScalars(field_name)
         else:
-            isPoint = True
-        # Bail out if field was not found
-        if array is None:
-                raise NotImplementedError, \
-                    'Could not find field "{0}"!'.format(field_name)
+            array = vtk_poly_data.GetCellData().GetScalars(field_name)
         numComps = array.GetNumberOfComponents()
         assert(field_component < numComps,
                "Field component should be < {0}".format(numComps))
