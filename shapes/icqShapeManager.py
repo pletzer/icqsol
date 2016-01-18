@@ -247,8 +247,40 @@ class ShapeManager(object):
         pdata.GetPointData().SetScalars(rgbArray)
 
         return pdata
+
+    def getFieldRange(self, vtk_poly_data, field_name,
+                      field_component=0):
+        """
+        Get the min/max field values
+        @param vtk_poly_data, VTKPolyData instance
+        @param field_name name of the field to integrate
+        @param field_component field component
+        @return min, max values        
+        """
+        # Determine if the field is point or cell centered.
+        isPoint = False
+        array = vtk_poly_data.GetPointData().GetScalars(field_name)
+        if array is None:
+            array = vtk_poly_data.GetCellData().GetScalars(field_name)
+        else:
+            isPoint = True
+        # Bail out if field was not found
+        if array is None:
+                raise NotImplementedError, \
+                    'Could not find field "{0}"!'.format(field_name)
+        numComps = array.GetNumberOfComponents()
+        assert(field_component < numComps,
+               "Field component {0} must be < {1}".format(field_component, numComps))
+        numTuples = array.GetNumberOfTuples()
+        minVal, maxVal = float('inf'), -float('inf')(
+        for i in range(numPtuples):
+            minVal = min(array.GetComponent(i, field_component), minVal)
+            maxVal = max(array.GetComponent(i, field_component), maxVal)
         
-    def integrateSurfaceField(self, vtk_poly_data, field_name, field_component=0):
+        return minVal, maxVal
+        
+    def integrateSurfaceField(self, vtk_poly_data, field_name,
+                              field_component=0):
         """
         Surface integral of a field (point or cell)
         @param vtk_poly_data, VTKPolyData instance
@@ -270,7 +302,7 @@ class ShapeManager(object):
                     'Could not find field "{0}"!'.format(field_name)
         numComps = array.GetNumberOfComponents()
         assert(field_component < numComps,
-               "Filed component {0} must be < {1}".format(field_component, numComps))
+               "Field component {0} must be < {1}".format(field_component, numComps))
         
         # Iterate over all the polys.
         points = vtk_poly_data.GetPoints()
