@@ -277,7 +277,7 @@ class ShapeManager(object):
         @return min, max values        
         """
         # Get array and centering.
-        isPoint = self.getArrayCentering(vtk_poly_data, field_name)
+        isPoint = self.getFieldCentering(vtk_poly_data, field_name)
         array = None
         if isPoint:
             array = vtk_poly_data.GetPointData().GetScalars(field_name)
