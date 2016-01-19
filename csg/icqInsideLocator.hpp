@@ -22,6 +22,7 @@ private:
     vtkPolyData* pdata;
     double boxMin[3];
     double boxMax[3];
+    double boxLen[3];
     double center[3];
     double rayDirection[3];
 

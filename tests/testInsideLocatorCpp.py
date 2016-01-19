@@ -15,7 +15,7 @@ handle = c_void_p(0)
 
 # load vtkPolyData from file
 shape_mgr = ShapeManager(file_format=util.VTK_FORMAT, vtk_dataset_type='POLYDATA')
-s = shape_mgr.createShape('sphere', origin=(0., 0., 0.), radius=1.0, n_theta=8, n_phi=4)
+s = shape_mgr.createShape('box', origin=(-0.5, -0.5, -0.5),)
 pdata = shape_mgr.shapeToVTKPolyData(s)
 
 # Constructor
@@ -24,9 +24,14 @@ lib.icqInsideLocatorInit(byref(handle), c_long(addr))
 
 # Tests
 
-tests = [((0., 0., 0.), 1),
-         ((10, 0., 0.), 0),
-         ((0.1, 0.2, 0.3), 1)]
+tests = [((0., 0., 0.), 1), # center
+         ((10, 0., 0.), 0), # well outside
+         ((0.1, 0.2, 0.3), 1), # somewhere inside
+         ((0.499, 0., 0.), 1), # close to a face
+         ((0.499, 0.499, 0.), 1), # close to an edge
+         ((0.499, 0.499, 0.499), 1), # close to a vertex
+         ((0.501, 0.499, 0.499), 0) # just outside
+         ]
 for test in tests:
 	point = numpy.array(test[0])
 	result = test[1]

@@ -9,26 +9,29 @@
 
 icqInsideLocatorType::icqInsideLocatorType(vtkPolyData* pdata) {
 
+    // A very small number
 	this->eps = 1.98743174483817*std::numeric_limits<double>::epsilon(); 
 	
     this->pdata = pdata;
-    //  (xmin,xmax, ymin,ymax, zmin,zmax)
+
+    //  Boundaing box: (xmin,xmax, ymin,ymax, zmin,zmax)
     this->pdata->GetPoints()->ComputeBounds();
     double* bounds = this->pdata->GetPoints()->GetBounds();
 
-    // Make the box a little bigger
     this->boxMin[0] = bounds[0] - this->eps;
-    this->boxMax[0] = bounds[1] + 2*this->eps;
+    this->boxMax[0] = bounds[1] + this->eps;
     this->boxMin[1] = bounds[2] - this->eps;
-    this->boxMax[1] = bounds[3] + 2*this->eps;
+    this->boxMax[1] = bounds[3] + this->eps;
     this->boxMin[2] = bounds[4] - this->eps;
-    this->boxMax[2] = bounds[5] + 2*this->eps;
+    this->boxMax[2] = bounds[5] + this->eps;
+
     this->radius = 0;
     for (size_t k = 0; k < 3; ++k) {
+        this->boxLen[k] = this->boxMax[k] - this->boxMin[k];
         this->center[k] = 0.5*(this->boxMin[k] + this->boxMax[k]);
-        double halfDist = 0.5*(this->boxMax[k] - this->boxMin[k]);
-        this->radius = (this->radius < halfDist? halfDist: this->radius);
+        this->radius += this->boxLen[k]*this->boxLen[k];
     }
+    this->radius = 0.5*sqrt(this->radius);
 }
 
 int 
@@ -78,7 +81,7 @@ icqInsideLocatorType::isPointInside(const double* point) {
         double paDotRay = 0;
         for (size_t k = 0; k < 3; ++k) {
             p[k] = point[k] - pa[k];
-            paDotRay -= p[k] * this->rayDirection[k];
+            paDotRay += (pa[k] - point[k]) * this->rayDirection[k];
         }
         
         // Subdivide the polygon into triangles
@@ -92,8 +95,8 @@ icqInsideLocatorType::isPointInside(const double* point) {
             for (size_t k = 0; k < 3; ++k) {
                 b[k] = pb[k] - pa[k];
                 c[k] = pc[k] - pa[k];
-                pbDotRay -= b[k] * this->rayDirection[k];
-                pcDotRay -= c[k] * this->rayDirection[k];
+                pbDotRay += (pb[k] - point[k]) * this->rayDirection[k];
+                pcDotRay += (pc[k] - point[k]) * this->rayDirection[k];
             }
 
             // Points cannot be degenerate
@@ -111,9 +114,10 @@ icqInsideLocatorType::isPointInside(const double* point) {
             
             // At least one of the points must be in the direction of the
             // ray
-            //if (paDotRay > 0 || pbDotRay > 0 || pcDotRay > 0) {
-            	numIntersections += this->rayIntersectsTriangle(p, b, c);
-        	//}
+            if (paDotRay > 0 || pbDotRay > 0 || pcDotRay > 0) {
+            	int res = this->rayIntersectsTriangle(p, b, c);
+                if (res == 1) numIntersections += res;
+        	}
         }
     }
     ptIds->Delete();
@@ -150,22 +154,23 @@ int icqInsideLocatorType::isPointInBox(const double* point) {
 void icqInsideLocatorType::setRayDirection(const double* point) {
 
    // Shoot towards the box plane that is closest but avoid 
-   // shooting along one of the main axes. (One is free to 
-   // choose any direction in principle.)
-   this->rayDirection[0] = 1.22342432532532523;
-   this->rayDirection[1] = 4.23432532245934304;
-   this->rayDirection[2] = 2.23905823675768753;
+   // shooting along one of the main axes to minimize the risk
+   // of hitting either an edge or a vertex.
+
+   // Initialize to some small random directions
+   this->rayDirection[0] = 0.0061246565456 * this->boxLen[0];
+   this->rayDirection[1] = 0.0037655645623 * this->boxLen[1];
+   this->rayDirection[2] = 0.0078962767621 * this->boxLen[2];
+
    size_t index = 0; 
    int sign = 1;
    double minD = std::numeric_limits<double>::max();
 
    for (size_t k = 0; k < 3; ++k) {
 
-       //this->rayDirection[k] = 100 * (k + 1) * this->eps;
-
        double hi = this->boxMax[k] - point[k];
        double lo = point[k] - this->boxMin[k];
-       double d = (hi < lo? hi: lo);
+       double d = (lo < hi? lo: hi);
        if (d < minD) {
            index = k;
            sign = (lo < hi? -1: +1);
@@ -173,7 +178,8 @@ void icqInsideLocatorType::setRayDirection(const double* point) {
        }
    }
    
-   //this->rayDirection[index] = sign * minD;
+   // Set the ray in this direction
+   this->rayDirection[index] = sign;
 }
 
 
@@ -184,11 +190,12 @@ int icqInsideLocatorType::rayIntersectsTriangle(const double* p,
     const double* d = this->rayDirection;
     double det = b[2]*c[1]*d[0] - b[1]*c[2]*d[0] - b[2]*c[0]*d[1] + b[0]*c[2]*d[1] + b[1]*c[0]*d[2] - b[0]*c[1]*d[2];
     if (det == 0) {
+        // point very close to the triangle face or ray is parallel to face
         return ICQ_MAYBE;
     }
 
     double xsi = -c[2]*d[1]*p[0] + c[1]*d[2]*p[0] + c[2]*d[0]*p[1] - c[0]*d[2]*p[1] - c[1]*d[0]*p[2] + c[0]*d[1]*p[2];
-    xsi /= det;
+    xsi /= -det;
     double eta = b[2]*d[1]*p[0] - b[1]*d[2]*p[0] - b[2]*d[0]*p[1] + b[0]*d[2]*p[1] + b[1]*d[0]*p[2] - b[0]*d[1]*p[2];
     eta /= -det;
 
@@ -198,10 +205,10 @@ int icqInsideLocatorType::rayIntersectsTriangle(const double* p,
     if (xsi > 1.0 + this->eps) return res;
     if (eta > 1.0 - xsi + this->eps) return res;
 
-    std::cerr << "........MAYBE xsi = " << xsi << " eta = " << eta << "\n";
+    // A good chance to have an intersection
     if (xsi > 0 && xsi < 1 && 
         eta > 0 && xsi + eta < 1) {
-        std::cerr << "........FOUND intersection\n";
+        // Definitely an intersection
         return ICQ_YES;
     }
 
