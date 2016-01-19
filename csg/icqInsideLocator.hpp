@@ -22,7 +22,6 @@ private:
     vtkPolyData* pdata;
     double boxMin[3];
     double boxMax[3];
-    double boxLen[3];
     double center[3];
     double rayDirection[3];
 
@@ -31,7 +30,8 @@ private:
 
     int rayIntersectsTriangle(const double* p, 
                               const double* b,
-                              const double* c);
+                              const double* c,
+                              double* xsi, double* eta, double* lam);
 
     void setRayDirection(const double* point);
     

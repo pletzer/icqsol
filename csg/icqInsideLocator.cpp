@@ -27,9 +27,9 @@ icqInsideLocatorType::icqInsideLocatorType(vtkPolyData* pdata) {
 
     this->radius = 0;
     for (size_t k = 0; k < 3; ++k) {
-        this->boxLen[k] = this->boxMax[k] - this->boxMin[k];
+        double boxLen = this->boxMax[k] - this->boxMin[k];
         this->center[k] = 0.5*(this->boxMin[k] + this->boxMax[k]);
-        this->radius += this->boxLen[k]*this->boxLen[k];
+        this->radius += boxLen*boxLen;
     }
     this->radius = 0.5*sqrt(this->radius);
 }
@@ -60,6 +60,9 @@ icqInsideLocatorType::isPointInside(const double* point) {
 
     // The triangle's vertices
     double pa[3], pb[3], pc[3];
+
+    // Parametric coordinates
+    double xsi, eta, lam;
     
     // Iterate over the polygons
     vtkPoints* points = this->pdata->GetPoints();
@@ -115,8 +118,10 @@ icqInsideLocatorType::isPointInside(const double* point) {
             // At least one of the points must be in the direction of the
             // ray
             if (paDotRay > 0 || pbDotRay > 0 || pcDotRay > 0) {
-            	int res = this->rayIntersectsTriangle(p, b, c);
-                if (res == 1) numIntersections += res;
+            	int res = this->rayIntersectsTriangle(p, b, c, &xsi, &eta, &lam);
+                if (res == ICQ_YES) {
+                    numIntersections += 1;
+                }
         	}
         }
     }
@@ -126,7 +131,6 @@ icqInsideLocatorType::isPointInside(const double* point) {
     if (numIntersections % 2 == 1) {
         res = ICQ_YES;
     }
-    std::cerr << ".....numIntersections = " << numIntersections << '\n';
     
     return res;
 }
@@ -158,9 +162,9 @@ void icqInsideLocatorType::setRayDirection(const double* point) {
    // of hitting either an edge or a vertex.
 
    // Initialize to some small random directions
-   this->rayDirection[0] = 0.0061246565456 * this->boxLen[0];
-   this->rayDirection[1] = 0.0037655645623 * this->boxLen[1];
-   this->rayDirection[2] = 0.0078962767621 * this->boxLen[2];
+   this->rayDirection[0] = 0.0061246565456;
+   this->rayDirection[1] = -0.0037655645623;
+   this->rayDirection[2] = 0.0078962767621;
 
    size_t index = 0; 
    int sign = 1;
@@ -185,7 +189,8 @@ void icqInsideLocatorType::setRayDirection(const double* point) {
 
 int icqInsideLocatorType::rayIntersectsTriangle(const double* p,
                                             const double* b,
-                                            const double* c) {
+                                            const double* c,
+                                            double* xsi, double* eta, double* lam) {
 
     const double* d = this->rayDirection;
     double det = b[2]*c[1]*d[0] - b[1]*c[2]*d[0] - b[2]*c[0]*d[1] + b[0]*c[2]*d[1] + b[1]*c[0]*d[2] - b[0]*c[1]*d[2];
@@ -194,24 +199,31 @@ int icqInsideLocatorType::rayIntersectsTriangle(const double* p,
         return ICQ_MAYBE;
     }
 
-    double xsi = -c[2]*d[1]*p[0] + c[1]*d[2]*p[0] + c[2]*d[0]*p[1] - c[0]*d[2]*p[1] - c[1]*d[0]*p[2] + c[0]*d[1]*p[2];
-    xsi /= -det;
-    double eta = b[2]*d[1]*p[0] - b[1]*d[2]*p[0] - b[2]*d[0]*p[1] + b[0]*d[2]*p[1] + b[1]*d[0]*p[2] - b[0]*d[1]*p[2];
-    eta /= -det;
+    *xsi = -c[2]*d[1]*p[0] + c[1]*d[2]*p[0] + c[2]*d[0]*p[1] - c[0]*d[2]*p[1] - c[1]*d[0]*p[2] + c[0]*d[1]*p[2];
+    *xsi /= -det;
+    *eta = b[2]*d[1]*p[0] - b[1]*d[2]*p[0] - b[2]*d[0]*p[1] + b[0]*d[2]*p[1] + b[1]*d[0]*p[2] - b[0]*d[1]*p[2];
+    *eta /= -det;
+    *lam = b[2]*c[1]*p[0]-b[1]*c[2]*p[0]-b[2]*c[0]*p[1]+b[0]*c[2]*p[1]+b[1]*c[0]*p[2]-b[0]*c[1]*p[2];
+    *lam /= -det;
 
     int res = ICQ_NO;
-    if (xsi < -this->eps) return res;
-    if (eta < -this->eps) return res;
-    if (xsi > 1.0 + this->eps) return res;
-    if (eta > 1.0 - xsi + this->eps) return res;
+    if (*xsi < -this->eps ||
+        *eta < -this->eps ||
+        *xsi > 1.0 + this->eps ||
+        *xsi + *eta > 1.0 + this->eps ||
+        *lam < -this->eps) {
+        // No intersection
+        return res;
+    }
 
     // A good chance to have an intersection
-    if (xsi > 0 && xsi < 1 && 
-        eta > 0 && xsi + eta < 1) {
+    if (*xsi > 0 && *xsi < 1 && 
+        *eta > 0 && *xsi + *eta < 1) {
         // Definitely an intersection
         return ICQ_YES;
     }
 
+    // Cannot say for sure
     return ICQ_MAYBE;
 }
 
