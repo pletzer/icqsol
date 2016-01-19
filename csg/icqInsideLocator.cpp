@@ -186,7 +186,7 @@ int icqInsideLocatorType::rayIntersectsTriangle(const double* p,
 // C interface
 
 extern "C"
-void icqInsideLocatorNew(icqInsideLocatorType** self, vtkPolyData* pdata) {
+void icqInsideLocatorInit(icqInsideLocatorType** self, vtkPolyData* pdata) {
     *self = new icqInsideLocatorType(pdata);
 }
 

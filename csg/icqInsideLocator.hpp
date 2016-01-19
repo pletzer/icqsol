@@ -38,7 +38,7 @@ private:
 
 // C interface
 extern "C" {
-    void icqInsideLocatorNew(icqInsideLocatorType** self, vtkPolyData* pdata);
+    void icqInsideLocatorInit(icqInsideLocatorType** self, vtkPolyData* pdata);
     void icqInsideLocatorDel(icqInsideLocatorType** self);
     int icqInsideLocatorIsPointInside(icqInsideLocatorType **self, const double* point);
 }
