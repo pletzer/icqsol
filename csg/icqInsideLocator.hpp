@@ -5,13 +5,13 @@
 
 enum {ICQ_NO, ICQ_YES, ICQ_MAYBE};
 
-struct icqInsideLocator {
+class icqInsideLocatorType {
 
 public:
 
-    icqInsideLocator(vtkPolyData* pdata);
+    icqInsideLocatorType(vtkPolyData* pdata);
 
-    ~icqInsideLocator(){}
+    ~icqInsideLocatorType(){}
 
     int isPointInside(const double* point);
 
@@ -35,5 +35,12 @@ private:
     void setRayDirection(const double* point);
     
 };
+
+// C interface
+extern "C" {
+    void icqInsideLocatorNew(icqInsideLocatorType** self, vtkPolyData* pdata);
+    void icqInsideLocatorDel(icqInsideLocatorType** self);
+    int icqInsideLocatorIsPointInside(icqInsideLocatorType **self, const double* point);
+}
 
 #endif // ICQ_POINT_INSIDE_VTK_POLY_DATA

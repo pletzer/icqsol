@@ -6,7 +6,7 @@
 #include <vtkPoints.h>
 
 
-icqInsideLocator::icqInsideLocator(vtkPolyData* pdata) {
+icqInsideLocatorType::icqInsideLocatorType(vtkPolyData* pdata) {
 
 	this->eps = 1.2345678*std::numeric_limits<double>::epsilon(); 
 	
@@ -31,7 +31,7 @@ icqInsideLocator::icqInsideLocator(vtkPolyData* pdata) {
 }
 
 int 
-icqInsideLocator::isPointInside(const double* point) {
+icqInsideLocatorType::isPointInside(const double* point) {
 
     // Quick check
     if (this->isPointInSphere(point) == 0 || 
@@ -119,7 +119,7 @@ icqInsideLocator::isPointInside(const double* point) {
     return res;
 }
 
-int icqInsideLocator::isPointInSphere(const double* point) {
+int icqInsideLocatorType::isPointInSphere(const double* point) {
 
     int res = ICQ_NO;
     double radSqr = 0;
@@ -130,7 +130,7 @@ int icqInsideLocator::isPointInSphere(const double* point) {
     return res;
 }
 
-int icqInsideLocator::isPointInBox(const double* point) {
+int icqInsideLocatorType::isPointInBox(const double* point) {
 
     for (size_t k = 0; k < 3; ++k) {
     	if (point[k] < this->boxMin[k]) return ICQ_NO;
@@ -139,7 +139,7 @@ int icqInsideLocator::isPointInBox(const double* point) {
     return ICQ_YES;
 }
 
-void icqInsideLocator::setRayDirection(const double* point) {
+void icqInsideLocatorType::setRayDirection(const double* point) {
 
    // Shoot towards the box plane that is closest
    size_t index = 0; 
@@ -161,7 +161,7 @@ void icqInsideLocator::setRayDirection(const double* point) {
 }
 
 
-int icqInsideLocator::rayIntersectsTriangle(const double* p,
+int icqInsideLocatorType::rayIntersectsTriangle(const double* p,
                                             const double* b,
                                             const double* c) {
 
@@ -182,3 +182,21 @@ int icqInsideLocator::rayIntersectsTriangle(const double* p,
 
     return res;
 }
+
+// C interface
+
+extern "C"
+void icqInsideLocatorNew(icqInsideLocatorType** self, vtkPolyData* pdata) {
+    *self = new icqInsideLocatorType(pdata);
+}
+
+extern "C"
+void icqInsideLocatorDel(icqInsideLocatorType** self) {
+    delete *self;
+}
+  
+extern "C"  
+int icqInsideLocatorIsPointInside(icqInsideLocatorType **self, const double* point) {
+    return (*self)->isPointInside(point);
+}
+
