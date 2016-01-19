@@ -18,6 +18,7 @@ icqInsideLocatorType::icqInsideLocatorType(vtkPolyData* pdata) {
     this->pdata->GetPoints()->ComputeBounds();
     double* bounds = this->pdata->GetPoints()->GetBounds();
 
+    // Make the box a little bigger
     this->boxMin[0] = bounds[0] - this->eps;
     this->boxMax[0] = bounds[1] + this->eps;
     this->boxMin[1] = bounds[2] - this->eps;
@@ -117,7 +118,7 @@ icqInsideLocatorType::isPointInside(const double* point) {
             
             // At least one of the points must be in the direction of the
             // ray
-            if (paDotRay > 0 || pbDotRay > 0 || pcDotRay > 0) {
+            if (paDotRay > -this->eps || pbDotRay > -this->eps || pcDotRay > -this->eps) {
             	int res = this->rayIntersectsTriangle(p, b, c, &xsi, &eta, &lam);
                 if (res == ICQ_YES) {
                     numIntersections++;

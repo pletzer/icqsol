@@ -9,10 +9,22 @@ class icqInsideLocatorType {
 
 public:
 
-    icqInsideLocatorType(vtkPolyData* pdata);
+/**
+ * Constructor
+ * @param pdata instance of vtkPolyData
+ */
 
+    icqInsideLocatorType(vtkPolyData* pdata);
+/**
+ * Destructor
+ */
     ~icqInsideLocatorType(){}
 
+/**
+ * Check if a point is inside the shape
+ * @param point point
+ * @return ICQ_YES, ICQ_NO, or ICQ_MAYBE
+ */
     int isPointInside(const double* point);
 
 private:
