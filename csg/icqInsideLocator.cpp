@@ -1,10 +1,12 @@
 #include <limits>
-#include <icqPointInsideVtkPolyData.hpp>
+#include <cmath>
+#include <icqInsideLocator.hpp>
 #include <vtkCellArray.h>
 #include <vtkIdList.h>
 #include <vtkPoints.h>
 
-icqPointInsideVtkPolyData::icqPointInsideVtkPolyData(vtkPolyData* pdata) {
+
+icqInsideLocator::icqInsideLocator(vtkPolyData* pdata) {
 
 	this->eps = 1.2345678*std::numeric_limits<double>::epsilon(); 
 	
@@ -12,9 +14,6 @@ icqPointInsideVtkPolyData::icqPointInsideVtkPolyData(vtkPolyData* pdata) {
     //  (xmin,xmax, ymin,ymax, zmin,zmax)
     this->pdata->GetPoints()->ComputeBounds();
     double* bounds = this->pdata->GetPoints()->GetBounds();
-    this->boxMin.resize(3);
-    this->boxMax.resize(3);
-    this->center.resize(3);
 
     // Make the box a little bigger
     this->boxMin[0] = bounds[0] - this->eps;
@@ -29,14 +28,14 @@ icqPointInsideVtkPolyData::icqPointInsideVtkPolyData(vtkPolyData* pdata) {
         double halfDist = 0.5*(this->boxMax[k] - this->boxMin[k]);
         this->radius = (this->radius < halfDist? halfDist: this->radius);
     }
-    this->rayDirection.resize(3);
 }
 
 int 
-icqPointInsideVtkPolyData::isInShape(const double* point) {
+icqInsideLocator::isPointInside(const double* point) {
 
     // Quick check
-    if (this->isInSphere(point) == 0 || this->isInBox(point) == 0) {
+    if (this->isPointInSphere(point) == 0 || 
+        this->isPointInBox(point) == 0) {
         return ICQ_NO;
     }
     
@@ -45,15 +44,15 @@ icqPointInsideVtkPolyData::isInShape(const double* point) {
     int numIntersections = 0;
     
     // point - pa
-    std::vector<double> p(3);
+    double p[3];
 
     // pb - pa
-    std::vector<double> b(3);
+    double b[3];
 
     // pc - pa
-    std::vector<double> c(3);
+    double c[3];
 
-    std::vector<double> areaVec(3);
+    double areaVec[3];
     
     // Iterate over the polygons
     vtkPoints* points = this->pdata->GetPoints();
@@ -120,7 +119,7 @@ icqPointInsideVtkPolyData::isInShape(const double* point) {
     return res;
 }
 
-int icqPointInsideVtkPolyData::isInSphere(const double* point) {
+int icqInsideLocator::isPointInSphere(const double* point) {
 
     int res = ICQ_NO;
     double radSqr = 0;
@@ -131,7 +130,7 @@ int icqPointInsideVtkPolyData::isInSphere(const double* point) {
     return res;
 }
 
-int icqPointInsideVtkPolyData::isInBox(const double* point) {
+int icqInsideLocator::isPointInBox(const double* point) {
 
     for (size_t k = 0; k < 3; ++k) {
     	if (point[k] < this->boxMin[k]) return ICQ_NO;
@@ -140,7 +139,7 @@ int icqPointInsideVtkPolyData::isInBox(const double* point) {
     return ICQ_YES;
 }
 
-void icqPointInsideVtkPolyData::setRayDirection(const double* point) {
+void icqInsideLocator::setRayDirection(const double* point) {
 
    // Shoot towards the box plane that is closest
    size_t index = 0; 
@@ -162,11 +161,11 @@ void icqPointInsideVtkPolyData::setRayDirection(const double* point) {
 }
 
 
-int icqPointInsideVtkPolyData::rayIntersectsTriangle(const std::vector<double>& p,
-                                                     const std::vector<double>& b,
-                                                     const std::vector<double>& c) {
+int icqInsideLocator::rayIntersectsTriangle(const double* p,
+                                            const double* b,
+                                            const double* c) {
 
-    const std::vector<double>& d = this->rayDirection;
+    const double* d = this->rayDirection;
     double det = b[2]*c[1]*d[0] - b[1]*c[2]*d[0] - b[2]*c[0]*d[1] + b[0]*c[2]*d[1] + b[1]*c[0]*d[2] - b[0]*c[1]*d[2];
     if (det == 0) {
         return ICQ_MAYBE;
