@@ -188,14 +188,14 @@ void icqInsideLocatorType::setRayDirection(const double* point) {
 
 
 int icqInsideLocatorType::rayIntersectsTriangle(const double* p,
-                                            const double* b,
-                                            const double* c,
-                                            double* xsi, double* eta, double* lam) {
+                                                const double* b,
+                                                const double* c,
+                                                double* xsi, double* eta, double* lam) {
 
     const double* d = this->rayDirection;
     double det = b[2]*c[1]*d[0] - b[1]*c[2]*d[0] - b[2]*c[0]*d[1] + b[0]*c[2]*d[1] + b[1]*c[0]*d[2] - b[0]*c[1]*d[2];
     if (det == 0) {
-        // point very close to the triangle face or ray is parallel to face
+        // face parallel to ray? This should never happen!!
         return ICQ_MAYBE;
     }
 
@@ -203,22 +203,21 @@ int icqInsideLocatorType::rayIntersectsTriangle(const double* p,
     *xsi /= -det;
     *eta = b[2]*d[1]*p[0] - b[1]*d[2]*p[0] - b[2]*d[0]*p[1] + b[0]*d[2]*p[1] + b[1]*d[0]*p[2] - b[0]*d[1]*p[2];
     *eta /= -det;
-    *lam = b[2]*c[1]*p[0]-b[1]*c[2]*p[0]-b[2]*c[0]*p[1]+b[0]*c[2]*p[1]+b[1]*c[0]*p[2]-b[0]*c[1]*p[2];
+    *lam = b[2]*c[1]*p[0] - b[1]*c[2]*p[0] - b[2]*c[0]*p[1] + b[0]*c[2]*p[1] + b[1]*c[0]*p[2] - b[0]*c[1]*p[2];
     *lam /= -det;
 
-    int res = ICQ_NO;
     if (*xsi < -this->eps ||
         *eta < -this->eps ||
         *xsi > 1.0 + this->eps ||
         *xsi + *eta > 1.0 + this->eps ||
         *lam < -this->eps) {
         // No intersection
-        return res;
+        return ICQ_NO;
     }
 
     // A good chance to have an intersection
-    if (*xsi > 0 && *xsi < 1 && 
-        *eta > 0 && *xsi + *eta < 1) {
+    if (*xsi > this->eps && *xsi < 1 - this->eps && 
+        *eta > this->eps && *xsi + *eta < 1 - this->eps) {
         // Definitely an intersection
         return ICQ_YES;
     }
