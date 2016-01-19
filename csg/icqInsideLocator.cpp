@@ -4,6 +4,7 @@
 #include <vtkCellArray.h>
 #include <vtkIdList.h>
 #include <vtkPoints.h>
+#include <iostream>
 
 
 icqInsideLocatorType::icqInsideLocatorType(vtkPolyData* pdata) {
@@ -144,9 +145,9 @@ void icqInsideLocatorType::setRayDirection(const double* point) {
    // Shoot towards the box plane that is closest
    size_t index = 0; 
    int sign = 1;
-   double minD = std::numeric_limits<int>::max();
+   double minD = std::numeric_limits<double>::max();
    for (size_t k = 0; k < 3; ++k) {
-       this->rayDirection[index] = this->eps;
+       this->rayDirection[k] = this->eps;
        double hi = this->boxMax[k] - point[k];
        double lo = point[k] - this->boxMin[k];
        double d = (hi < lo? hi: lo);
@@ -158,6 +159,8 @@ void icqInsideLocatorType::setRayDirection(const double* point) {
    }
    
    this->rayDirection[index] = sign * minD;
+   std::cerr << "*** index = " << index << " sign = " << sign << " minD = " << minD << " ray direction is " << this->rayDirection[0] << " " << this->rayDirection[1] << " " << this->rayDirection[2] << "\n";
+
 }
 
 

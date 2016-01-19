@@ -24,5 +24,14 @@ lib.icqInsideLocatorInit(byref(handle), c_long(addr))
 
 # Tests
 
+tests = [((0.,0.,0.), 1)]
+for test in tests:
+	point = numpy.array(test[0])
+	result = test[1]
+	print 'point = ', point
+	inside = lib.icqInsideLocatorIsPointInside(byref(handle), point.ctypes.data_as(POINTER(c_double)))
+	print 'inside = ', inside
+	assert(inside - result == 0)
+
 # Destructor
 lib.icqInsideLocatorDel(byref(handle))
