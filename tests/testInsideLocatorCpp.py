@@ -30,7 +30,10 @@ tests = [((0., 0., 0.), 1), # center
          ((0.499, 0., 0.), 1), # close to a face
          ((0.499, 0.499, 0.), 1), # close to an edge
          ((0.499, 0.499, 0.499), 1), # close to a vertex
-         ((0.501, 0.499, 0.499), 0) # just outside
+         ((0.501, 0.499, 0.499), 0), # just outside
+         ((0.5, 0.5, 0.5), 0), # on face and on vertex
+         ((0.5, 0.2, 0.5), 0), # on face and on edge
+         ((0.5, 0.2, 0.3), 1), # right on a face but well inside triangle
          ]
 for test in tests:
 	point = numpy.array(test[0])

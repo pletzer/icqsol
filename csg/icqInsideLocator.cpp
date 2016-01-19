@@ -120,7 +120,16 @@ icqInsideLocatorType::isPointInside(const double* point) {
             if (paDotRay > 0 || pbDotRay > 0 || pcDotRay > 0) {
             	int res = this->rayIntersectsTriangle(p, b, c, &xsi, &eta, &lam);
                 if (res == ICQ_YES) {
-                    numIntersections += 1;
+                    numIntersections++;
+                }
+                else if (res == ICQ_MAYBE) {
+
+                    if (xsi > this->eps && xsi < 1. - this->eps &&
+                        eta > this->eps && xsi + eta < 1. - this->eps && 
+                        lam > -this->eps) {
+                        // Likely point (nearly) on triangle
+                        numIntersections++;
+                    }
                 }
         	}
         }
