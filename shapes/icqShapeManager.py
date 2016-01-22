@@ -1044,25 +1044,25 @@ def testPrimitiveShapes():
     box = shape_mgr.createShape('box', origin=(0.,  0.,  0.),
                                 lengths=(0.5,  1.,  2.))
     shape_mgr.saveShape(shape=box, file_name='box.vtk', file_type='ascii')
-    shape_mgr.show(box)
+    shape_mgr.showShape(box)
 
     # Cone
     con = shape_mgr.createShape('cone', radius=1.0, origin=(0.,  0.,  0.),
                                 lengths=[1., 0., 0.], n_theta=8)
     shape_mgr.saveShape(shape=con, file_name='con.vtk', file_type='ascii')
-    shape_mgr.show(con)
+    shape_mgr.showShape(con)
 
     # Cylinder
     cyl = shape_mgr.createShape('cylinder', radius=1.0, origin=(0., 0., 0.),
                                 lengths=(1., 0., 0.), n_theta=8)
     shape_mgr.saveShape(shape=cyl, file_name='cyl.vtk', file_type='ascii')
-    shape_mgr.show(cyl)
+    shape_mgr.showShape(cyl)
 
     # Sphere
     sph = shape_mgr.createShape('sphere', radius=1.0, origin=(0., 0., 0.),
                                 n_theta=8, n_phi=4)
     shape_mgr.saveShape(shape=sph, file_name='sph.vtk', file_type='ascii')
-    shape_mgr.show(sph)
+    shape_mgr.showShape(sph)
 
 
 def testSaveLoad():
@@ -1088,7 +1088,7 @@ def testConstructiveGeometry():
     geom = c*b - s2 - s1
     shape_mgr.saveShape(shape=geom, file_name='geom.ply', file_type='binary')
     geom2 = shape_mgr.loadAsShape('geom.ply')
-    shape_mgr.show(geom2)
+    shape_mgr.showShape(geom2)
 
 
 def testShapeComposition():
