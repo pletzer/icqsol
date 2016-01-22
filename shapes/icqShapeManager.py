@@ -1066,14 +1066,13 @@ def testPrimitiveShapes():
 
 def testSaveLoad():
     shape_mgr = ShapeManager(file_format='vtk', vtk_dataset_type='POLYDATA')
-    s = shape_mgr.createShape('shpere', radius=0.7, origin=(0., 0., 0.),
+    s = shape_mgr.createShape('sphere', radius=0.7, origin=(0., 0., 0.),
                               n_theta=8, n_phi=4)
     shape_mgr.saveShape(shape=s, file_name='t.vtk', file_type='ascii')
     s2 = shape_mgr.loadAsShape('t.vtk')
     s3 = shape_mgr.createShape('box', origin=(0.1, 0.2, 0.3),
                                lengths=(1.1, 1.2, 1.3))
     s4 = s2 + s3
-    s4.debug()
 
 
 def testConstructiveGeometry():
