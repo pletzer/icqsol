@@ -41,9 +41,8 @@ class ShapeManager(object):
             self.reader = None
             self.writer = None
         elif self.file_format == 'vtk':
-            assert(self.vtk_dataset_type in
-              VTK_DATASET_TYPES, "Invalid vtk_dataset_type %s"
-                % str(self.vtk_dataset_type))
+            assert self.vtk_dataset_type in VTK_DATASET_TYPES, \
+                "Invalid vtk_dataset_type %s" % str(self.vtk_dataset_type)
             self.setVtkGeometryFilter()
             self.setReader(self.file_format, self.vtk_dataset_type)
             self.setWriter(self.file_format, self.vtk_dataset_type)
@@ -284,8 +283,8 @@ class ShapeManager(object):
         else:
             array = vtk_poly_data.GetCellData().GetScalars(field_name)
         numComps = array.GetNumberOfComponents()
-        assert(field_component < numComps,
-               "Field component {0} must be < {1}".format(field_component, numComps))
+        assert field_component < numComps, \
+            "Field component {0} must be < {1}".format(field_component, numComps)
         return array.GetRange(field_component)
         
     def integrateSurfaceField(self, vtk_poly_data, field_name,
@@ -305,8 +304,8 @@ class ShapeManager(object):
         else:
             array = vtk_poly_data.GetCellData().GetScalars(field_name)
         numComps = array.GetNumberOfComponents()
-        assert(field_component < numComps,
-               "Field component {0} must be < {1}".format(field_component, numComps))
+        assert field_component < numComps, \
+            "Field component {0} must be < {1}".format(field_component, numComps)
         
         # Iterate over all the polys.
         points = vtk_poly_data.GetPoints()
@@ -484,8 +483,8 @@ class ShapeManager(object):
         else:
             array = vtk_poly_data.GetCellData().GetScalars(field_name)
         numComps = array.GetNumberOfComponents()
-        assert(field_component < numComps,
-               "Field component should be < {0}".format(numComps))
+        assert field_component < numComps, \
+            "Field component should be < {0}".format(numComps)
         # Get the min/max field values.
         fmin, fmax = array.GetRange()
         # Prepare for coloring.
@@ -989,13 +988,13 @@ class ShapeManager(object):
         """
         if file_format is None:
             file_format = self.file_format
-        assert(file_format in FILE_FORMATS,
-               "Invalid file_format %s" % str(file_format))
+        assert file_format in FILE_FORMATS, \
+            "Invalid file_format %s" % str(file_format)
         if file_format == 'vtk':
             if vtk_dataset_type is None:
                 vtk_dataset_type = self.vtk_dataset_type
-            assert(vtk_dataset_type in VTK_DATASET_TYPES,
-                   "Invalid vtk_dataset_type %s" % str(vtk_dataset_type))
+            assert vtk_dataset_type in VTK_DATASET_TYPES, \
+                "Invalid vtk_dataset_type %s" % str(vtk_dataset_type)
         self.reader = self.chooseReader(file_format, vtk_dataset_type)
 
     def chooseWriter(self, file_format, vtk_dataset_type):
@@ -1026,13 +1025,13 @@ class ShapeManager(object):
         """
         if file_format is None:
             file_format = self.file_format
-        assert(file_format in FILE_FORMATS,
-               "Invalid file_format %s" % str(file_format))
+        assert file_format in FILE_FORMATS, \
+            "Invalid file_format %s" % str(file_format)
         if file_format == 'vtk':
             if vtk_dataset_type is None:
                 vtk_dataset_type = self.vtk_dataset_type
-            assert(vtk_dataset_type in VTK_DATASET_TYPES,
-                   "Invalid vtk_dataset_type %s" % str(vtk_dataset_type))
+            assert vtk_dataset_type in VTK_DATASET_TYPES, \
+                "Invalid vtk_dataset_type %s" % str(vtk_dataset_type)
         self.writer = self.chooseWriter(file_format, vtk_dataset_type)
 
 

@@ -15,4 +15,4 @@ s1 = shape_mgr.createShape('cylinder', radius=1.0, origin=(0., 0., 0.5), length=
 # floating point issues
 s2 = shape_mgr.createShape('cylinder', radius=0.5, origin=(0., 0., 0.), length=1.1)
 geom = s1 - s2
-shape_mgr.show(geom, filename='testSubtractionCylinders.png')
+shape_mgr.showShape(geom, filename='testSubtractionCylinders.png')

@@ -12,4 +12,4 @@ shape_mgr = ShapeManager(file_format=util.VTK_FORMAT, vtk_dataset_type=util.POLY
 s1 = shape_mgr.createShape('sphere', radius=1.0, origin=(0., 0., 0.))
 s2 = shape_mgr.createShape('sphere', radius=1.0, origin=(1., 0., 0.))
 geom = s1 * s2
-shape_mgr.show(geom, filename='testIntersection.png')
+shape_mgr.showShape(geom, filename='testIntersection.png')

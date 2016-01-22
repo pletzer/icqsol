@@ -34,4 +34,4 @@ s = shape_mgr.createShape('box', origin=eval(args.origin), lengths=eval(args.len
 if args.output:
     shape_mgr.saveShape(shape=s, file_name=args.output, file_type=util.ASCII)
 else:
-    shape_mgr.show(s)
+    shape_mgr.showShape(s)
