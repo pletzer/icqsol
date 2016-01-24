@@ -7,6 +7,7 @@ alexander@gokliya.net
 
 import os
 from setuptools import setup, Extension
+import __init__ # for version number
 
 # Because we're linking C++ code to the VTK library, we 
 # need to know where VTK was installed. 
@@ -14,7 +15,7 @@ VTK_LIBRARY_DIR = os.environ.get('VTK_LIBRARY_DIR', '')
 VTK_INCLUDE_DIR = os.environ.get('VTK_INCLUDE_DIR', '')
 
 setup(name='icqsol',
-      version='0.3.12',
+      version=__init__.__version__, 
       description='Solving engineering problems on the web',
       author='Alex Pletzer and Greg Von Kuster',
       author_email='alexander@gokliya.net',
