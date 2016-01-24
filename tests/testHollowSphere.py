@@ -36,8 +36,8 @@ bigSphere = shape_mgr.createShape('sphere',
 smallSphere = shape_mgr.createShape('sphere',
                                     origin=(0., 0., 0.),
                                     radius=1.0,
-                                    n_theta=args.n_theta,
-                                    n_phi=args.n_phi)
+                                    n_theta=2*args.n_theta,
+                                    n_phi=2*args.n_phi)
                                     
 geom = bigSphere - smallSphere
 
