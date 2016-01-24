@@ -3,6 +3,8 @@ project(icqsol)
 
 # need python
 find_package(PythonInterp REQUIRED)
+# need VTK include files and libraries
+find_package(VTK REQUIRED)
 
 # make sure the numpy python module can be imported
 execute_process(COMMAND "${PYTHON_EXECUTABLE}" -c "import numpy" ERROR_VARIABLE ERROR_NUMPY)
@@ -13,13 +15,11 @@ endif()
 # make sure the vtk python module can be imported
 execute_process(COMMAND "${PYTHON_EXECUTABLE}" -c "import vtk" ERROR_VARIABLE ERROR_VTK)
 if (NOT ERROR_VTK STREQUAL "")
-  message(FATAL_ERROR "You must have python-vtk installed!")
+  message(FATAL_ERROR "You must have vtkpython installed!")
 endif()
 
 option(INSTALL_USER "Install in user directory" OFF)
 option(INSTALL_PREFIX "Install under CMAKE_INSTALL_PREFIX" OFF)
-option(VTK_INCLUDE_DIR "Directory where VTK include files are located" "")
-option(VTK_LIBRARY_DIR "Directory where VTK libraries are located" "")
 
 # run python setup.py install
 if (NOT INSTALL_USER AND NOT INSTALL_PREFIX)
