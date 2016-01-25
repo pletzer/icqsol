@@ -59,6 +59,7 @@ void computeOffDiagonalTerms(vtkPolyData* pdata, double* gMat) {
     ptIds->Delete();
 
     // Iterate over the source triangles
+    #pragma omp parallel for
     for (size_t jSrc = 0; jSrc < numTriangles; ++jSrc) {
 
         size_t ia = cells[3*jSrc + 0];

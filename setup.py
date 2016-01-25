@@ -13,6 +13,7 @@ import __init__ # for version number
 # need to know where VTK was installed. 
 VTK_LIBRARY_DIR = os.environ.get('VTK_LIBRARY_DIR', '')
 VTK_INCLUDE_DIR = os.environ.get('VTK_INCLUDE_DIR', '')
+OPENMP_COMPILER_ARG = os.environ.get('OPENMP_COMPILER_ARG', '-fopenmp')
 
 setup(name='icqsol',
       version=__init__.__version__, 
@@ -41,6 +42,7 @@ setup(name='icqsol',
                                 'bem/icqLaplaceMatrices.cpp'],
                                include_dirs=['bem', VTK_INCLUDE_DIR],
                                library_dirs=[VTK_LIBRARY_DIR],
+                               extra_compile_args=[OPENMP_COMPILER_ARG],
                                ),
                       Extension('icqsol.icqInsideLocatorCpp', 
                                 ['csg/icqInsideLocator.cpp'],
