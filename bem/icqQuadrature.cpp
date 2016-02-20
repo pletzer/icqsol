@@ -160,6 +160,19 @@ int icqQuadratureGetMaxOrder(icqQuadratureType **self) {
     return (int) (*self)->gaussPtsAndWeights.size();
 }
 
+double icqQuadratureArea(const double* db, const double* dc) {
+    const double p12 = db[1]*dc[2];
+    const double p20 = db[2]*dc[0];
+    const double p01 = db[0]*dc[1];
+    const double p21 = db[2]*dc[1];
+    const double p02 = db[0]*dc[2];
+    const double p10 = db[1]*dc[0];
+    const double area = sqrt((p12-p21)*(p12-p21) +
+                             (p20-p02)*(p20-p02) +
+                             (p01-p10)*(p01-p10));
+    return area;
+}
+
 extern "C"
 double icqQuadratureEvaluate(icqQuadratureType **self, int order,
                              const double* pa, const double*pb, const double* pc) {
@@ -201,6 +214,46 @@ double icqQuadratureEvaluate(icqQuadratureType **self, int order,
     }
 
     return 0.5 * area * res;
+}
+
+extern "C"
+double icqQuadratureEvaluateDouble(icqQuadratureType **self, int order,
+                             const double* pa0, const double* pb0, const double* pc0,
+                             const double* pa1, const double* pb1, const double* pc1) {
+    double res = 0;
+    const double db0[] = {pb0[0] - pa0[0], pb0[1] - pa0[1], pb0[2] - pa0[2]};
+    const double dc0[] = {pc0[0] - pa0[0], pc0[1] - pa0[1], pc0[2] - pa0[2]};
+
+    const double db1[] = {pb1[0] - pa1[0], pb1[1] - pa1[1], pb1[2] - pa1[2]};
+    const double dc1[] = {pc1[0] - pa1[0], pc1[1] - pa1[1], pc1[2] - pa1[2]};
+
+    const double area0 = icqQuadratureArea(db0, dc0);
+    const double area1 = icqQuadratureArea(db1, dc1);
+
+    double p0[] = {0., 0., 0.};
+    double p1[] = {0., 0., 0.};
+
+    std::map<int, std::vector< std::vector<double> > >::const_iterator
+        it = (*self)->gaussPtsAndWeights.find(order);
+    if (it != (*self)->gaussPtsAndWeights.end()) {
+        const std::vector<double>& xsi = it->second[0];
+        const std::vector<double>& eta = it->second[1];
+        const std::vector<double>& wgh = it->second[2];
+        size_t n = xsi.size();
+        for (size_t i0 = 0; i0 < n; ++i0) {
+            for (size_t j = 0; j < 3; ++j) {
+                p0[j] = pa0[j] + xsi[i0]*db0[j] + eta[i0]*dc0[j];
+            }
+            icqQuadratureSetObserver(self, p0);
+            for (size_t i1 = 0; i1 < n; ++i1) {
+                for (size_t j = 0; j < 3; ++j) {
+                    p1[j] = pa1[j] + xsi[i1]*db1[j] + eta[i1]*dc1[j];
+                }
+                res += wgh[i0] * (*self)->func->operator()(p1) * wgh[i1];
+            }
+        }
+    }
+    return 0.5 * area1 * res;
 }
 
 extern "C"

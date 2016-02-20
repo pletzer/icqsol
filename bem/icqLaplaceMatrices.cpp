@@ -106,17 +106,8 @@ void computeOffDiagonalTerms(vtkPolyData* pdata, double* gMat) {
 
             icqQuadratureSetObserver(&self, &xObs[0]);
 
-            // Gauss quadrature order estimate
-            double normDistance = 0;
-            for (size_t j = 0; j < 3; ++j) {
-                normDistance += (xObs[j] - xSrc[j])*(xObs[j] - xSrc[j]);
-            }
-            normDistance = sqrt(normDistance) / sqrt(areaSrc);
-            int offDiagonalOrder = (int)(maxOrder * 2 / normDistance);
-            offDiagonalOrder = std::min(maxOrder, std::max(1, offDiagonalOrder));
-
             gMat[numTriangles*iObs + jSrc] = icqQuadratureEvaluate(&self, 
-                                                                   offDiagonalOrder, 
+                                                                   maxOrder, 
                                                                    &paSrc[0], &pbSrc[0], &pcSrc[0]);
         }
 
