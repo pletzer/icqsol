@@ -14,6 +14,7 @@ import __init__ # for version number
 VTK_LIBRARY_DIR = os.environ.get('VTK_LIBRARY_DIR', '')
 VTK_INCLUDE_DIR = os.environ.get('VTK_INCLUDE_DIR', '')
 OPENMP_COMPILER_ARG = os.environ.get('OPENMP_COMPILER_ARG', '-fopenmp')
+OPENMP_COMPILER_LIB = os.environ.get('OPENMP_COMPILER_LIB', 'gomp')
 
 setup(name='icqsol',
       version=__init__.__version__, 
@@ -44,7 +45,7 @@ setup(name='icqsol',
                                include_dirs=['bem', VTK_INCLUDE_DIR],
                                library_dirs=[VTK_LIBRARY_DIR],
                                extra_compile_args=[OPENMP_COMPILER_ARG],
-                               libraries=['vtkCommonDataModel-6.3'],
+                               libraries=['vtkCommonDataModel-6.3', OPENMP_COMPILER_LIB],
                                ),
                       Extension('icqsol.icqInsideLocatorCpp', 
                                 ['csg/icqInsideLocator.cpp'],
