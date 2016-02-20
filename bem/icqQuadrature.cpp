@@ -193,8 +193,9 @@ double icqQuadratureEvaluate(icqQuadratureType **self, int order,
         const std::vector<double>& eta = it->second[1];
         const std::vector<double>& wgh = it->second[2];
         for (size_t i = 0; i < xsi.size(); ++i) {
-            for (size_t j = 0; j < 3; ++j)
+            for (size_t j = 0; j < 3; ++j) {
                 p[j] = pa[j] + xsi[i]*pb2[j] + eta[i]*pc2[j];
+            }
             res += (*self)->func->operator()(p) * wgh[i];
         }
     }

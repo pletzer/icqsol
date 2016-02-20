@@ -1,9 +1,11 @@
 #ifndef ICQ_FUNCTOR
 #define ICQ_FUNCTOR
 
+#include <vector>
+
 class icqFunctor {
 protected:
-    const double* pObs;
+    std::vector<double> pObs;
 public:
     icqFunctor();
     virtual ~icqFunctor();
