@@ -1,4 +1,5 @@
 #include <icqFunctor.hpp>
+#include <string> // for size_t
 
 icqFunctor::icqFunctor() {
 	this->pObs.resize(3, 0);
