@@ -45,15 +45,6 @@ enable_testing()
 #
 
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests")
-add_test(NAME testOpenmp
-         COMMAND time "${PYTHON_EXECUTABLE}" 
-         "${CMAKE_SOURCE_DIR}/examples/solveLaplace.py" 
-         --input ${CMAKE_SOURCE_DIR}/data/tin.vtk
-         --dirichlet "sqrt(x**2+y**2+z**2) > 1.5" 
-         --input_name v 
-         --output_name charge --output out.vtk 
-         --verbose 
-         --refine 0.15)
 add_test(NAME testInsideLocatorCpp
          COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testInsideLocatorCpp.py")
 add_test(NAME testQuadrature 
