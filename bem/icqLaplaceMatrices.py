@@ -4,6 +4,7 @@ import vtk
 import numpy
 from icqsol.shapes.icqRefineSurface import RefineSurface
 from icqsol.bem.icqPotentialIntegrals import PotentialIntegrals
+from icqQuadrature import gaussPtsAndWeights
 import pkg_resources
 from ctypes import cdll, POINTER, byref, c_void_p, c_double, c_long
 
@@ -153,6 +154,11 @@ class LaplaceMatrices:
 
     def __computeDiagonalTerms(self):
 
+        # Gauss points and weights
+        gpws = gaussPtsAndWeights[self.order]
+        npts = gpws.shape[1]
+        xsis, etas, weights = gpws[0, :], gpws[1, :], gpws[2, :]
+
         # iterate over the source triangles
         for jSrc in range(self.numTriangles):
 
@@ -162,19 +168,23 @@ class LaplaceMatrices:
             paSrc = numpy.array(self.points.GetPoint(ia))
             pbSrc = numpy.array(self.points.GetPoint(ib))
             pcSrc = numpy.array(self.points.GetPoint(ic))
+            dbSrc = pbSrc - paSrc
+            dcSrc = pcSrc - paSrc
 
-            # Observer is at mid point
-            xObs = (paSrc + pbSrc + pcSrc) / 3.0
+            # Iterate over the observer points
+            g = 0
+            for ipt in range(npts):
+                # Observer point
+                xObs = paSrc + xsis[ipt]*dbSrc + etas[ipt]*dcSrc
+                # Three triangles having oberver point as one corner
+                pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
+                pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
+                pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
+                g += weights[ipt] * (pot0ab.getIntegralOneOverR() + \
+                                     pot0bc.getIntegralOneOverR() + \
+                                     pot0ca.getIntegralOneOverR())
 
-            # Singular term
-            pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
-            pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
-            pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
-
-            self.gMat[jSrc, jSrc] = pot0ab.getIntegralOneOverR() + \
-                                    pot0bc.getIntegralOneOverR() + \
-                                    pot0ca.getIntegralOneOverR()
-            self.gMat[jSrc, jSrc] /= (-FOUR_PI)
+            self.gMat[jSrc, jSrc] = g / (-FOUR_PI)
 
     def __computeOffDiagonalTerms(self):
 
