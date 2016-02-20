@@ -180,18 +180,7 @@ double icqQuadratureEvaluate(icqQuadratureType **self, int order,
     double res = 0;
     const double pb2[] = {pb[0] - pa[0], pb[1] - pa[1], pb[2] - pa[2]};
     const double pc2[] = {pc[0] - pa[0], pc[1] - pa[1], pc[2] - pa[2]};
-
-    const double p12 = pb2[1]*pc2[2];
-    const double p20 = pb2[2]*pc2[0];
-    const double p01 = pb2[0]*pc2[1];
-
-    const double p21 = pb2[2]*pc2[1];
-    const double p02 = pb2[0]*pc2[2];
-    const double p10 = pb2[1]*pc2[0];
-
-    const double area = sqrt((p12-p21)*(p12-p21) + 
-                             (p20-p02)*(p20-p02) + 
-                             (p01-p10)*(p01-p10));
+    double area = icqQuadratureArea(pb2, pc2);
 
     if (area == 0) return res;
 
