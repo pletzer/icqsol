@@ -23,21 +23,10 @@ void computeOffDiagonalTerms(vtkPolyData* pdata, double* gMat) {
     std::vector<double> pbSrc(3);
     std::vector<double> pcSrc(3);
 
-    // Edges for the source triangle
-    std::vector<double> pb2Src(3);
-    std::vector<double> pc2Src(3);
-
-    // Source area vector
-    std::vector<double> areaSrcVec(3);
-
     // Observer triangle vertices
     std::vector<double> paObs(3);
     std::vector<double> pbObs(3);
     std::vector<double> pcObs(3);
-
-    // Triangle mid-points
-    std::vector<double> xObs(3);
-    std::vector<double> xSrc(3);
 
     vtkCellArray* polys = pdata->GetPolys();
     vtkPoints* points = pdata->GetPoints();
@@ -70,23 +59,6 @@ void computeOffDiagonalTerms(vtkPolyData* pdata, double* gMat) {
         points->GetPoint(ib, &pbSrc[0]);
         points->GetPoint(ic, &pcSrc[0]);
 
-        // The triangle's normal vector, mid point, and area at the center of the triangle
-        for (size_t j = 0; j < 3; ++j) {
-            pb2Src[j] = pbSrc[j] - paSrc[j];
-            pc2Src[j] = pcSrc[j] - paSrc[j];
-            xSrc[j] = (paSrc[j] + pbSrc[j] + pcSrc[j])/3.;
-        }
-        for (size_t j = 0; j < 3; ++j) {
-            size_t j1 = (j + 1) % 3;
-            size_t j2 = (j + 2) % 3;
-            areaSrcVec[j] = pb2Src[j1]*pc2Src[j2] - pb2Src[j2]*pc2Src[j1];
-        }
-        double areaSrc = 0;
-        for (size_t j = 0; j < 3; ++j) {
-            areaSrc += areaSrcVec[j]*areaSrcVec[j];
-        }
-        areaSrc = sqrt(areaSrc);
-
         // Iterate over the observer triangles
         for (size_t iObs = 0; iObs < numTriangles; ++iObs) {
 
@@ -99,15 +71,8 @@ void computeOffDiagonalTerms(vtkPolyData* pdata, double* gMat) {
             points->GetPoint(cells[3*iObs + 1], &pbObs[0]);
             points->GetPoint(cells[3*iObs + 2], &pcObs[0]);
 
-            // Observer is at mid point
-            for (size_t j = 0; j < 3; ++j) {
-                xObs[j] = (paObs[j] + pbObs[j] + pcObs[j])/3.;
-            }
-
-            icqQuadratureSetObserver(&self, &xObs[0]);
-
-            gMat[numTriangles*iObs + jSrc] = icqQuadratureEvaluate(&self, 
-                                                                   maxOrder, 
+            gMat[numTriangles*iObs + jSrc] = icqQuadratureEvaluateDouble(&self,  maxOrder,
+                                                                   &paObs[0], &pbObs[0], &pcObs[0],
                                                                    &paSrc[0], &pbSrc[0], &pcSrc[0]);
         }
 

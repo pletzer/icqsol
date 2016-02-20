@@ -30,8 +30,12 @@ int icqQuadratureGetMaxOrder(icqQuadratureType **self);
 
 extern "C"
 double icqQuadratureEvaluate(icqQuadratureType **self, int order,
-                            const double* pa, const double*pb, const double* pc);
+                             const double* pa, const double* pb, const double* pc);
 
+extern "C"
+double icqQuadratureEvaluateDouble(icqQuadratureType **self, int order,
+                                   const double* pa0, const double* pb0, const double* pc0,
+                                   const double* pa1, const double* pb1, const double* pc1);
 extern "C"
 void icqQuadratureDel(icqQuadratureType **self);
 

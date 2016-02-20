@@ -216,7 +216,7 @@ double icqQuadratureEvaluateDouble(icqQuadratureType **self, int order,
     const double db1[] = {pb1[0] - pa1[0], pb1[1] - pa1[1], pb1[2] - pa1[2]};
     const double dc1[] = {pc1[0] - pa1[0], pc1[1] - pa1[1], pc1[2] - pa1[2]};
 
-    const double area0 = icqQuadratureArea(db0, dc0);
+    //const double area0 = icqQuadratureArea(db0, dc0);
     const double area1 = icqQuadratureArea(db1, dc1);
 
     double p0[] = {0., 0., 0.};
