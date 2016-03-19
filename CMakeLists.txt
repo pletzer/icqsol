@@ -5,6 +5,11 @@ project(icqsol)
 find_package(PythonInterp REQUIRED)
 # need VTK include files and libraries
 find_package(VTK REQUIRED)
+include(${VTK_USE_FILE})
+message("VTK_LIBRARY_DIRS=${VTK_LIBRARY_DIRS}")
+message("VTK_CMAKE_DIR=${VTK_CMAKE_DIR}")
+message("VTK_RUNTIME_LIBRARY_DIRS=${VTK_RUNTIME_LIBRARY_DIRS}")
+
 
 # make sure the python setuptools is installed
 execute_process(COMMAND "${PYTHON_EXECUTABLE}" -c "import setuptools" ERROR_VARIABLE ERR)
@@ -28,8 +33,7 @@ option(INSTALL_USER "Install in user directory" OFF)
 option(INSTALL_PREFIX "Install under CMAKE_INSTALL_PREFIX" OFF)
 
 # run python setup.py install
-#set(SETUPCMD "VTK_INCLUDE_DIRS=${VTK_INCLUDE_DIRS}" "VTK_LIBRARY_DIRS=${VTK_LIBRARY_DIRS}" "${PYTHON_EXECUTABLE}" "setup.py" install)
-set(SETUPCMD python setup.py install)
+set(SETUPCMD python ${CMAKE_SOURCE_DIR}/setup.py install)
 if (INSTALL_USER)
   # install in user directory
   set(SETUPCMD ${SETUPCMD} --user)
@@ -42,7 +46,8 @@ endif()
 
 # build python extensions
 set(ENV{VTK_INCLUDE_DIRS} "${VTK_INCLUDE_DIRS}")
-set(ENV{VTK_LIBRARY_DIRS} "${VTK_LIBRARY_DIRS}")
+set(ENV{VTK_LIBRARIES} "${VTK_LIBRARIES}")
+set(ENV{VTK_RUNTIME_LIBRARY_DIRS} "${VTK_RUNTIME_LIBRARY_DIRS}")
 execute_process(COMMAND ${SETUPCMD} RESULT_VARIABLE RES)
 # error handling
 if (RES)

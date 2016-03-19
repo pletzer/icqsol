@@ -11,21 +11,29 @@ import __init__ # for version number
 
 # Because we're linking C++ code to the VTK library, we 
 # need to know where VTK was installed. 
-VTK_LIBRARY_DIRS = os.environ.get('VTK_LIBRARY_DIRS', '').split(';')
 VTK_INCLUDE_DIRS = os.environ.get('VTK_INCLUDE_DIRS', '').split(';')
+VTK_LIBRARIES = os.environ.get('VTK_LIBRARIES', '').split(';')
+VTK_RUNTIME_LIBRARY_DIRS = os.environ.get('VTK_RUNTIME_LIBRARY_DIRS', '').split(';')
 
 # OpenMP flags
 OPENMP_COMPILER_ARG = os.environ.get('OPENMP_COMPILER_ARG', '-fopenmp')
 OPENMP_COMPILER_LIB = os.environ.get('OPENMP_COMPILER_LIB', 'gomp')
 
+# remove all the Python libraries since they are causing a link issue 
+# on CentOS 7 and we don't really need them
+indicesToDelete = []
+for i in range(len(VTK_LIBRARIES)):
+  lib = VTK_LIBRARIES[i]
+  if lib.find('Python') >= 0 or lib.find('verdict') >=0: 
+    indicesToDelete.append(i)
+indicesToDelete.reverse()
+
+for i in indicesToDelete:
+  del VTK_LIBRARIES[i]
+
 print 'VTK_INCLUDE_DIRS = ', VTK_INCLUDE_DIRS
-print 'VTK_LIBRARY_DIRS = ', VTK_LIBRARY_DIRS
-
-import vtk
-vtkLibs = []
-if vtk.VTK_MAJOR_VERSION == 6 and vtk.VTK_MINOR_VERSION == 3:
-  vtkLibs = ['vtkCommonDataModel-6.3']
-
+print 'VTK_LIBRARIES = ', VTK_LIBRARIES
+print 'VTK_RUNTIME_LIBRARY_DIRS = ', VTK_RUNTIME_LIBRARY_DIRS
 
 setup(name='icqsol',
       version=__init__.__version__, 
@@ -54,14 +62,15 @@ setup(name='icqsol',
                                 'bem/icqQuadrature.cpp',
                                 'bem/icqLaplaceMatrices.cpp'],
                                include_dirs=['bem'] + VTK_INCLUDE_DIRS,
-                               library_dirs=VTK_LIBRARY_DIRS,
                                extra_compile_args=[OPENMP_COMPILER_ARG],
-                               libraries=vtkLibs + [OPENMP_COMPILER_LIB],
+                               library_dirs=VTK_RUNTIME_LIBRARY_DIRS,
+                               libraries=VTK_LIBRARIES + [OPENMP_COMPILER_LIB],
                                ),
                       Extension('icqsol.icqInsideLocatorCpp', 
                                 ['csg/icqInsideLocator.cpp'],
                                 include_dirs=['csg'] + VTK_INCLUDE_DIRS,
-                                library_dirs=VTK_LIBRARY_DIRS
+                                library_dirs=VTK_RUNTIME_LIBRARY_DIRS,
+                                libraries=VTK_LIBRARIES,
                                 ),
       ],
       requires = ['numpy', 'vtk',],
