@@ -2,7 +2,7 @@
 
 """
 @brief A base class for constructing shapes
-@author pletzer@psu.edu
+@author alexander@gokliya.net
 """
 
 from csg.core import CSG

@@ -2,7 +2,7 @@
 
 """
 @brief A class for testing if a point is inside a shape
-@author pletzer@psu.edu
+@author alexander@gokliya.net
 """
 
 import numpy
