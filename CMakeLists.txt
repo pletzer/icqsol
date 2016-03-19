@@ -49,7 +49,7 @@ execute_process(COMMAND ${SETUPCMD} RESULT_VARIABLE RES)
 if (RES)
    message("Failed to build icqsol!")
    # convert list of commands into a single string with a space separator
-   set(cmd "")
+   set(cmd "VTK_INCLUDE_DIRS=${VTK_INCLUDE_DIRS} VTK_RUNTIME_LIBRARY_DIRS=${VTK_RUNTIME_LIBRARY_DIRS} VTK_LIBRARIES=${VTK_LIBRARIES} ")
    foreach(elem ${SETUPCMD})
       set(cmd "${cmd} ${elem}")
    endforeach()
