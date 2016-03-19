@@ -6,12 +6,8 @@ find_package(PythonInterp REQUIRED)
 # need VTK include files and libraries
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
-message("VTK_LIBRARY_DIRS=${VTK_LIBRARY_DIRS}")
-message("VTK_CMAKE_DIR=${VTK_CMAKE_DIR}")
-message("VTK_RUNTIME_LIBRARY_DIRS=${VTK_RUNTIME_LIBRARY_DIRS}")
 
-
-# make sure the python setuptools is installed
+# make sure python setuptools is installed
 execute_process(COMMAND "${PYTHON_EXECUTABLE}" -c "import setuptools" ERROR_VARIABLE ERR)
 if (NOT ERR STREQUAL "")
   message(FATAL_ERROR "You must have python-setuptools installed!")
@@ -52,10 +48,15 @@ execute_process(COMMAND ${SETUPCMD} RESULT_VARIABLE RES)
 # error handling
 if (RES)
    message("Failed to build icqsol!")
+   # convert list of commands into a single string with a space separator
+   set(cmd "")
+   foreach(elem ${SETUPCMD})
+      set(cmd "${cmd} ${elem}")
+   endforeach()
    message("Command was:")
-   message(${SETUPCMD})
+   message(${cmd})
    message("Result:")
-   message("*** ${res} ***")
+   message("${res}")
    message(FATAL_ERROR "Failed to build icqsol!")
 endif ()
 
