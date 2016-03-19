@@ -2,7 +2,7 @@
 
 """
 Test creation of sphere
-@author pletzer@psu.edu
+@author alexander.net
 """
 
 import argparse

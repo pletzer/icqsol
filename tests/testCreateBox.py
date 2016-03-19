@@ -2,7 +2,7 @@
 
 """
 Test creation of box
-@author pletzer@psu.edu
+@author alexander.net
 """
 
 import argparse

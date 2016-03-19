@@ -2,7 +2,7 @@
 
 """
 Test for determining whether a point is inside a shape.
-@author pletzer@psu.edu
+@author alexander.net
 """
 
 import numpy
@@ -23,7 +23,8 @@ shp = shape_mgr.createShape('sphere', radius=1.0, origin=(0., 0., 0.), n_theta=a
 inside = Inside(shp)
 
 pt = numpy.array([0., 0., 0.])
-# assert(inside.isInside(pt, 0.) == 1)
+minDistance = 0.
+assert(inside.isInside(pt, 0.) == 1)
 
 pt = numpy.array([1.01, 0., 0.])
 # assert(inside.isInside(pt, 0.) == -1)

@@ -48,7 +48,7 @@ class Inside:
         """
         Determine if a point is inside the shape
         @param point point
-        @param minDistance a point is declaed inside if is at least minDistance
+        @param minDistance a point is declared inside if is at least minDistance
                away from the face
         @return +1 if inside, -1 if outside, and 0 if indefinite
         """

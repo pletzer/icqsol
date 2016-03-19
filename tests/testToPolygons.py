@@ -4,7 +4,7 @@ from icqsol import util
 
 """
 Test conversion from a shape to a list of polygons
-@author pletzer@psu.edu
+@author alexander.net
 """
 shape_mgr = ShapeManager(file_format=util.VTK_FORMAT, vtk_dataset_type=util.POLYDATA)
 shp = shape_mgr.createShape('box', origin=[0., 0., 0.], lengths=[1., 1., 1.],)

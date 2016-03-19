@@ -2,7 +2,7 @@
 
 """
 Test creation of a bolt object
-@author pletzer@psu.edu
+@author alexander.net
 """
 
 from icqsol.shapes.icqShapeManager import ShapeManager

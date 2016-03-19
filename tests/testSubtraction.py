@@ -2,7 +2,7 @@
 
 """
 Test intersection operation
-@author pletzer@psu.edu
+@author alexander.net
 """
 
 from icqsol.shapes.icqShapeManager import ShapeManager
