@@ -7,20 +7,20 @@ find_package(PythonInterp REQUIRED)
 find_package(VTK REQUIRED)
 
 # make sure the python setuptools is installed
-execute_process(COMMAND "${PYTHON_EXECUTABLE}" -c "import setuptools" ERROR_VARIABLE ERROR_SETUPTOOLS)
-if (NOT ERROR_SETUPTOOLS STREQUAL "")
+execute_process(COMMAND "${PYTHON_EXECUTABLE}" -c "import setuptools" ERROR_VARIABLE ERR)
+if (NOT ERR STREQUAL "")
   message(FATAL_ERROR "You must have python-setuptools installed!")
 endif()
 
 # make sure python numpy module can be imported
-execute_process(COMMAND "${PYTHON_EXECUTABLE}" -c "import numpy" ERROR_VARIABLE ERROR_NUMPY)
-if (NOT ERROR_NUMPY STREQUAL "")
+execute_process(COMMAND "${PYTHON_EXECUTABLE}" -c "import numpy" ERROR_VARIABLE ERR)
+if (NOT ERR STREQUAL "")
   message(FATAL_ERROR "You must have python-numpy installed!")
 endif()
 
 # make sure python vtk module can be imported
-execute_process(COMMAND "${PYTHON_EXECUTABLE}" -c "import vtk" ERROR_VARIABLE ERROR_VTK)
-if (NOT ERROR_VTK STREQUAL "")
+execute_process(COMMAND "${PYTHON_EXECUTABLE}" -c "import vtk" ERROR_VARIABLE ERR)
+if (NOT ERR STREQUAL "")
   message(FATAL_ERROR "You must have vtkpython installed!")
 endif()
 
@@ -28,22 +28,32 @@ option(INSTALL_USER "Install in user directory" OFF)
 option(INSTALL_PREFIX "Install under CMAKE_INSTALL_PREFIX" OFF)
 
 # run python setup.py install
-if (NOT INSTALL_USER AND NOT INSTALL_PREFIX)
-  # let python choose where to install, may require sudo access
-  message(STATUS "Executing:\nVTK_INCLUDE_DIR=${VTK_INCLUDE_DIR} VTK_LIBRARY_DIR=${VTK_LIBRARY_DIR} ${PYTHON_EXECUTABLE} setup.py install")
-  execute_process(COMMAND VTK_INCLUDE_DIR="${VTK_INCLUDE_DIR}" VTK_LIBRARY_DIR="${VTK_LIBRARY_DIR}"
-                          "${PYTHON_EXECUTABLE}" setup.py install)
-elseif (INSTALL_USER)
+#set(SETUPCMD "VTK_INCLUDE_DIRS=${VTK_INCLUDE_DIRS}" "VTK_LIBRARY_DIRS=${VTK_LIBRARY_DIRS}" "${PYTHON_EXECUTABLE}" "setup.py" install)
+set(SETUPCMD python setup.py install)
+if (INSTALL_USER)
   # install in user directory
-  message(STATUS "Executing:\nVTK_INCLUDE_DIR=${VTK_INCLUDE_DIR} VTK_LIBRARY_DIR=${VTK_LIBRARY_DIR} ${PYTHON_EXECUTABLE} setup.py install --user")
-  execute_process(COMMAND VTK_INCLUDE_DIR="${VTK_INCLUDE_DIR}" VTK_LIBRARY_DIR="${VTK_LIBRARY_DIR}" 
-                          "${PYTHON_EXECUTABLE}" setup.py install --user)
-else ()
+  set(SETUPCMD ${SETUPCMD} --user)
+elseif (INSTALL_PREFIX)
   # user specifies where to install, must set PYTHONPATH
-  message("\n\n*** Installing under ${CMAKE_INSTALL_PREFIX}. Be sure to set PYTHONPATH, e.g. ***")
+  message("\n\n*** Installing under CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}. Be sure to set PYTHONPATH, e.g. ***")
   message("export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib/python2.7/site-packages:$PYTHONPATH\n\n")
-  execute_process(COMMAND "${PYTHON_EXECUTABLE}" setup.py install --prefix=${CMAKE_INSTALL_PREFIX})
+  set(SETUPCMD ${SETUPCMD} --prefix=${CMAKE_INSTALL_PREFIX})
 endif()
+
+# build python extensions
+set(ENV{VTK_INCLUDE_DIRS} "${VTK_INCLUDE_DIRS}")
+set(ENV{VTK_LIBRARY_DIRS} "${VTK_LIBRARY_DIRS}")
+execute_process(COMMAND ${SETUPCMD} RESULT_VARIABLE RES)
+# error handling
+if (RES)
+   message("Failed to build icqsol!")
+   message("Command was:")
+   message(${SETUPCMD})
+   message("Result:")
+   message("*** ${res} ***")
+   message(FATAL_ERROR "Failed to build icqsol!")
+endif ()
+
 
 # enable ctest
 enable_testing()

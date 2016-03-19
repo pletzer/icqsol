@@ -11,10 +11,21 @@ import __init__ # for version number
 
 # Because we're linking C++ code to the VTK library, we 
 # need to know where VTK was installed. 
-VTK_LIBRARY_DIR = os.environ.get('VTK_LIBRARY_DIR', '')
-VTK_INCLUDE_DIR = os.environ.get('VTK_INCLUDE_DIR', '')
+VTK_LIBRARY_DIRS = os.environ.get('VTK_LIBRARY_DIRS', '').split(';')
+VTK_INCLUDE_DIRS = os.environ.get('VTK_INCLUDE_DIRS', '').split(';')
+
+# OpenMP flags
 OPENMP_COMPILER_ARG = os.environ.get('OPENMP_COMPILER_ARG', '-fopenmp')
 OPENMP_COMPILER_LIB = os.environ.get('OPENMP_COMPILER_LIB', 'gomp')
+
+print 'VTK_INCLUDE_DIRS = ', VTK_INCLUDE_DIRS
+print 'VTK_LIBRARY_DIRS = ', VTK_LIBRARY_DIRS
+
+import vtk
+vtkLibs = []
+if vtk.VTK_MAJOR_VERSION == 6 and vtk.VTK_MINOR_VERSION == 3:
+  vtkLibs = ['vtkCommonDataModel-6.3']
+
 
 setup(name='icqsol',
       version=__init__.__version__, 
@@ -42,15 +53,15 @@ setup(name='icqsol',
                                 'bem/icqLaplaceFunctor.cpp',
                                 'bem/icqQuadrature.cpp',
                                 'bem/icqLaplaceMatrices.cpp'],
-                               include_dirs=['bem', VTK_INCLUDE_DIR],
-                               library_dirs=[VTK_LIBRARY_DIR],
+                               include_dirs=['bem'] + VTK_INCLUDE_DIRS,
+                               library_dirs=VTK_LIBRARY_DIRS,
                                extra_compile_args=[OPENMP_COMPILER_ARG],
-                               libraries=['vtkCommonDataModel-6.3', OPENMP_COMPILER_LIB],
+                               libraries=vtkLibs + [OPENMP_COMPILER_LIB],
                                ),
                       Extension('icqsol.icqInsideLocatorCpp', 
                                 ['csg/icqInsideLocator.cpp'],
-                                include_dirs=['csg', VTK_INCLUDE_DIR],
-                                library_dirs=[VTK_LIBRARY_DIR]
+                                include_dirs=['csg'] + VTK_INCLUDE_DIRS,
+                                library_dirs=VTK_LIBRARY_DIRS
                                 ),
       ],
       requires = ['numpy', 'vtk',],
