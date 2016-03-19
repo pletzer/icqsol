@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Test intersection operation
-@author alexander.net
+@author alexander@gokliya.net
 """
 from icqsol.shapes.icqShapeManager import ShapeManager
 from icqsol import util

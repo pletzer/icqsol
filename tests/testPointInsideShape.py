@@ -2,7 +2,7 @@
 
 """
 Test for determining whether a point is inside a shape.
-@author alexander.net
+@author alexander@gokliya.net
 """
 
 import numpy

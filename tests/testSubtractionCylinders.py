@@ -2,7 +2,7 @@
 
 """
 Test subtraction operation on cylinders
-@author alexander.net
+@author alexander@gokliya.net
 """
 
 from icqsol.shapes.icqShapeManager import ShapeManager

@@ -2,7 +2,7 @@
 
 """
 Test creation of sphere
-@author alexander.net
+@author alexander@gokliya.net
 """
 
 import argparse

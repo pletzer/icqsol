@@ -2,7 +2,7 @@
 
 """
 Test creation of simple ring object
-@author alexander.net
+@author alexander@gokliya.net
 """
 
 from icqsol.shapes.icqShapeManager import ShapeManager

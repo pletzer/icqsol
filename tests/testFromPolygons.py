@@ -4,7 +4,7 @@ from icqsol import util
 
 """
 Test construction of shape from a list of polygons
-@author alexander.net
+@author alexander@gokliya.net
 """
 shape_mgr = ShapeManager(file_format=util.VTK_FORMAT, vtk_dataset_type=util.POLYDATA)
 cube = CSG.cube()
