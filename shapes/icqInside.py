@@ -73,10 +73,10 @@ class Inside:
         numberOfIntersections = 0
         for poly in self.polys:
 
-            triangle = 1
+            isTriangle = 1
             numPoints = len(poly)
             if numPoints == 4:
-                triangle = 0
+                isTriangle = 0
 
             # compute the overlap betwen the ray and face boxes
             if not self.areBoxesOverlapping(point, poly, minDistance):
@@ -93,7 +93,7 @@ class Inside:
                 rayIntersects = True
                 for i in range(len(xis)):
                     rayIntersects &= (xis[i] >= 0.0)
-                    rayIntersects &= (xis[i] < 1.0 - triangle*sums)
+                    rayIntersects &= (xis[i] < 1.0 - isTriangle*sums)
                     sums += xis[i]
 
                 if rayIntersects:
@@ -128,13 +128,14 @@ class Inside:
                (self.xminRay[i] > xmaxFace + minDistance):
                 # no overlap possible
                 return False
-        # there is a strong possibility og overlap
+        # there is a strong possibility of overlap
         return True
 
     def computeOptimalDirection(self, point):
         """
         Compute the direction of the ray to the nearest
-        domain box face
+        domain box face and perturb that direction slightly 
+        to minimize the probability that the ray hits a  node
         @param point starting point of the ray
         @note this will update self.direction
         """
@@ -152,7 +153,7 @@ class Inside:
                 # the normal vector contains very small values in place of
                 # zeros in order to avoid issues with rays hitting the exact
                 # location of a node
-                normal = numpy.array([i*1.23456789e-10 for i
+                normal = numpy.array([(i + 1)*1.23456789e-8 for i
                                       in range(self.ndims)])
                 normal[axis] = pm
 
@@ -172,6 +173,7 @@ class Inside:
         Compute the intersection with either a triangle or a quadrilateral
         @param point starting point of the ray
         @param poly either a triangle or quad
+        @return lmbda (linear parametric coordinate), xis (triangle parametric coordinates)
         """
         ip0 = poly[0]
         self.b = self.points[ip0] - point
