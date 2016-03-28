@@ -12,12 +12,14 @@ Prerequisites
 
 * python. Version 2.7 will work
 * numpy. Version 1.9.2 will work
-* VTK with python wrapping enabled. Version 6.1.0 will work
-* Pytriangle. Version 1.0 will work
+* VTK with python wrapping enabled. Version 6.3.0 will work
 * CMake
 
-Installing ICQSol
+Installing icqsol
 .................
+
+Icqsol uses a CMake build system, which will call "python setyp.py"
+to install the package. You have two choices:
 
 a) Let python choose the installation directory, typically 
    under /usr/lib/python<version>/site-packages. May require
