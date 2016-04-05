@@ -228,7 +228,7 @@ def testStartingWithTwoCells():
 
     rs = SmoothSurface(pdata)
     rs.smooth(min_cell_area=1.e-5)
-    assert(rs.getVtkPolyData().GetNumberOfPolys() == 8)
+    assert(rs.getVtkPolyData().GetNumberOfPolys() == 2)
 
 
 if __name__ == '__main__':
