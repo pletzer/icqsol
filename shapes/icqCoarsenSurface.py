@@ -4,7 +4,7 @@ import math
 import numpy
 import vtk
 
-class SmoothSurface:
+class CoarsenSurface:
 
     def __init__(self, pdata):
         """
@@ -40,9 +40,9 @@ class SmoothSurface:
         """
         return self.polydata
 
-    def smooth(self, min_cell_area = 1.e-10):
+    def coarsen(self, min_cell_area = 1.e-10):
         """
-        Smooth surface by removing very small cells
+        Coarsen surface by removing very small cells
         @param min_cell_area cell area tolerance
         @note operation is in place
         """
@@ -175,8 +175,8 @@ def testNoCoarsening():
     pdata.Allocate(1, 1)
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
-    rs = SmoothSurface(pdata)
-    rs.smooth(min_cell_area=1.e-5)
+    rs = CoarsenSurface(pdata)
+    rs.coarsen(min_cell_area=1.e-5)
     pdata2 = rs.getVtkPolyData()
     assert(pdata2.GetNumberOfPolys() == 1)
 
@@ -198,8 +198,8 @@ def testAddingThreePointsThenMore():
     pdata.Allocate(1, 1)
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
-    rs = SmoothSurface(pdata)
-    rs.smooth(min_cell_area=1.e-5)
+    rs = CoarsenSurface(pdata)
+    rs.coarsen(min_cell_area=1.e-5)
     assert(rs.getVtkPolyData().GetNumberOfPolys() == 1)
 
 
@@ -226,8 +226,8 @@ def testStartingWithTwoCells():
     ptIds.SetId(2, 0)
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
-    rs = SmoothSurface(pdata)
-    rs.smooth(min_cell_area=1.e-5)
+    rs = CoarsenSurface(pdata)
+    rs.coarsen(min_cell_area=1.e-5)
     assert(rs.getVtkPolyData().GetNumberOfPolys() == 2)
 
 
