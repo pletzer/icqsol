@@ -50,10 +50,15 @@ class SmoothSurface:
         pd = self.polydata.GetPointData()
         numArrays = pd.GetNumberOfArrays()
 
-        points = self.pdata.GetPoints()
-        polys = self.pdata.GetPolys()
+        points = self.polydata.GetPoints()
+
+        polys = self.polydata.GetPolys()
         p = numpy.zeros((3,), numpy.float64)
         numPolys = polys.GetNumberOfCells()
+        if numPolys <= 1:
+            # must have at least one polygon
+            return
+
         ptIds = vtk.vtkIdList()
 
         # holds the cell Ids to delete
@@ -97,10 +102,10 @@ class SmoothSurface:
         
         # remove the tagged, zero-area cells
         for cellId in cellIdsToRemove:
-            self.pdata.DeleteCell(cellId)
+            self.polydata.DeleteCell(cellId)
 
         # now remove
-        self.pdata.RemoveDeletedCells()
+        self.polydata.RemoveDeletedCells()
 
     def getPolygonArea(self, polyPtIds):
         """
@@ -109,11 +114,11 @@ class SmoothSurface:
         @return area
         """
         area = numpy.zeros((3,), numpy.float64)
-        p0 = numpy.array(self.points.GetPoint(polyPtIds[0]))
-        numPolyPts = len(polyPtIds)
+        p0 = numpy.array(self.points.GetPoint(polyPtIds.GetId(0)))
+        numPolyPts = polyPtIds.GetNumberOfIds()
         for i in range(1, numPolyPts - 1):
-            p1 = numpy.array(self.points.GetPoint(polyPtIds[i]))
-            p2 = numpy.array(self.points.GetPoint(polyPtIds[i + 1]))
+            p1 = numpy.array(self.points.GetPoint(polyPtIds.GetId(i    )))
+            p2 = numpy.array(self.points.GetPoint(polyPtIds.GetId(i + 1)))
             area += numpy.cross(p1 - p0, p2 - p0)
         return numpy.linalg.norm(area)
 
@@ -153,7 +158,7 @@ def printVtkPolyData(pdata):
             print '\t\t{0} -> {1}'.format(ptId, pt)
 
 
-def testNoRefinement():
+def testNoCoarsening():
 
     points = vtk.vtkPoints()
     points.InsertNextPoint((0., 0., 0.))
@@ -195,7 +200,7 @@ def testAddingThreePointsThenMore():
 
     rs = SmoothSurface(pdata)
     rs.smooth(min_cell_area=1.e-5)
-    assert(rs.getVtkPolyData().GetNumberOfPolys() == 4)
+    assert(rs.getVtkPolyData().GetNumberOfPolys() == 1)
 
 
 def testStartingWithTwoCells():
@@ -227,6 +232,6 @@ def testStartingWithTwoCells():
 
 
 if __name__ == '__main__':
-    testNoRefinement()
+    testNoCoarsening()
     testAddingThreePointsThenMore()
     testStartingWithTwoCells()
