@@ -63,17 +63,32 @@ class CoarsenSurface:
 
         # holds the cell Ids to delete
         cellIdsToRemove = []
+        cellIds = vtk.vtkIdList()
 
         # iterate over cells
         polys.InitTraversal()
-        for i in range(numPolys):
+        for polyId in range(numPolys):
 
             polys.GetNextCell(ptIds)
 
             if self.getPolygonArea(ptIds) < min_cell_area:
 
-                # number of points spanning the cell
+                # number of points spanning the cell (or number of edges)
                 n = ptIds.GetNumberOfIds()
+
+                # iterate over edges
+                neighCellIds = set() # unique entries
+                for iEdge in range(n):
+                    ptId1, ptId2 = ptIds.GetId(iEgde), ptIds.GetId((iEgde + 1) % n)
+                    self.polydata.GetCellEdgeNeighbors(cellId, ptId1, ptId2, cellIds)
+                    for j in range(cellIds.GetNumberOfIds()):
+                        neighCellIds.add(cellIds.getId(j))
+
+                if len(neighCellIds) < n:
+                    # must be a boundary cell, skip for the time being...
+                    # might need to do something special here. Just want to 
+                    # be sure the boundary does not move...
+                    continue
 
                 # compute the cell's gravity center
                 barycenter = numpy.zeros((3,), numpy.float64)
@@ -98,7 +113,7 @@ class CoarsenSurface:
                         arr.SetTuple(ptIds.GetId(j), baryVals)
 
                 # tag the cell for removal
-                cellIdsToRemove.append(i)
+                cellIdsToRemove.append(cellId)
         
         # remove the tagged, zero-area cells
         for cellId in cellIdsToRemove:
