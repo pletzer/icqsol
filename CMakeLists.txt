@@ -69,6 +69,8 @@ enable_testing()
 #
 
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests")
+add_test(NAME testRefineCoarsen
+         COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testRefineCoarsen.py")
 add_test(NAME testInsideLocatorCpp
          COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testInsideLocatorCpp.py")
 add_test(NAME testQuadrature 
