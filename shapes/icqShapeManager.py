@@ -553,7 +553,7 @@ class ShapeManager(object):
         rs.refine(max_edge_length=max_edge_length)
         return rs.getVtkPolyData()
 
-    def coarsenVtkPolyData(self, polydata, min_cell_edge):
+    def coarsenVtkPolyData(self, polydata, min_cell_area):
         """
         Coarsen a vtkPolyData object by coalescing cells
         @param polydata vtkPolyData instance

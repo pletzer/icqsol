@@ -10,13 +10,13 @@ from icqsol import util
 
 shape_mgr = ShapeManager()
 s = shape_mgr.createShape('box', origin=(0., 0., 0.), lengths=[10., 1., 1.])
-pdata = s.getVtkPolydata()
+pdata = shape_mgr.shapeToVTKPolyData(s)
 shape_mgr.setWriter(file_format='vtk', vtk_dataset_type='POLYDATA')
 
 # refine
-sr = shape_mgr.refineVtkPolyData(pdata, min_edge_length=0.05)
-shape_mgr.saveVtkPolyData(sr.getVtkPolyData(), file_name='boxRefined.vtk', file_type='ascii')
+pr = shape_mgr.refineVtkPolyData(pdata, max_edge_length=0.05)
+shape_mgr.saveVtkPolyData(pr, file_name='boxRefined.vtk', file_type='ascii')
 
 # coarsen
-sc = shape_mgr.coarsenVtkPolyData(sr.getVtkPolyData(), max_cell_area=0.2)
-shape_mgr.saveVtkPolyData(sc.getVtkPolyData(), file_name='boxRefinedCoarsened.vtk', file_type='ascii')
+pc = shape_mgr.coarsenVtkPolyData(pr, min_cell_area=0.2)
+shape_mgr.saveVtkPolyData(pc, file_name='boxRefinedCoarsened.vtk', file_type='ascii')

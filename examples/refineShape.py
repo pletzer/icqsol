@@ -65,7 +65,7 @@ if args.ascii:
 else:
     file_type = util.BINARY
 
-# Always produce VYK POLYDATA.
+# Always produce VTK POLYDATA.
 shape_mgr.setWriter(file_format=util.VTK_FORMAT, vtk_dataset_type=util.POLYDATA)
 shape_mgr.saveShape(shape=s, file_name=args.output, file_type=file_type)
 
