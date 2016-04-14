@@ -16,6 +16,7 @@ from icqShape import Box, Cone, Cylinder, Sphere
 from icqShape import DEFAULTS, CompositeShape
 from icqsol.color.icqColorMap import ColorMap
 from icqsol.shapes.icqRefineSurface import RefineSurface
+from icqsol.shapes.icqCoarsenSurface import CoarsenSurface
 
 LOCATIONS = ['POINT', 'CELL']
 VTK_DATASET_TYPES = ['STRUCTURED_GRID', 'POLYDATA', 'UNSTRUCTURED_GRID']
@@ -551,6 +552,18 @@ class ShapeManager(object):
         rs = RefineSurface(polydata)
         rs.refine(max_edge_length=max_edge_length)
         return rs.getVtkPolyData()
+
+    def coarsenVtkPolyData(self, polydata, min_cell_edge):
+        """
+        Coarsen a vtkPolyData object by coalescing cells
+        @param polydata vtkPolyData instance
+        @param min_cell_area minimum cell area beyond which cells
+               will be merged
+        @return vtkPolyData instance
+        """
+        cs = CoarsenSurface(polydata)
+        cs.coarsen(min_cell_area=min_cell_area)
+        return cs.getVtkPolyData()
 
     def cloneShape(self, shape):
         """
