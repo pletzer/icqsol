@@ -79,8 +79,8 @@ class CoarsenSurface:
                 # iterate over edges
                 neighCellIds = set() # unique entries
                 for iEdge in range(n):
-                    ptId1, ptId2 = ptIds.GetId(iEgde), ptIds.GetId((iEgde + 1) % n)
-                    self.polydata.GetCellEdgeNeighbors(cellId, ptId1, ptId2, cellIds)
+                    ptId1, ptId2 = ptIds.GetId(iEdge), ptIds.GetId((iEdge + 1) % n)
+                    self.polydata.GetCellEdgeNeighbors(polyId, ptId1, ptId2, cellIds)
                     for j in range(cellIds.GetNumberOfIds()):
                         neighCellIds.add(cellIds.getId(j))
 
