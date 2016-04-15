@@ -47,6 +47,8 @@ class CoarsenSurface:
         @note operation is in place
         """
 
+        self.polydata.BuildLinks()
+
         pd = self.polydata.GetPointData()
         numArrays = pd.GetNumberOfArrays()
 
@@ -71,9 +73,11 @@ class CoarsenSurface:
 
             polys.GetNextCell(ptIds)
 
-            if self.getPolygonArea(ptIds) < min_cell_area:
+            polygonArea = self.getPolygonArea(ptIds)
+            if polygonArea < min_cell_area:
 
-                # number of points spanning the cell (or number of edges)
+                # number of points spanning the cell 
+                # (also equal to number of edges)
                 n = ptIds.GetNumberOfIds()
 
                 # iterate over edges
@@ -82,7 +86,7 @@ class CoarsenSurface:
                     ptId1, ptId2 = ptIds.GetId(iEdge), ptIds.GetId((iEdge + 1) % n)
                     self.polydata.GetCellEdgeNeighbors(polyId, ptId1, ptId2, cellIds)
                     for j in range(cellIds.GetNumberOfIds()):
-                        neighCellIds.add(cellIds.getId(j))
+                        neighCellIds.add(cellIds.GetId(j))
 
                 if len(neighCellIds) < n:
                     # must be a boundary cell, skip for the time being...
@@ -93,7 +97,7 @@ class CoarsenSurface:
                 # compute the cell's gravity center
                 barycenter = numpy.zeros((3,), numpy.float64)
                 for j in range(n):
-                    p[:] = points.GetPoint(ptId)
+                    p[:] = points.GetPoint(ptIds.GetId(j))
                     barycenter += p
                 barycenter /= float(n)
 
@@ -113,7 +117,7 @@ class CoarsenSurface:
                         arr.SetTuple(ptIds.GetId(j), baryVals)
 
                 # tag the cell for removal
-                cellIdsToRemove.append(cellId)
+                cellIdsToRemove.append(polyId)
         
         # remove the tagged, zero-area cells
         for cellId in cellIdsToRemove:
