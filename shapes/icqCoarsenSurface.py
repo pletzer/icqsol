@@ -11,27 +11,15 @@ class CoarsenSurface:
         Constructor
         @param pdata vtkPolyData instance
         """
-        self.polydata = pdata
+        self.polydata = vtk.vtkPolyData()
+        self.polydata.DeepCopy(pdata)
+        self.points = self.polydata.GetPoints()
 
-        # save the points and point data as separate class members
-        # so as not to pollute pdata
-        self.points = vtk.vtkPoints()
-        self.points.DeepCopy(pdata.GetPoints())
+        self.polydata.BuildLinks()
 
-        self.pointData = {}
-        pd = pdata.GetPointData()
-        for i in range(pd.GetNumberOfArrays()):
-            arr = pd.GetArray(i)
-            name = arr.GetName()
-            self.pointData[name] = vtk.vtkDoubleArray()
-            self.pointData[name].DeepCopy(arr)
+        self.pointData = self.polydata.GetPointData()
+        self.numPointData = self.pointData.GetNumberOfArrays()
 
-        self.cellData = {}
-        cd = pdata.GetCellData()
-        for i in range(cd.GetNumberOfArrays()):
-            name = cd.GetArray(i).GetName()
-            self.cellData[name] = vtk.vtkDoubleArray()
-            self.cellData[name].SetName(name)
 
     def getVtkPolyData(self):
         """
@@ -47,15 +35,9 @@ class CoarsenSurface:
         @note operation is in place
         """
 
-        self.polydata.BuildLinks()
-
-        pd = self.polydata.GetPointData()
-        numArrays = pd.GetNumberOfArrays()
-
         points = self.polydata.GetPoints()
 
         polys = self.polydata.GetPolys()
-        p = numpy.zeros((3,), numpy.float64)
         numPolys = polys.GetNumberOfCells()
         if numPolys <= 1:
             # must have at least one polygon
@@ -94,29 +76,14 @@ class CoarsenSurface:
                     # be sure the boundary does not move...
                     continue
 
-                # compute the cell's gravity center
-                barycenter = numpy.zeros((3,), numpy.float64)
-                for j in range(n):
-                    p[:] = points.GetPoint(ptIds.GetId(j))
-                    barycenter += p
-                barycenter /= float(n)
+                # move the points spanning the polygon to the 
+                # center of the polygon. This will essentially 
+                # reduce the cell to a set of points which are 
+                # on top of each other.
+                self.movePointsToBaryCenter(ptIds)
 
-                # interpolate the nodal fields to the barycenter locations
-                for el in range(numArrays):
-                    arr = pd.GetArray(el)
-                    numComps = arr.GetNumberOfComponents()
-                    vals = numpy.zeros((numComps,), numpy.float64)
-                    baryVals = numpy.zeros((numComps,), numpy.float64)
-                    # mid cell values
-                    for j in range(n):
-                        vals[:] = arr.GetTuple(ptIds.GetId(j))
-                        baryVals += vals
-                    baryVals /= float(n)
-                    # set the field values to the mid cell values
-                    for j in range(n):
-                        arr.SetTuple(ptIds.GetId(j), baryVals)
-
-                # tag the cell for removal
+                # tag the cell for removal since it now has zero 
+                # area
                 cellIdsToRemove.append(polyId)
         
         # remove the tagged, zero-area cells
@@ -125,6 +92,38 @@ class CoarsenSurface:
 
         # now remove
         self.polydata.RemoveDeletedCells()
+
+    def movePointsToBaryCenter(self, ptIds):
+        """
+        Move points to barycenter location
+        @param ptIds point Ids
+        """
+
+        p = numpy.zeros((3,), numpy.float64)
+        n = ptIds.GetNumberOfIds()
+        # compute the cell's gravity center
+        barycenter = numpy.zeros((3,), numpy.float64)
+        for j in range(n):
+            p[:] = self.points.GetPoint(ptIds.GetId(j))
+            barycenter += p
+        barycenter /= float(n)
+
+        # interpolate the nodal fields to the barycenter locations.
+        # This simply amounts to averaging the nodal fields
+        for el in range(self.numPointData):
+            arr = self.pointData.GetArray(el)
+            numComps = arr.GetNumberOfComponents()
+            vals = numpy.zeros((numComps,), numpy.float64)
+            baryVals = numpy.zeros((numComps,), numpy.float64)
+            # mid cell values
+            for j in range(n):
+                vals[:] = arr.GetTuple(ptIds.GetId(j))
+                baryVals += vals
+            baryVals /= float(n)
+            # set the field values to the mid cell values
+            for j in range(n):
+                arr.SetTuple(ptIds.GetId(j), baryVals)
+
 
     def getPolygonArea(self, polyPtIds):
         """
