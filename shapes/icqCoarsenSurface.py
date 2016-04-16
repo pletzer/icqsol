@@ -15,24 +15,41 @@ class CoarsenSurface:
         self.polydata.DeepCopy(pdata)
         self.points = self.polydata.GetPoints()
 
+        # reuired in order to get the cell Ids sharing an edge
         self.polydata.BuildLinks()
 
+        # will need to be able to interpolate the nodal data to the
+        # new vertices
         self.pointData = self.polydata.GetPointData()
         self.numPointData = self.pointData.GetNumberOfArrays()
 
-        # compute the area of each cell
-        polys = self.polydata.GetPolys()
-        numPolys = polys.GetNumberOfCells()
+        # polygons
+        self.polys = self.polydata.GetPolys()
+
+        # number of polygons
+        self.numPolys = polys.GetNumberOfCells()
+
+        # polygon areas -- polygons will be sorted according to 
+        # their polygon areas
         self.polyAreas = numpy.zeros((numPolys,), numpy.float64)
-        polys.InitTraversal()
+
+        # point Ids attached to each polygon. As far as I know we 
+        # cannot access the point Ids in random way -- must use
+        # the traversal itereation
+        self.poly2PointIds = []
+        self.polys.InitTraversal()
         ptIds = vtk.vtkIdList()
         for polyId in range(numPolys):
-            polys.GetNextCell(ptIds)
+            self.polys.GetNextCell(ptIds)
             self.polyAreas[polyId] = self.getPolygonArea(ptIds)
+            numPts = ptIds.GetNumberOfIds()
+            pids = []
+            for j in range(numPts):
+                pids.append(ptIds.GetId(j))
+            self.poly2PointIds.append(tuple(pids))
 
-        # sort the cell by deacreasing cell areas
-        self.sortedPolyIndices = numpy.fliplr([numpy.argsort(self.polyAreas)])[0]
-
+        # sell indices sorted by increasing polygon areas
+        self.sortedPolyIndices = numpy.argsort(self.polyAreas)
 
     def getVtkPolyData(self):
         """
@@ -48,126 +65,154 @@ class CoarsenSurface:
         @note operation is in place
         """
 
-        points = self.polydata.GetPoints()
+        # polygon index in the self.sortedPolyIndices array denoting 
+        # the first valid polygon. That is indices smaller than 
+        # firstValidPolyIndex should all have zero area
+        firstValidPolyIndex = 0
 
-        polys = self.polydata.GetPolys()
-        numPolys = polys.GetNumberOfCells()
-        if numPolys <= 1:
-            # must have at least one polygon
-            return
+        # flag denoting whether we need to colapse the smallest, non-zero
+        # polygon
+        colapsePoly = True
 
-        ptIds = vtk.vtkIdList()
-
-        # holds the cell Ids to delete
-        cellIdsToRemove = []
+        # collection of cell Ids sharing an edge
         cellIds = vtk.vtkIdList()
 
-        # iterate over cells
-        polys.InitTraversal()
-        for polyId in range(numPolys):
+        while colapsePoly and firstValidPolyIndex < self.numPolys:
 
-            polys.GetNextCell(ptIds)
+            polyId = self.sortedPolyIndices[firstValidPolyIndex]
 
-            polygonArea = self.getPolygonArea(ptIds)
-            if polygonArea < min_cell_area:
+            if self.polyAreas[polyId] > min_cell_area:
 
-                # number of points spanning the cell 
-                # (also equal to number of edges)
-                n = ptIds.GetNumberOfIds()
+                # we're done
+                colapsePoly = False
+                # exit the loop
+
+            else:
+
+                # point Ids that span the polygon
+                ptIds = self.poly2PointIds[polyId]
+
+                # either the number of points or the number of edges
+                # spanning the polygon
+                n = len(ptIds)
+
+                # center of the polygon
+                barycenter = self.getPolyBarycenter(ptIds)
+
+                # collect the point ids spanning the polygon
+                ptIdSet = set()
+
+                # collect the edge to neighbor polygon connectivity
+                edge2NeighPoly = {}
 
                 # iterate over edges
-                neighCellIds = set() # unique entries
-                for iEdge in range(n):
-                    ptId1, ptId2 = ptIds.GetId(iEdge), ptIds.GetId((iEdge + 1) % n)
+                for i in range(n):
+
+                    # the two point Ids spanning the edge
+                    ptId1, ptId2 = ptIds[i], ptIds[(i + 1) % n]
+                    ptIdSet.add(ptId1)
+                    ptIdSet.add(ptId2)
+
+                    # get the other cell that shares this edge
                     self.polydata.GetCellEdgeNeighbors(polyId, ptId1, ptId2, cellIds)
-                    for j in range(cellIds.GetNumberOfIds()):
-                        neighCellIds.add(cellIds.GetId(j))
 
-                if len(neighCellIds) < n:
-                    # must be a boundary cell, skip for the time being...
-                    # might need to do something special here. Just want to 
-                    # be sure the boundary does not move...
-                    continue
+                    if cellIds.GetNumberOfIds() == 2:
+                        cellId1 = cellIds.GetId(0)
+                        cellId2 = cellIds.GetId(1)
+                        if cellId1 == polyId:
+                            edge2NeighPoly[(ptId1, ptId2)] = cellId2
+                        else:
+                            edge2NeighPoly[(ptId1, ptId2)] = cellId1
 
-                # move the points spanning the polygon to the 
-                # center of the polygon. This will essentially 
-                # reduce the cell to a set of points which are 
-                # on top of each other.
-                self.movePointsToBaryCenter(ptIds)
+                # is this an internal polygon whose edges are not on the boundary?
+                # (boundary polygons need different treatment, TO DO)
+                if len(edge2NeighPoly) == n:
 
-                # tag the cell for removal since it now has zero 
-                # area
-                cellIdsToRemove.append(polyId)
-        
-        # remove the tagged, zero-area cells
-        for cellId in cellIdsToRemove:
-            self.polydata.DeleteCell(cellId)
+                    # internal polygon
 
-        # now remove
+                    for edge, cellId in edge2NeighPoly.items():
+                        # the two points spanning the edge
+                        p1, p2 = self.points.GetPoint(edge[0]), self.points.GetPoint(edge[1])
+
+                        # area between edge and barycenter
+                        a12b = self.getTriangleArea(p1, p2, barycenter)
+
+                        # increase the area of the neighbor polygon
+                        self.polyAreas[cellId] += a12b
+                        
+                    # move the poly boundary points to the barycenter
+                    for ptId in ptIds:
+                        self.points.SetPoint(ptId, barycenter)
+
+                    # average nodal field to the barycenter position
+                    self.averagePointData(ptIds)
+
+                    # set polygon area to zero
+                    self.polyAreas[polyId] = 0.
+
+                    # tag this poly for removal
+                    self.polydata.Delete(polyId)
+
+                else:
+
+                    # boundary polygon
+                    # TO DO 
+                    pass
+
+            # look at the next bigger poly
+            firstValidPolyIndex += 1
+
+        # now remove the polys tagged for deletion
         self.polydata.RemoveDeletedCells()
+        self.polydata.BuildLinks()
 
-    def movePointsToBaryCenter(self, ptIds):
+    def getPolyBarycenter(self, ptIds):
         """
-        Move points to barycenter location
-        @param ptIds point Ids
+        Get the center of cloud of points
+        @param ptIds list of point Ids
+        @return center position
         """
-
-        p = numpy.zeros((3,), numpy.float64)
-        n = ptIds.GetNumberOfIds()
-        # compute the cell's gravity center
         barycenter = numpy.zeros((3,), numpy.float64)
-        for j in range(n):
-            p[:] = self.points.GetPoint(ptIds.GetId(j))
-            barycenter += p
-        barycenter /= float(n)
+        point = numpy.zeros((3,), numpy.float64)
+        for ptId in ptIds:
+            self.polydata.GetPoint(ptId, point)
+            barycenter += point
+        barycenter /= float(len(ptIds))
+        return barycenter
 
-        # interpolate the nodal fields to the barycenter locations.
-        # This simply amounts to averaging the nodal fields
+
+    def averagePointData(self, ptIds):
+        """
+        Average the field at the point locations and set the nodal field values 
+        to the average value
+        @param ptIds set of point Ids
+        """
         for el in range(self.numPointData):
             arr = self.pointData.GetArray(el)
             numComps = arr.GetNumberOfComponents()
             vals = numpy.zeros((numComps,), numpy.float64)
             baryVals = numpy.zeros((numComps,), numpy.float64)
             # mid cell values
-            for j in range(n):
-                vals[:] = arr.GetTuple(ptIds.GetId(j))
+            for ptId in ptIds:
+                vals[:] = arr.GetTuple(ptId)
                 baryVals += vals
+            n = len(ptIds)
             baryVals /= float(n)
             # set the field values to the mid cell values
             for j in range(n):
                 arr.SetTuple(ptIds.GetId(j), baryVals)
 
-
-    def getPolygonArea(self, polyPtIds):
+    def getTriangleArea(p0, p1, p2):
         """
-        Compute the (scalar) area of a polygon
-        @param polyPtIds list of point indices
-        @return area
+        Compute the area of the triangle
+        @param p0 first vertex
+        @param p1 second vertex
+        @param p2 third vertex
+        @note vertices are in counterclockwise direction
         """
-        area = numpy.zeros((3,), numpy.float64)
-        p0 = numpy.array(self.points.GetPoint(polyPtIds.GetId(0)))
-        numPolyPts = polyPtIds.GetNumberOfIds()
-        for i in range(1, numPolyPts - 1):
-            p1 = numpy.array(self.points.GetPoint(polyPtIds.GetId(i    )))
-            p2 = numpy.array(self.points.GetPoint(polyPtIds.GetId(i + 1)))
-            area += numpy.cross(p1 - p0, p2 - p0)
+        area = numpy.cross(p1 - p0, p2 - p0)
         return numpy.linalg.norm(area)
 
-    def removeDegeneratePoints(self, polyPtIds):
-        """
-        Remove degenerate points
-        @param polyPtIds list of point indices (modified on output)
-        """
-        indicesToDelete = []
-        numPolyPts = len(polyPtIds)
-        for i in range(numPolyPts):
-            p0 = numpy.array(self.points.GetPoint(polyPtIds[i]))
-            p1 = numpy.array(self.points.GetPoint(polyPtIds[(i + 1)%numPolyPts]))
-            if numpy.linalg.norm(p1 - p0) < 1.e-15:
-                indicesToDelete.append(i)
-        for j in range(len(indicesToDelete) - 1, -1, -1):
-            i = indicesToDelete[j]
-            del polyPtIds[i]
 
 ##############################################################################
 
