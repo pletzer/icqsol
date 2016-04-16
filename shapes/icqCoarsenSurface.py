@@ -20,6 +20,19 @@ class CoarsenSurface:
         self.pointData = self.polydata.GetPointData()
         self.numPointData = self.pointData.GetNumberOfArrays()
 
+        # compute the area of each cell
+        polys = self.polydata.GetPolys()
+        numPolys = polys.GetNumberOfCells()
+        self.polyAreas = numpy.zeros((numPolys,), numpy.float64)
+        polys.InitTraversal()
+        ptIds = vtk.vtkIdList()
+        for polyId in range(numPolys):
+            polys.GetNextCell(ptIds)
+            self.polyAreas[polyId] = self.getPolygonArea(ptIds)
+
+        # sort the cell by deacreasing cell areas
+        self.sortedPolyIndices = numpy.fliplr([numpy.argsort(self.polyAreas)])[0]
+
 
     def getVtkPolyData(self):
         """
