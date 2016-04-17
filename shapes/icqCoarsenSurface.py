@@ -48,7 +48,7 @@ class CoarsenSurface:
                 pids.append(ptIds.GetId(j))
             self.poly2PointIds.append(tuple(pids))
 
-        # sell indices sorted by increasing polygon areas
+        # cell indices sorted by increasing polygon areas
         self.sortedPolyIndices = numpy.argsort(self.polyAreas)
 
     def getVtkPolyData(self):
@@ -61,7 +61,7 @@ class CoarsenSurface:
     def getPolygonArea(self, ptIds):
         """
         Compute the (scalar) area of a polygon
-        @param polyPtIds list of point indices
+        @param ptIds list of point indices
         @return area
         """
         area = numpy.zeros((3,), numpy.float64)
@@ -96,7 +96,11 @@ class CoarsenSurface:
 
             polyId = self.sortedPolyIndices[firstValidPolyIndex]
 
-            if self.polyAreas[polyId] > min_cell_area:
+            # vector sum of the triangle areas spanning the polygon
+            # if the polygon is non-planar then the sum may be smaller
+            # than the sum of the absolute values
+            polyArea = self.polyAreas[polyId]
+            if polyArea > min_cell_area:
 
                 # we're done
                 colapsePoly = False
@@ -129,15 +133,14 @@ class CoarsenSurface:
                     ptIdSet.add(ptId2)
 
                     # get the other cell that shares this edge
-                    self.polydata.GetCellEdgeNeighbors(polyId, ptId1, ptId2, cellIds)
+                    self.polydata.GetCellEdgeNeighbors(polyId, 
+                                                       ptId1, ptId2, 
+                                                       cellIds)
 
-                    if cellIds.GetNumberOfIds() == 2:
-                        cellId1 = cellIds.GetId(0)
-                        cellId2 = cellIds.GetId(1)
-                        if cellId1 == polyId:
-                            edge2NeighPoly[(ptId1, ptId2)] = cellId2
-                        else:
-                            edge2NeighPoly[(ptId1, ptId2)] = cellId1
+                    if cellIds.GetNumberOfIds() == 1:
+                        # the neighbor cells exclude polyId so there 
+                        # can only be one neighbor
+                        edge2NeighPoly[(ptId1, ptId2)] = cellIds.GetId(0)
 
                 # is this an internal polygon whose edges are not on the boundary?
                 # (boundary polygons need different treatment, TO DO)
@@ -145,28 +148,41 @@ class CoarsenSurface:
 
                     # internal polygon
 
+                    sumAreas = 0.0
                     for edge, cellId in edge2NeighPoly.items():
+
                         # the two points spanning the edge
-                        p1, p2 = self.points.GetPoint(edge[0]), self.points.GetPoint(edge[1])
+                        p1 = numpy.array(self.points.GetPoint(edge[0]))
+                        p2 = numpy.array(self.points.GetPoint(edge[1]))
 
                         # area between edge and barycenter
                         a12b = self.getTriangleArea(p1, p2, barycenter)
 
                         # increase the area of the neighbor polygon
                         self.polyAreas[cellId] += a12b
+
+                        sumAreas += a12b
+
+                    # sumAreas must match polyArea, if not theen the neighbors may be 
+                    # on a different plane
+                    if abs(polyArea - sumAreas) < 1.e-10:
                         
-                    # move the poly boundary points to the barycenter
-                    for ptId in ptIds:
-                        self.points.SetPoint(ptId, barycenter)
+                        # move the poly boundary points to the barycenter
+                        for ptId in ptIds:
+                            self.points.SetPoint(ptId, barycenter)
 
-                    # average nodal field to the barycenter position
-                    self.averagePointData(ptIds)
+                        # average nodal field to the barycenter position
+                        self.averagePointData(ptIds)
 
-                    # set polygon area to zero
-                    self.polyAreas[polyId] = 0.
+                        # set polygon area to zero
+                        self.polyAreas[polyId] = 0.
 
-                    # tag this poly for removal
-                    self.polydata.Delete(polyId)
+                        # tag this poly for removal
+                        self.polydata.DeleteCell(polyId)
+
+                        # re-sort the polygons by areas now that the polygin areas 
+                        # have been modified. WE NEED TO MAKE THIS MORE EFFICIENT!
+                        self.sortedPolyIndices = numpy.argsort(self.polyAreas)
 
                 else:
 
@@ -217,7 +233,7 @@ class CoarsenSurface:
             for j in range(n):
                 arr.SetTuple(ptIds.GetId(j), baryVals)
 
-    def getTriangleArea(p0, p1, p2):
+    def getTriangleArea(self, p0, p1, p2):
         """
         Compute the area of the triangle
         @param p0 first vertex

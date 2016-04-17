@@ -18,5 +18,5 @@ pr = shape_mgr.refineVtkPolyData(pdata, max_edge_length=0.10)
 shape_mgr.saveVtkPolyData(pr, file_name='boxRefined.vtk', file_type='ascii')
 
 # coarsen
-pc = shape_mgr.coarsenVtkPolyData(pr, min_cell_area=0.2)
+pc = shape_mgr.coarsenVtkPolyData(pr, min_cell_area=0.5)
 shape_mgr.saveVtkPolyData(pc, file_name='boxRefinedCoarsened.vtk', file_type='ascii')
