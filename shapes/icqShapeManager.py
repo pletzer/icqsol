@@ -719,7 +719,7 @@ class ShapeManager(object):
         @param normals resolve features (corners) and save
                        normal vectors if True
         """
-        # compute the vertex nrmals
+        # compute the vertex normals
         if normals:
             vtk_pdata_save = self.computeVertexNormals(vtk_poly_data)
         else:
