@@ -9,12 +9,12 @@ from icqsol.shapes.icqShapeManager import ShapeManager
 from icqsol import util
 
 shape_mgr = ShapeManager()
-s = shape_mgr.createShape('box', origin=(0., 0., 0.), lengths=[10., 1., 1.])
+s = shape_mgr.createShape('box', origin=(0., 0., 0.), lengths=[1., 1.1, 1.2])
 pdata = shape_mgr.shapeToVTKPolyData(s)
 shape_mgr.setWriter(file_format='vtk', vtk_dataset_type='POLYDATA')
 
 # refine
-pr = shape_mgr.refineVtkPolyData(pdata, max_edge_length=0.05)
+pr = shape_mgr.refineVtkPolyData(pdata, max_edge_length=0.10)
 shape_mgr.saveVtkPolyData(pr, file_name='boxRefined.vtk', file_type='ascii')
 
 # coarsen

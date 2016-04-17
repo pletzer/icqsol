@@ -27,11 +27,11 @@ class CoarsenSurface:
         self.polys = self.polydata.GetPolys()
 
         # number of polygons
-        self.numPolys = polys.GetNumberOfCells()
+        self.numPolys = self.polys.GetNumberOfCells()
 
         # polygon areas -- polygons will be sorted according to 
         # their polygon areas
-        self.polyAreas = numpy.zeros((numPolys,), numpy.float64)
+        self.polyAreas = numpy.zeros((self.numPolys,), numpy.float64)
 
         # point Ids attached to each polygon. As far as I know we 
         # cannot access the point Ids in random way -- must use
@@ -39,7 +39,7 @@ class CoarsenSurface:
         self.poly2PointIds = []
         self.polys.InitTraversal()
         ptIds = vtk.vtkIdList()
-        for polyId in range(numPolys):
+        for polyId in range(self.numPolys):
             self.polys.GetNextCell(ptIds)
             self.polyAreas[polyId] = self.getPolygonArea(ptIds)
             numPts = ptIds.GetNumberOfIds()
@@ -57,6 +57,21 @@ class CoarsenSurface:
         @return vtkPolyData instance
         """
         return self.polydata
+
+    def getPolygonArea(self, ptIds):
+        """
+        Compute the (scalar) area of a polygon
+        @param polyPtIds list of point indices
+        @return area
+        """
+        area = numpy.zeros((3,), numpy.float64)
+        p0 = numpy.array(self.points.GetPoint(ptIds.GetId(0)))
+        numPts = ptIds.GetNumberOfIds()
+        for i in range(1, numPts - 1):
+            p1 = numpy.array(self.points.GetPoint(ptIds.GetId(i    )))
+            p2 = numpy.array(self.points.GetPoint(ptIds.GetId(i + 1)))
+            area += numpy.cross(p1 - p0, p2 - p0)
+        return numpy.linalg.norm(area)
 
     def coarsen(self, min_cell_area = 1.e-10):
         """
