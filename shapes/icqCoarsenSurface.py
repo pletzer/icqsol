@@ -76,6 +76,7 @@ class CoarsenSurface:
         @param polyId Id of the polygon
         """
         ptIds = vtk.vtkIdList()
+        neighPtIds = vtk.vtkIdList()
         neighPolyIds = vtk.vtkIdList()
         self.polydata.GetCellPoints(polyId, ptIds)
 
@@ -98,17 +99,16 @@ class CoarsenSurface:
             # move this point
             self.points.SetPoint(pI, barycenter)
 
-
-
             # get a list of the polys that have this vertex and 
             # correct their area
-            pId.SetId(pI)
+            pId.SetId(0, pI)
             self.polydata.GetCellNeighbors(polyId, pId, neighPolyIds)
             numNeigh = neighPolyIds.GetNumberOfIds()
             for j in range(numNeigh):
                 neighPolyId = neighPolyIds.GetId(j)
+                self.polydata.GetCellPoints(neighPolyId, neighPtIds)
                 # correct the area
-                area = self.getPolygonArea(neighPolyId)
+                area = self.getPolygonArea(neighPtIds)
                 self.polyAreas[neighPolyId] = area
 
         # this poly has now zero area
@@ -125,7 +125,7 @@ class CoarsenSurface:
         @note operation is in place
         """
         validPolyIndices = numpy.where(
-            self.polyAreas[self.sortedPolyIndices] > self.EPS)
+            self.polyAreas[self.sortedPolyIndices] > self.EPS)[0]
         if len(validPolyIndices) == 0:
             # no valid polygons with area > 0
             # nothing to do 
@@ -135,6 +135,8 @@ class CoarsenSurface:
         go = True
 
         while go and polyId < self.numPolys:
+
+            print '*** polyId = ', polyId
 
             polyArea = self.polyAreas[polyId]
             if polyArea > min_cell_area:
@@ -147,17 +149,19 @@ class CoarsenSurface:
                 # colapse polygon. WILL NEED TO DO SOMETHING 
                 # ABOUT VERTICES THAT ARE AT THE BOUNDARY
                 self.colapsePolygon(polyId)
+                print '*** after colapse: self.polyAreas[polyId] = ', self.polyAreas[polyId]
 
                 # re-order the polygons since some 
                 # areas have changed
                 self.sortedPolyIndices = numpy.argsort(self.polyAreas)
                 validPolyIndices = numpy.where(
-                    self.polyAreas[self.sortedPolyIndices] > self.EPS)
+                    self.polyAreas[self.sortedPolyIndices] > self.EPS)[0]
                 if len(validPolyIndices) == 0:
                     go = False
                     break
 
                 # new poly index
+                print '*** validPolyIndices = ', validPolyIndices
                 polyId = validPolyIndices[0]
  
     def averagePointData(self, ptIds):
