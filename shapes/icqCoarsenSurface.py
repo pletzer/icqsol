@@ -40,9 +40,6 @@ class CoarsenSurface:
             self.polys.GetNextCell(ptIds)
             self.polyAreas[polyId] = self.getPolygonArea(ptIds)
 
-        # cell indices sorted by increasing polygon areas
-        self.sortedPolyIndices = numpy.argsort(self.polyAreas)
-
         # required so we can get the connectivity between points and 
         # cells
         self.polydata.BuildLinks()
@@ -124,45 +121,54 @@ class CoarsenSurface:
         @param min_cell_area cell area tolerance
         @note operation is in place
         """
-        validPolyIndices = numpy.where(
-            self.polyAreas[self.sortedPolyIndices] > self.EPS)[0]
-        if len(validPolyIndices) == 0:
-            # no valid polygons with area > 0
-            # nothing to do 
-            return 
 
-        polyId = validPolyIndices[0]
-        go = True
+        zeroPolyList = []
 
-        while go and polyId < self.numPolys:
+        polyId = self.findSmallestPolygon()
+        if polyId < 0:
+            return
 
-            print '*** polyId = ', polyId
+        polyArea = self.polyAreas[polyId]
 
-            polyArea = self.polyAreas[polyId]
-            if polyArea > min_cell_area:
-                # done
-                go = False
-                break
+        count = -1
+        while polyArea < min_cell_area and 0 <= polyId < self.numPolys \
+          and count < self.numPolys:
 
-            else:
+            count += 1
+            
+            # colapse polygon. WILL NEED TO DO SOMETHING 
+            # ABOUT VERTICES THAT ARE AT THE BOUNDARY
+            self.colapsePolygon(polyId)
+            zeroPolyList.append(polyId)
 
-                # colapse polygon. WILL NEED TO DO SOMETHING 
-                # ABOUT VERTICES THAT ARE AT THE BOUNDARY
-                self.colapsePolygon(polyId)
-                print '*** after colapse: self.polyAreas[polyId] = ', self.polyAreas[polyId]
+            # find the polygon with the smallest but non-zero area
+            polyId = self.findSmallestPolygon()
 
-                # re-order the polygons since some 
-                # areas have changed
-                self.sortedPolyIndices = numpy.argsort(self.polyAreas)
-                validPolyIndices = numpy.where(
-                    self.polyAreas[self.sortedPolyIndices] > self.EPS)[0]
-                if len(validPolyIndices) == 0:
-                    go = False
-                    break
+        # delete the zero polys
+        for polyId in zeroPolyList:
+            self.polydata.DeleteCell(polyId)
+        self.polydata.RemoveDeletedCells()
+        self.polydata.BuildLinks() # not sure if this is required
 
-                # new poly index
-                print '*** validPolyIndices = ', validPolyIndices
-                polyId = validPolyIndices[0]
+    def findSmallestPolygon(self):
+        """
+        Find the smallest polygon whose area is > 0
+        @return polygon Id
+        """
+        # sort the polygons by increasing area
+        sortedPolyIndices = numpy.argsort(self.polyAreas)
+
+        # sorted polygon areas
+        sortedPolyAreas = self.polyAreas[sortedPolyIndices]
+
+        # indices in the sorted array wit area > 0
+        inds = numpy.where(sortedPolyAreas > self.EPS)[0]
+
+        if len(inds) > 0:
+            return sortedPolyIndices[inds[0]]
+
+        # no non-zero polygon
+        return -1
  
     def averagePointData(self, ptIds):
         """
