@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from operator import itemgetter
 import math
 import numpy
 import vtk
@@ -122,17 +123,14 @@ class CoarsenSurface:
         @note operation is in place
         """
 
-        zeroPolyList = []
-
-        polyId = self.findSmallestPolygon()
+        polyId, polyArea = self.findSmallestPolygon()
         if polyId < 0:
             return
 
-        polyArea = self.polyAreas[polyId]
-
+        zeroPolyList = []
         count = -1
-        while polyArea < min_cell_area and 0 <= polyId < self.numPolys \
-          and count < self.numPolys:
+        while polyArea < min_cell_area and polyId > 0 \
+                and count < self.numPolys:
 
             count += 1
             
@@ -142,7 +140,7 @@ class CoarsenSurface:
             zeroPolyList.append(polyId)
 
             # find the polygon with the smallest but non-zero area
-            polyId = self.findSmallestPolygon()
+            polyId, polyArea = self.findSmallestPolygon()                
 
         # delete the zero polys
         for polyId in zeroPolyList:
@@ -153,22 +151,20 @@ class CoarsenSurface:
     def findSmallestPolygon(self):
         """
         Find the smallest polygon whose area is > 0
-        @return polygon Id
+        @return polygon Id, area
         """
-        # sort the polygons by increasing area
-        sortedPolyIndices = numpy.argsort(self.polyAreas)
 
-        # sorted polygon areas
-        sortedPolyAreas = self.polyAreas[sortedPolyIndices]
+        # collect the indices where area > 0
+        inds = numpy.where(self.polyAreas > self.EPS)
 
-        # indices in the sorted array wit area > 0
-        inds = numpy.where(sortedPolyAreas > self.EPS)[0]
+        # make sure there is at least one non-degenerate cell
+        if len(inds) == 0:
+            return -1, -1
 
-        if len(inds) > 0:
-            return sortedPolyIndices[inds[0]]
+        # find the smallest non-zero cells
+        polyId, polyArea = min(enumerate(self.polyAreas[inds]), key=itemgetter(1))
 
-        # no non-zero polygon
-        return -1
+        return polyId, polyArea
  
     def averagePointData(self, ptIds):
         """
