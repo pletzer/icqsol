@@ -18,7 +18,7 @@ class CoarsenSurface:
         self.polydata.DeepCopy(pdata)
         self.points = self.polydata.GetPoints()
 
-        # reuired in order to get the cell Ids sharing an edge
+        # required in order to get the cell Ids sharing an edge
         self.polydata.BuildLinks()
 
         # will need to be able to interpolate the nodal data to the
@@ -26,24 +26,30 @@ class CoarsenSurface:
         self.pointData = self.polydata.GetPointData()
         self.numPointData = self.pointData.GetNumberOfArrays()
 
-        # polygons
-        self.polys = self.polydata.GetPolys()
-
-        # number of polygons
-        self.numPolys = self.polys.GetNumberOfCells()
-
-        # polygon areas -- polygons will be sorted according to 
-        # their polygon areas
-        self.polyAreas = numpy.zeros((self.numPolys,), numpy.float64)
-        self.polys.InitTraversal()
-        ptIds = vtk.vtkIdList()
-        for polyId in range(self.numPolys):
-            self.polys.GetNextCell(ptIds)
-            self.polyAreas[polyId] = self.getPolygonArea(ptIds)
+        self.computePolyAreas()
 
         # required so we can get the connectivity between points and 
         # cells
         self.polydata.BuildLinks()
+
+    def computePolyAreas(self):
+        """
+        Compute the polygon areas
+        """
+        # polygons
+        polys = self.polydata.GetPolys()
+
+        # number of polygons
+        numPolys = polys.GetNumberOfCells()
+
+        # polygon areas -- polygons will be sorted according to 
+        # their polygon areas
+        self.polyAreas = numpy.zeros((numPolys,), numpy.float64)
+        polys.InitTraversal()
+        ptIds = vtk.vtkIdList()
+        for polyId in range(numPolys):
+            polys.GetNextCell(ptIds)
+            self.polyAreas[polyId] = self.getPolygonArea(ptIds)
 
     def getVtkPolyData(self):
         """
@@ -67,15 +73,18 @@ class CoarsenSurface:
             area += numpy.cross(p1 - p0, p2 - p0)
         return numpy.linalg.norm(area)
 
-    def colapsePolygon(self, polyId):
+    def colapsePolygon(self, polyId, zeroPolyList):
         """
         Colapse the vertices of the cell and adjust the 
         neighboring polygons' area
         @param polyId Id of the polygon
+        @param zeroPolyList list of polygons with zero area will be updated
         """
         ptIds = vtk.vtkIdList()
         neighPtIds = vtk.vtkIdList()
         neighPolyIds = vtk.vtkIdList()
+
+        # points of the cell
         self.polydata.GetCellPoints(polyId, ptIds)
 
         # iterate over the points to compute the barycenter
@@ -85,6 +94,7 @@ class CoarsenSurface:
             barycenter += self.points.GetPoint(ptIds.GetId(i))
         barycenter /= float(numPts)
 
+        # point under consideration
         pId = vtk.vtkIdList()
         pId.SetNumberOfIds(1)
 
@@ -108,13 +118,18 @@ class CoarsenSurface:
                 # correct the area
                 area = self.getPolygonArea(neighPtIds)
                 self.polyAreas[neighPolyId] = area
+                print '*** setting poly ', neighPolyId, ' area to ', area
+                if area < self.EPS :
+                    zeroPolyList.append(neighPolyId)
 
         # this poly has now zero area
         self.polyAreas[polyId] = 0.
+        print '*** also setting poly ', polyId, ' area to 0'
 
         # reset the nodal field values to account for the vertices 
         # having moved
         self.averagePointData(ptIds)
+        print '=' * 80
 
     def coarsen(self, min_cell_area = 1.e-10):
         """
@@ -127,26 +142,35 @@ class CoarsenSurface:
         if polyId < 0:
             return
 
-        zeroPolyList = []
+        numPolys = self.polydata.GetPolys().GetNumberOfCells()
         count = -1
         while polyArea < min_cell_area and polyId > 0 \
-                and count < self.numPolys:
+                and count < 10: #numPolys:
 
             count += 1
+
+            zeroPolyList = []
+
+            print '*** count, polyArea, min_cell_area, polyId, numPolys =  ', count, polyArea, min_cell_area, polyId, numPolys
             
             # colapse polygon. WILL NEED TO DO SOMETHING 
             # ABOUT VERTICES THAT ARE AT THE BOUNDARY
-            self.colapsePolygon(polyId)
+            self.colapsePolygon(polyId, zeroPolyList)
             zeroPolyList.append(polyId)
 
-            # find the polygon with the smallest but non-zero area
-            polyId, polyArea = self.findSmallestPolygon()                
+            # delete the zero polys
+            print '*** len(zeroPolyList) = ', len(zeroPolyList)
+            for polyId in zeroPolyList:
+                self.polydata.DeleteCell(polyId)
+            self.polydata.RemoveDeletedCells()
+            self.polydata.BuildLinks() # not sure if this is required
+            self.computePolyAreas()
 
-        # delete the zero polys
-        for polyId in zeroPolyList:
-            self.polydata.DeleteCell(polyId)
-        self.polydata.RemoveDeletedCells()
-        self.polydata.BuildLinks() # not sure if this is required
+            # find the polygon with the smallest but non-zero area
+            polyId, polyArea = self.findSmallestPolygon()  
+            numPolys = self.polydata.GetPolys().GetNumberOfCells()
+            print '*** after colapse number of polys: ', self.polydata.GetPolys().GetNumberOfCells()           
+
 
     def findSmallestPolygon(self):
         """
