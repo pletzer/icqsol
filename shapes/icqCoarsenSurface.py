@@ -16,7 +16,6 @@ class CoarsenSurface:
         """
         self.polydata = vtk.vtkPolyData()
         self.polydata.DeepCopy(pdata)
-        self.points = self.polydata.GetPoints()
 
         # required in order to get the cell Ids sharing an edge
         self.polydata.BuildLinks()
@@ -64,12 +63,13 @@ class CoarsenSurface:
         @param ptIds list of point indices
         @return area
         """
+        points = self.polydata.GetPoints()
         area = numpy.zeros((3,), numpy.float64)
-        p0 = numpy.array(self.points.GetPoint(ptIds.GetId(0)))
+        p0 = numpy.array(points.GetPoint(ptIds.GetId(0)))
         numPts = ptIds.GetNumberOfIds()
         for i in range(1, numPts - 1):
-            p1 = numpy.array(self.points.GetPoint(ptIds.GetId(i    )))
-            p2 = numpy.array(self.points.GetPoint(ptIds.GetId(i + 1)))
+            p1 = numpy.array(points.GetPoint(ptIds.GetId(i    )))
+            p2 = numpy.array(points.GetPoint(ptIds.GetId(i + 1)))
             area += numpy.cross(p1 - p0, p2 - p0)
         return numpy.linalg.norm(area)
 
@@ -83,6 +83,7 @@ class CoarsenSurface:
         ptIds = vtk.vtkIdList()
         neighPtIds = vtk.vtkIdList()
         neighPolyIds = vtk.vtkIdList()
+        points = self.polydata.GetPoints()
 
         # points of the cell
         self.polydata.GetCellPoints(polyId, ptIds)
@@ -91,7 +92,7 @@ class CoarsenSurface:
         barycenter = numpy.zeros((3,), numpy.float64)
         numPts = ptIds.GetNumberOfIds()
         for i in range(numPts):
-            barycenter += self.points.GetPoint(ptIds.GetId(i))
+            barycenter += points.GetPoint(ptIds.GetId(i))
         barycenter /= float(numPts)
 
         # point under consideration
@@ -101,17 +102,17 @@ class CoarsenSurface:
         # move each vertex of polyId to the barycenter position
         print '>>> numPts = ', numPts, ' spanning poly'
         for i in range(numPts):
-
             # Id of this point
             pI = ptIds.GetId(i)
-
             # move this point to the barycenter
-            self.points.SetPoint(pI, barycenter)
+            self.polydata.GetPoints().SetPoint(pI, barycenter)
 
+        zeroAreas = set()
         for i in range(numPts):
 
             # get a list of the polys that have this vertex and 
             # correct their area
+            pI = ptIds.GetId(i)
             pId.SetId(0, pI)
             self.polydata.GetCellNeighbors(polyId, pId, neighPolyIds)
             numNeigh = neighPolyIds.GetNumberOfIds()
@@ -123,7 +124,10 @@ class CoarsenSurface:
                 self.polyAreas[neighPolyId] = area
                 print '*** setting poly ', neighPolyId, ' area to ', area
                 if area < self.EPS :
-                    zeroPolyList.append(neighPolyId)
+                    zeroAreas.add(neighPolyId)
+
+        for neighPolyId in zeroAreas:
+            zeroPolyList.append(neighPolyId)
 
         # this poly has now zero area
         self.polyAreas[polyId] = 0.
@@ -133,7 +137,7 @@ class CoarsenSurface:
         # having moved
         self.averagePointData(ptIds)
         print '=' * 80
-        if len(zeroPolyList) < 3:
+        if len(zeroPolyList) != 3:
             return False
         return True
 
