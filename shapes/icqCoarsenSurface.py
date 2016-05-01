@@ -100,11 +100,9 @@ class CoarsenSurface:
         pId.SetNumberOfIds(1)
 
         # move each vertex of polyId to the barycenter position
-        print '>>> numPts = ', numPts, ' spanning poly'
         for i in range(numPts):
             # Id of this point
             pI = ptIds.GetId(i)
-            # move this point to the barycenter
             self.polydata.GetPoints().SetPoint(pI, barycenter)
 
         zeroAreas = set()
@@ -122,23 +120,26 @@ class CoarsenSurface:
                 # correct the area
                 area = self.getPolygonArea(neighPtIds)
                 self.polyAreas[neighPolyId] = area
-                print '*** setting poly ', neighPolyId, ' area to ', area
                 if area < self.EPS :
                     zeroAreas.add(neighPolyId)
 
-        for neighPolyId in zeroAreas:
-            zeroPolyList.append(neighPolyId)
+        print '=' * 80
+        if len(zeroAreas) != 3:
+            # something is not right
+            print '*** number of zero polys = ', len(zeroAreas), ' != 3'
+            return False
+
+        #for neighPolyId in zeroAreas:
+        #    print '*** adding ', neighPolyId, ' to the list of zero polys'
+        #    zeroPolyList.append(neighPolyId)
 
         # this poly has now zero area
         self.polyAreas[polyId] = 0.
-        print '*** also setting poly ', polyId, ' area to 0'
 
         # reset the nodal field values to account for the vertices 
         # having moved
         self.averagePointData(ptIds)
-        print '=' * 80
-        if len(zeroPolyList) != 3:
-            return False
+
         return True
 
     def coarsen(self, min_cell_area = 1.e-10):
@@ -155,33 +156,31 @@ class CoarsenSurface:
         numPolys = self.polydata.GetPolys().GetNumberOfCells()
         count = -1
         success = True
-        while success and polyArea < min_cell_area and polyId > 0 \
-                and count < 50: #numPolys:
+        while polyArea < min_cell_area and polyId > 0 \
+                and count < 10*numPolys:
 
             count += 1
+            print '*** count = ', count
 
             zeroPolyList = []
-
-            print '*** count, polyArea, min_cell_area, polyId, numPolys =  ', count, polyArea, min_cell_area, polyId, numPolys
             
             # collapse polygon. WILL NEED TO DO SOMETHING 
             # ABOUT VERTICES THAT ARE AT THE BOUNDARY
             success = self.collapsePolygon(polyId, zeroPolyList)
             zeroPolyList.append(polyId)
 
-            # delete the zero polys
-            print '*** len(zeroPolyList) = ', len(zeroPolyList)
-            for polyId in zeroPolyList:
-                self.polydata.DeleteCell(polyId)
-            self.polydata.RemoveDeletedCells()
-            self.polydata.BuildLinks() # not sure if this is required
-            self.computePolyAreas()
-
             # find the polygon with the smallest but non-zero area
             polyId, polyArea = self.findSmallestPolygon()  
             numPolys = self.polydata.GetPolys().GetNumberOfCells()
-            print '*** after collapse number of polys: ', self.polydata.GetPolys().GetNumberOfCells()           
 
+        # delete the zero polys
+        for polyId in range(numPolys):
+            if self.polyAreas[polyId] < self.EPS:
+                self.polydata.DeleteCell(polyId)
+            
+        self.polydata.RemoveDeletedCells()
+        self.polydata.BuildLinks() # not sure if this is required
+        self.computePolyAreas()
 
     def findSmallestPolygon(self):
         """
