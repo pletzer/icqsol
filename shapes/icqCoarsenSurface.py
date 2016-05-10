@@ -4,10 +4,12 @@ from operator import itemgetter
 import math
 import numpy
 import vtk
+import math
 
 class CoarsenSurface:
 
     EPS = 1.23456789e-10
+    TWOPI = 2.0 * math.pi
 
     def __init__(self, pdata):
         """
@@ -57,90 +59,130 @@ class CoarsenSurface:
         """
         return self.polydata
 
+    def getPolygonVectorArea(self, ptIds):
+        """
+        Get the polygon vector area 
+        @param ptIds boundary points of the cell
+        @return vector
+        """
+        points = self.polydata.GetPoints()
+        areaVec = numpy.zeros((3,), numpy.float64)
+        p0 = numpy.array(points.GetPoint(ptIds.GetId(0)))
+        numPts = ptIds.GetNumberOfIds()
+        for i in range(1, numPts - 1):
+            p1 = numpy.array(points.GetPoint(ptIds.GetId(i    )))
+            p2 = numpy.array(points.GetPoint(ptIds.GetId(i + 1)))
+            areaVec += numpy.cross(p1 - p0, p2 - p0)
+        return areaVec
+
     def getPolygonArea(self, ptIds):
         """
         Compute the (scalar) area of a polygon
         @param ptIds list of point indices
         @return area
         """
-        points = self.polydata.GetPoints()
-        area = numpy.zeros((3,), numpy.float64)
-        p0 = numpy.array(points.GetPoint(ptIds.GetId(0)))
-        numPts = ptIds.GetNumberOfIds()
-        for i in range(1, numPts - 1):
-            p1 = numpy.array(points.GetPoint(ptIds.GetId(i    )))
-            p2 = numpy.array(points.GetPoint(ptIds.GetId(i + 1)))
-            area += numpy.cross(p1 - p0, p2 - p0)
-        return numpy.linalg.norm(area)
+        areaVec = self.getPolygonVectorArea(ptIds)
+        return numpy.linalg.norm(areaVec)
 
-    def collapsePolygon(self, polyId, zeroPolyList):
+    def getPolygonNormalVector(self, ptIds):
         """
-        Collapse the vertices of the cell and adjust the 
-        neighboring polygons' area
-        @param polyId Id of the polygon
-        @param zeroPolyList list of polygons with zero area will be updated
+        Compute the normal vector of the polygon
+        @param ptIds list of point indices
+        @return area
         """
+        areaVec = self.getPolygonVectorArea(ptIds)
+        area = numpy.linalg.norm(areaVec)
+        return areaVec / area
+
+    def getTotalAngle(self, ptId):
+        """
+        Compute the sum of the angles between edges
+        @param ptId point Id
+        @return total angle in radiants
+        """
+        cellIds = vtk.vtkIdList()
+
+        # get the cell Ids sharing this point
         ptIds = vtk.vtkIdList()
-        neighPtIds = vtk.vtkIdList()
-        neighPolyIds = vtk.vtkIdList()
+        self.polydata.GetPointCells(ptId, cellIds)
+
+        pt0 = numpy.zeros((3,), numpy.float64)
+        edge1 = numpy.zeros((3,), numpy.float64)
+        edge2 = numpy.zeros((3,), numpy.float64)
         points = self.polydata.GetPoints()
 
+        # get the point coorindates of ptId
+        points.GetPoint(ptId, pt0)
+
+        # iterate over the cells sharing ptId
+        angle = 0.
+        for iCell in range(cellIds.GetNumberOfIds()):
+
+            # get the points of this cell
+            self.polydata.GetCellPoints(cellIds.GetId(iCell), ptIds)
+
+            # find the two edges incident to ptId
+            n = ptIds.GetNumberOfIds()
+            for j in range(n):
+                p1 = ptIds.GetId(j)
+                p2 = ptIds.GetId((j + 1) % n)
+                if p1 == ptId:
+                    self.polydata.GetPoints().GetPoint(p2, edge1)
+                elif p2 == ptId:
+                    self.polydata.GetPoints().GetPoint(p1, edge2)
+
+            # the two edges
+            edge1 -= pt0
+            edge2 -= pt0
+
+            # add the angle between pt1 and pt2
+            crossProduct = numpy.linalg.norm(numpy.cross(edge1, edge2))
+            dotProduct = numpy.dot(edge1, edge2)
+            angle += math.atan2(crossProduct, dotProduct)
+
+        return angle
+
+    def collapsePolygon(self, cellId):
+        """
+        Collapse the vertices of a cell
+        @param cellId Id of the polygon
+        """
         # points of the cell
-        self.polydata.GetCellPoints(polyId, ptIds)
+        ptIds = vtk.vtkIdList()
+        self.polydata.GetCellPoints(cellId, ptIds)
+        npts = ptIds.GetNumberOfIds()
 
-        # iterate over the points to compute the barycenter
-        barycenter = numpy.zeros((3,), numpy.float64)
-        numPts = ptIds.GetNumberOfIds()
-        for i in range(numPts):
-            barycenter += points.GetPoint(ptIds.GetId(i))
-        barycenter /= float(numPts)
+        # typically the center of the cell, in some 
+        # cases the center of an edge
+        center = numpy.zeros( (npts,), numpy.float64 )
 
-        # point under consideration
-        pId = vtk.vtkIdList()
-        pId.SetNumberOfIds(1)
+        # coordinates of the poinrt
+        pt = numpy.zeros( (npts,), numpy.float64 )
 
-        # move each vertex of polyId to the barycenter position
-        for i in range(numPts):
-            # Id of this point
-            pI = ptIds.GetId(i)
-            self.polydata.GetPoints().SetPoint(pI, barycenter)
+        points = self.polydata.GetPoints()
+        pointsToMove = []
 
-        zeroAreas = set()
-        for i in range(numPts):
+        # compute the polygon center
+        for i in range(npts):
+            ptId = ptIds.GetId(i)
+            # sum of the angle must be 2*pi for internal points
+            if abs(self.getTotalAngle(ptId) - self.TWOPI) < 0.01:
+                # internal, ie non-boundary point
+                points.GetPoint(ptId, pt)
+                center += pt
+                # add point to the list of points to move
+                pointsToMove.append(ptId)
+        
+        n = len(pointsToMove)
+        if n > 0:
+            center /= float(len(pointsToMove))
 
-            # get a list of the polys that have this vertex and 
-            # correct their area
-            pI = ptIds.GetId(i)
-            pId.SetId(0, pI)
-            self.polydata.GetCellNeighbors(polyId, pId, neighPolyIds)
-            numNeigh = neighPolyIds.GetNumberOfIds()
-            for j in range(numNeigh):
-                neighPolyId = neighPolyIds.GetId(j)
-                self.polydata.GetCellPoints(neighPolyId, neighPtIds)
-                # correct the area
-                area = self.getPolygonArea(neighPtIds)
-                self.polyAreas[neighPolyId] = area
-                if area < self.EPS :
-                    zeroAreas.add(neighPolyId)
+        # move the selected points to the center
+        for ptId in pointsToMove:
+            points.SetPoint(ptId, center)
 
-        print '=' * 80
-        if len(zeroAreas) != 3:
-            # something is not right
-            print '*** number of zero polys = ', len(zeroAreas), ' != 3'
-            return False
-
-        #for neighPolyId in zeroAreas:
-        #    print '*** adding ', neighPolyId, ' to the list of zero polys'
-        #    zeroPolyList.append(neighPolyId)
-
-        # this poly has now zero area
-        self.polyAreas[polyId] = 0.
-
-        # reset the nodal field values to account for the vertices 
-        # having moved
+        # average the nodal data at the new vertex location
         self.averagePointData(ptIds)
-
-        return True
 
     def coarsen(self, min_cell_area = 1.e-10):
         """
@@ -149,38 +191,78 @@ class CoarsenSurface:
         @note operation is in place
         """
 
-        polyId, polyArea = self.findSmallestPolygon()
-        if polyId < 0:
-            return
+        polys = self.polydata.GetPolys()
+        numPolys = polys.GetNumberOfCells()
+        ptIds = vtk.vtkIdList()
+        polys.InitTraversal()
+        for cellId in range(numPolys):
+            polys.GetNextCell(ptIds)
+            area = self.getPolygonArea(ptIds)
+            if abs(area) < min_cell_area and area > self.EPS:
+                self.collapsePolygon(cellId)
 
+        self.deleteZeroPolys()
+
+    def computeNormalVectorJump(self, polyId):
+        """
+        Compute the max jump in normal vector across polygon edges
+        @return magnitude of the jump
+        """
+        res = 0
+
+        # this polygon's normal vector
+        ptIds = vtk.vtkIdList()
+        self.polydata.GetCellPoints(polyId, ptIds)
+        normalVec = self.getPolygonNormalVector(ptIds)
+
+        # get the point Ids of the polygon
+        ptIds = vtk.vtkIdList()
+        self.polydata.GetCellPoints(polyId, ptIds)
+
+        # number of points or number of edges
+        n = ptIds.GetNumberOfIds()
+
+        # the two end points of an edge
+        ptIs = vtk.vtkIdList()
+        ptIs.SetNumberOfIds(2)
+
+        # the cell Ids sharing an edge with polyId
+        neighPolyIds = vtk.vtkIdList()
+        neighPolyPtIds = vtk.vtkIdList()
+
+        # iterate over edges
+        for i in range(n):
+            p0Id = ptIds.GetId(i)
+            p1Id = ptIds.GetId( (i + 1) % n )
+            ptIs.SetId(0, p0Id)
+            ptIs.SetId(1, p1Id)
+
+            # get the polygons sharing edge but excluding polyId
+            # (should only be one)
+            self.polydata.GetCellNeighbors(polyId, ptIs, neighPolyIds)
+
+            # iterate ove the neighbor polygons
+            for j in range(neighPolyIds.GetNumberOfIds()):
+                neighPolyId = neighPolyIds.GetId(j)
+                self.polydata.GetCellPoints(neighPolyId, neighPolyPtIds)
+                neighNormalVec = self.getPolygonNormalVector(neighPolyPtIds)
+                res = max(res, numpy.linalg.norm(neighNormalVec - normalVec))
+
+        return res
+
+    def deleteZeroPolys(self):
+        """
+        Delete all the polygons whose area is zero
+        """
+        ptIds = vtk.vtkIdList()
         numPolys = self.polydata.GetPolys().GetNumberOfCells()
-        count = -1
-        success = True
-        while polyArea < min_cell_area and polyId > 0 \
-                and count < 10*numPolys:
-
-            count += 1
-            print '*** count = ', count
-
-            zeroPolyList = []
-            
-            # collapse polygon. WILL NEED TO DO SOMETHING 
-            # ABOUT VERTICES THAT ARE AT THE BOUNDARY
-            success = self.collapsePolygon(polyId, zeroPolyList)
-            zeroPolyList.append(polyId)
-
-            # find the polygon with the smallest but non-zero area
-            polyId, polyArea = self.findSmallestPolygon()  
-            numPolys = self.polydata.GetPolys().GetNumberOfCells()
-
-        # delete the zero polys
         for polyId in range(numPolys):
-            if self.polyAreas[polyId] < self.EPS:
+            self.polydata.GetCellPoints(polyId, ptIds)
+            if abs(self.getPolygonArea(ptIds)) <= self.EPS:
                 self.polydata.DeleteCell(polyId)
             
         self.polydata.RemoveDeletedCells()
         self.polydata.BuildLinks() # not sure if this is required
-        self.computePolyAreas()
 
     def findSmallestPolygon(self):
         """

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    Test colormaps
+    Test refinement and coarsening
     @author alexander@gokliya.net
     """
 
