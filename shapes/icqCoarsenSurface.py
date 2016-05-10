@@ -19,38 +19,14 @@ class CoarsenSurface:
         self.polydata = vtk.vtkPolyData()
         self.polydata.DeepCopy(pdata)
 
-        # required in order to get the cell Ids sharing an edge
-        self.polydata.BuildLinks()
-
         # will need to be able to interpolate the nodal data to the
         # new vertices
         self.pointData = self.polydata.GetPointData()
         self.numPointData = self.pointData.GetNumberOfArrays()
 
-        self.computePolyAreas()
-
         # required so we can get the connectivity between points and 
         # cells
         self.polydata.BuildLinks()
-
-    def computePolyAreas(self):
-        """
-        Compute the polygon areas
-        """
-        # polygons
-        polys = self.polydata.GetPolys()
-
-        # number of polygons
-        numPolys = polys.GetNumberOfCells()
-
-        # polygon areas -- polygons will be sorted according to 
-        # their polygon areas
-        self.polyAreas = numpy.zeros((numPolys,), numpy.float64)
-        polys.InitTraversal()
-        ptIds = vtk.vtkIdList()
-        for polyId in range(numPolys):
-            polys.GetNextCell(ptIds)
-            self.polyAreas[polyId] = self.getPolygonArea(ptIds)
 
     def getVtkPolyData(self):
         """
@@ -203,53 +179,6 @@ class CoarsenSurface:
 
         self.deleteZeroPolys()
 
-    def computeNormalVectorJump(self, polyId):
-        """
-        Compute the max jump in normal vector across polygon edges
-        @return magnitude of the jump
-        """
-        res = 0
-
-        # this polygon's normal vector
-        ptIds = vtk.vtkIdList()
-        self.polydata.GetCellPoints(polyId, ptIds)
-        normalVec = self.getPolygonNormalVector(ptIds)
-
-        # get the point Ids of the polygon
-        ptIds = vtk.vtkIdList()
-        self.polydata.GetCellPoints(polyId, ptIds)
-
-        # number of points or number of edges
-        n = ptIds.GetNumberOfIds()
-
-        # the two end points of an edge
-        ptIs = vtk.vtkIdList()
-        ptIs.SetNumberOfIds(2)
-
-        # the cell Ids sharing an edge with polyId
-        neighPolyIds = vtk.vtkIdList()
-        neighPolyPtIds = vtk.vtkIdList()
-
-        # iterate over edges
-        for i in range(n):
-            p0Id = ptIds.GetId(i)
-            p1Id = ptIds.GetId( (i + 1) % n )
-            ptIs.SetId(0, p0Id)
-            ptIs.SetId(1, p1Id)
-
-            # get the polygons sharing edge but excluding polyId
-            # (should only be one)
-            self.polydata.GetCellNeighbors(polyId, ptIs, neighPolyIds)
-
-            # iterate ove the neighbor polygons
-            for j in range(neighPolyIds.GetNumberOfIds()):
-                neighPolyId = neighPolyIds.GetId(j)
-                self.polydata.GetCellPoints(neighPolyId, neighPolyPtIds)
-                neighNormalVec = self.getPolygonNormalVector(neighPolyPtIds)
-                res = max(res, numpy.linalg.norm(neighNormalVec - normalVec))
-
-        return res
-
     def deleteZeroPolys(self):
         """
         Delete all the polygons whose area is zero
@@ -263,24 +192,6 @@ class CoarsenSurface:
             
         self.polydata.RemoveDeletedCells()
         self.polydata.BuildLinks() # not sure if this is required
-
-    def findSmallestPolygon(self):
-        """
-        Find the smallest polygon whose area is > 0
-        @return polygon Id, area
-        """
-
-        # collect the indices where area > 0
-        inds = numpy.where(self.polyAreas > self.EPS)
-
-        # make sure there is at least one non-degenerate cell
-        if len(inds) == 0:
-            return -1, -1
-
-        # find the smallest non-zero cells
-        polyId, polyArea = min(enumerate(self.polyAreas[inds]), key=itemgetter(1))
-
-        return polyId, polyArea
  
     def averagePointData(self, ptIds):
         """
