@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import operator
 
 # https://pomax.github.io/bezierinfo/legendre-gauss.html
@@ -49,7 +50,7 @@ def testConstant():
         return 1.0
     for order in range(1, 6):
         res = lineQuadrature(order, pa, pb, f)
-        print 'testConstant: order = ', order, ' integral = ', res
+        print('testConstant: order = ', order, ' integral = ', res, end="\n")
         assert(abs(res - 0.8) < 1.e-12)
 
 
@@ -62,7 +63,7 @@ def testLinear():
         return 2.0 - x
     for order in range(1, 6):
         res = lineQuadrature(order, pa, pb, f)
-        print 'testLinear: order = ', order, ' integral = ', res
+        print('testLinear: order = ', order, ' integral = ', res, end="\n")
         assert(abs(res - 0.32) < 1.e-12)
 
 
@@ -75,7 +76,7 @@ def testQuadratic():
         return 2.0 - x + 3*x**2
     for order in range(2, 6):
         res = lineQuadrature(order, pa, pb, f)
-        print 'testQuadratic: order = ', order, ' integral = ', res
+        print('testQuadratic: order = ', order, ' integral = ', res, end="\n")
         assert(abs(res - 6.592) < 1.e-12)
 
 if __name__ == '__main__':

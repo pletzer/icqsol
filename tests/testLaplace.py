@@ -5,6 +5,7 @@ Solve Laplace equation on sphere
 @author alexander@gokliya.net
 """
 
+from __future__ import print_function
 import argparse
 from icqsol.shapes.icqShapeManager import ShapeManager
 from icqsol.bem.icqLaplaceMatrices import LaplaceMatrices
@@ -47,4 +48,4 @@ en = response.computeNormalElectricFieldJump()
 minEn = min(en)
 maxEn = max(en)
 avgEn = en.sum()/len(en)
-print 'normal electric field jump min/avg/max: {0}/{1}/{2}'.format(minEn, avgEn, maxEn)
+print('normal electric field jump min/avg/max: {0}/{1}/{2}'.format(minEn, avgEn, maxEn), end="\n")

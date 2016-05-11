@@ -3,6 +3,7 @@
 """
 Refine a surface by adding points along cell edges
 """
+from __future__ import print_function
 import argparse
 import time
 import sys
@@ -34,7 +35,7 @@ parser.add_argument('--output', dest='output',
 args = parser.parse_args()
 
 if not args.input:
-    print 'ERROR: must specify input file: --input <file>'
+    print('ERROR: must specify input file: --input <file>', end="\n")
     sys.exit(3)
 
 # Get the format of the input - either vtk or ply.

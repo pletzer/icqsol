@@ -5,6 +5,7 @@ Test for determining whether a point is inside a shape.
 @author alexander@gokliya.net
 """
 
+from __future__ import print_function
 import numpy
 import argparse
 from icqsol.shapes.icqInside import Inside

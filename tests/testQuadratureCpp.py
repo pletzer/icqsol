@@ -1,3 +1,4 @@
+from __future__ import print_function
 from ctypes import cdll, POINTER, byref, c_void_p, c_double
 import numpy
 import pkg_resources
@@ -35,7 +36,7 @@ lib.icqQuadratureEvaluate.restype = c_double
 for order in range(1, maxOrder + 1):
     integral = lib.icqQuadratureEvaluate(byref(handle), order, paPtr, pbPtr, pcPtr)
     integral2 = triangleQuadrature(order=order, pa=pa, pb=pb, pc=pc, func=func)
-    print 'order = ', order, ' integral = ', integral, ' integral2 = ', integral2
+    print('order = ', order, ' integral = ', integral, ' integral2 = ', integral2, end="\n")
     assert(abs(integral - integral2) < 1.e-10)
 
 # Destructor

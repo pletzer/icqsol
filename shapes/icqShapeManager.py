@@ -2,6 +2,7 @@
 """
 @brief A base class for constructing shapes
 """
+from __future__ import print_function
 import os
 import re
 import vtk
@@ -867,7 +868,7 @@ class ShapeManager(object):
 
             renderLarge = vtk.vtkRenderLargeImage()
         except:
-            print 'WARNING: Cannot call show method -- likely missing VTK'
+            print('WARNING: Cannot call show method -- likely missing VTK', end="\n")
             return
         renWin.AddRenderer(ren)
         renWin.SetSize(windowSizeX, windowSizeY)

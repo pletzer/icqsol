@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import numpy
 import vtk
 
@@ -72,9 +73,9 @@ def test():
     tri = Triangulation()
     tri.setInputPoints(points)
     tri.triangulate()
-    print tri.getVTKUnstructuredGrid()
+    print(tri.getVTKUnstructuredGrid(), end="\n")
     cells = tri.getCells()
-    print 'cells = ', cells
+    print('cells = ', cells, end="\n")
 
 if __name__ == '__main__':
     test()

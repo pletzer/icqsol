@@ -5,6 +5,7 @@ Test creation of box
 @author alexander@gokliya.net
 """
 
+from __future__ import print_function
 import argparse
 from icqsol.shapes.icqShapeManager import ShapeManager
 from icqsol import util

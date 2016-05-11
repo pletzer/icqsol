@@ -4,6 +4,7 @@ Analytic expressions for Laplacian singular kernel integrals
 http://arxiv.org/pdf/1201.4938.pdf
 """
 
+from __future__ import print_function
 from math import cos, sin
 from icqsol.bem.icqReferenceTriangle import ReferenceTriangle
 from icqsol.bem.icqQuadrature1D import lineQuadrature
@@ -45,8 +46,8 @@ def testRightTriangle():
     for order in range(1, 6):
         potInt = PotentialIntegrals([0., 0., 0.],
                                     [1., 0., 0.], [0., 1., 0.], order)
-        print 'order = ', order, \
-            ' integral of 1/R is ', potInt.getIntegralOneOverR()
+        print('order = ', order,
+            ' integral of 1/R is ', potInt.getIntegralOneOverR())
 
 if __name__ == '__main__':
     testRightTriangle()

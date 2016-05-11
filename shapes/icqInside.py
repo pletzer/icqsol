@@ -5,6 +5,7 @@
 @author alexander@gokliya.net
 """
 
+from __future__ import print_function
 import numpy
 import math
 

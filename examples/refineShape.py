@@ -4,6 +4,7 @@
 Refine a shape by subdividing the polygons
 """
 
+from __future__ import print_function
 import argparse
 import time
 import sys
@@ -33,11 +34,11 @@ parser.add_argument('--output', dest='output',
 args = parser.parse_args()
 
 if args.refine <= 0:
-    print 'ERROR: refine must be a positive, integer number: --refine #'
+    print('ERROR: refine must be a positive, integer number: --refine #', end="\n")
     sys.exit(2)
 
 if not args.input:
-    print 'ERROR: must specify input file: --input <file>'
+    print('ERROR: must specify input file: --input <file>', end="\n")
     sys.exit(3)
 
 file_format = util.getFileFormat(args.input)

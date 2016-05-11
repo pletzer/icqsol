@@ -4,6 +4,7 @@ Map an arbitrary triangle to a reference triangle
 http://arxiv.org/pdf/1201.4938.pdf
 """
 
+from __future__ import print_function
 import numpy
 import math
 

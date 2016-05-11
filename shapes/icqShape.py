@@ -5,6 +5,7 @@
 @author alexander@gokliya.net
 """
 
+from __future__ import print_function
 from csg.core import CSG
 from csg.geom import Vector
 import numpy

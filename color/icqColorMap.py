@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import math
 
 
@@ -87,7 +88,7 @@ def testHat():
     x0, x1, x2, x3 = 0.1, 0.3, 0.4, 0.8
     for i in range(n + 1):
         x = i * dx
-        print 'x = {} y = {}'.format(x, ColorMap.hatFunc(x, x0, x1, x2, x3))
+        print('x = {} y = {}'.format(x, ColorMap.hatFunc(x, x0, x1, x2, x3)), end="\n")
 
 def testGnu():
     fmin, fmax = 0., 1.
@@ -96,7 +97,7 @@ def testGnu():
     df = (fmax - fmin)/float(10)
     for i in range(n + 1):
         f = fmin + i * df
-        print 'f = {} rgb = {}'.format(f, cm.gnu(f))
+        print('f = {} rgb = {}'.format(f, cm.gnu(f)), end="\n")
 
 if __name__ == '__main__': 
     testHat()

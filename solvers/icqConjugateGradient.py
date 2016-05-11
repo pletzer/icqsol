@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy
 
 
@@ -34,7 +35,7 @@ class ConjugateGradient:
     def setVerbosity(self, verbose):
         """
         Set verbosity
-        @param verbose True will print out messages
+        @param verbose True will print(out messages, end="\n")
         """
         self.verbose = verbose
 
@@ -72,7 +73,7 @@ class ConjugateGradient:
             beta = rho/rhoOld
             err = numpy.linalg.norm(self.b - self.mat.dot(x))
             if self.verbose:
-                print 'iteration {0} error = {1}'.format(k, err)
+                print('iteration {0} error = {1}'.format(k, err), end="\n")
             k += 1
 
         return x, err, k

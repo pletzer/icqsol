@@ -4,6 +4,7 @@
 Combine shape objects to create a composite object
 """
 
+from __future__ import print_function
 import argparse
 import time
 import sys
@@ -33,11 +34,11 @@ parser.add_argument('--output', dest='output',
 args = parser.parse_args()
 
 if not args.expression:
-    print 'ERROR: must specify --compose <expression>'
+    print('ERROR: must specify --compose <expression>', end="\n")
     sys.exit(2)
 
 if len(args.shapeTuples) == 0:
-    print 'ERROR: must specify shape tuples: --shapeTuples <var, file>...'
+    print('ERROR: must specify shape tuples: --shapeTuples <var, file>...', end="\n")
     sys.exit(3)
 
 shape_tuples = []

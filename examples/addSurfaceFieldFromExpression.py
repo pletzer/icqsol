@@ -3,6 +3,7 @@
 """
 Apply a surface field to a shape
 """
+from __future__ import print_function
 import argparse
 import time
 import sys
@@ -46,11 +47,11 @@ parser.add_argument('--output', dest='output',
 args = parser.parse_args()
 
 if not args.expression:
-    print 'ERROR: must specify --expression <expression>'
+    print('ERROR: must specify --expression <expression>', end="\n")
     sys.exit(2)
 
 if not args.input:
-    print 'ERROR: must specify input file: --input <file>'
+    print('ERROR: must specify input file: --input <file>', end="\n")
     sys.exit(3)
 
 # make sure the field name contains no spaces

@@ -4,6 +4,7 @@
 Integrate a surface field
 """
 
+from __future__ import print_function
 import argparse
 import time
 import os
@@ -33,23 +34,23 @@ parser.add_argument('--ascii', dest='ascii', action='store_true',
 args = parser.parse_args()
 
 if not args.input:
-    print 'ERROR: must specify input file: --input <file>'
+    print('ERROR: must specify input file: --input <file>', end="\n")
     sys.exit(3)
 
 if not os.path.exists(args.input):
-    print 'ERROR: file {0} does not exist'.format(args.input)
+    print('ERROR: file {0} does not exist'.format(args.input), end="\n")
     sys.exit(2)
 
 file_format = util.getFileFormat(args.input)
 
 if file_format != util.VTK_FORMAT:
-    print 'ERROR: file {0} must be VTK format'.format(args.input)
+    print('ERROR: file {0} must be VTK format'.format(args.input), end="\n")
     sys.exit(2)
 
 vtk_dataset_type = util.getVtkDatasetType(args.input)
 
 if vtk_dataset_type not in util.VTK_DATASET_TYPES:
-    print 'ERROR: invalid VTK dataset type {0}'.format(vtk_dataset_type)
+    print('ERROR: invalid VTK dataset type {0}'.format(vtk_dataset_type), end="\n")
     sys.exit(2)
 
 shape_mgr = ShapeManager(file_format=util.VTK_FORMAT, vtk_dataset_type=vtk_dataset_type)
@@ -58,4 +59,4 @@ integral = shape_mgr.integrateSurfaceField(pDataInput,
                                            field_name=args.name,
                                            field_component=args.component)
 
-print 'integral = {0}'.format(integral)
+print('integral = {0}'.format(integral))

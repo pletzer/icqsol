@@ -3,6 +3,7 @@ Test save/load methods
 @author alexander@gokliya.net
 """
 
+from __future__ import print_function
 from icqsol.shapes.icqShapeManager import ShapeManager
 from icqsol import util
 

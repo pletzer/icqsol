@@ -3,7 +3,7 @@
 actions = {
 	'insert before': [
 		(
-		'^import',
+		'^[import|from]',
 		'from __future__ import print_function',
 		),
 	],
@@ -15,7 +15,7 @@ actions = {
 	    ),
 		(
 		 'print\s+([^\(].*[^\,])\s*\n\s*$',
-	     'print(\\1, end="\\\\n")\n',
+	     'print(\\1)\n',
 	    ),
 	],
 }

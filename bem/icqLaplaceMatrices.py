@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import vtk
 import numpy
 from icqsol.shapes.icqRefineSurface import RefineSurface
@@ -294,8 +295,8 @@ def testSingleTriangle():
 
     for order in range(1, 6):
         lslm = LaplaceMatrices(pdata, max_edge_length=1000.)
-        print 'order = ', order
-        print 'g matrix: ', lslm.getGreenMatrix()
+        print('order = ', order, end="\n")
+        print('g matrix: ', lslm.getGreenMatrix(), end="\n")
 
 
 def testTwoTrianglesCoplanar():
@@ -331,8 +332,8 @@ def testTwoTrianglesCoplanar():
         lslm = LaplaceMatrices(pdata,
                                max_edge_length=1000.,
                                order=order)
-        print 'order = ', order
-        print 'g matrix: ', lslm.getGreenMatrix()
+        print('order = ', order, end="\n")
+        print('g matrix: ', lslm.getGreenMatrix(), end="\n")
 
 
 def testTwoTriangles():
@@ -368,8 +369,8 @@ def testTwoTriangles():
         lslm = LaplaceMatrices(pdata,
                                max_edge_length=1000.,
                                order=order)
-        print 'order = ', order
-        print 'g matrix: ', lslm.getGreenMatrix()
+        print('order = ', order, end="\n")
+        print('g matrix: ', lslm.getGreenMatrix(), end="\n")
 
 if __name__ == '__main__':
     testSingleTriangle()

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from ctypes import cdll, POINTER, byref, c_void_p, c_double, c_long
 import numpy
 import pkg_resources
@@ -38,9 +39,9 @@ tests = [((0., 0., 0.), 1), # center
 for test in tests:
 	point = numpy.array(test[0])
 	result = test[1]
-	print 'point = ', point
+	print('point = ', point, end="\n")
 	inside = lib.icqInsideLocatorIsPointInside(byref(handle), point.ctypes.data_as(POINTER(c_double)))
-	print 'inside = ', inside
+	print('inside = ', inside, end="\n")
 	assert(inside - result == 0)
 
 # Destructor

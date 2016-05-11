@@ -3,6 +3,7 @@
 """
 Solve Laplace equation given Dirichlet boundary conditions
 """
+from __future__ import print_function
 import argparse
 import time
 import sys
@@ -47,7 +48,7 @@ parser.add_argument('--verbose', dest='verbose', action='store_true',
 args = parser.parse_args()
 
 if not args.input:
-    print 'ERROR: must specify input file: --input <file>'
+    print('ERROR: must specify input file: --input <file>', end="\n")
     sys.exit(3)
 
 # make sure the field names contain no spaces
@@ -84,9 +85,9 @@ if args.verbose:
     minJump = min(normalEJump)
     maxJump = max(normalEJump)
     avgJump = normalEJump.sum()/len(normalEJump)
-    print 'normal electric field jump min/avg/max: {0}/{1}/{2}'.format(minJump, 
+    print('normal electric field jump min/avg/max: {0}/{1}/{2}'.format(minJump,
                                                                        avgJump,
-                                                                       maxJump)
+                                                                       maxJump))
     # Compute the response matrix
     gMat = solver.getGreenMatrix()
 
@@ -102,7 +103,7 @@ if args.verbose:
         x, y, z = (pointArray[ia, :] + pointArray[ib, :] + pointArray[ic, :]) / 3.
         potential[i] = eval(args.dirichlet)
     error = gMat.dot(-normalEJump) - potential
-    print 'total error: ', error.sum()
+    print('total error: ', error.sum(), end="\n")
 
 if args.output:
     # Always produce VTK POLYDATA.

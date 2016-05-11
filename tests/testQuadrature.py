@@ -5,6 +5,7 @@ Test Gauss quadrature
 @author alexander@gokliya.net
 """
 
+from __future__ import print_function
 import unittest
 import numpy
 from math import exp, e
@@ -90,7 +91,7 @@ class TestQuadrature(unittest.TestCase):
                                        pa=pa, pb=pb, pc=pc,
                                        func=func)
             error = value - exact
-            print 'order = {0} value = {1} error = {2}'.format(order, value, error)
+            print('order = {0} value = {1} error = {2}'.format(order, value, error), end="\n")
             assert(abs(value - exact) < 0.002)
 
 

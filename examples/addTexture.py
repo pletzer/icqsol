@@ -4,6 +4,7 @@
 Add texture to shape
 """
 
+from __future__ import print_function
 import argparse
 import time
 import sys
@@ -40,11 +41,11 @@ parser.add_argument('--output', dest='output',
 args = parser.parse_args()
 
 if not args.texture:
-    print 'ERROR: must specify --texture <file>'
+    print('ERROR: must specify --texture <file>', end="\n")
     sys.exit(2)
 
 if not args.input:
-    print 'ERROR: must specify one input file with --input <file>'
+    print('ERROR: must specify one input file with --input <file>', end="\n")
     sys.exit(3)
 
 # Get the format of the input - either vtk or ply.

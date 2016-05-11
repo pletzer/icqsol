@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from operator import itemgetter
 import math
 import numpy
@@ -223,15 +224,15 @@ def printVtkPolyData(pdata):
     polys = pdata.GetPolys()
     ptIds = vtk.vtkIdList()
     numPolys = polys.GetNumberOfCells()
-    print 'Number of polygons: {0}'.format(numPolys)
+    print('Number of polygons: {0}'.format(numPolys), end="\n")
     polys.InitTraversal()
     for i in range(numPolys):
         numPts = ptIds.GetNumberOfIds()
-        print '\tCell {0} has {1} points: '.format(i, numPts)
+        print('\tCell {0} has {1} points: '.format(i, numPts), end="\n")
         for j in range(numPts):
             ptId = ptIds.GetId(j)
             pt = points.GetPoint(ptId)
-            print '\t\t{0} -> {1}'.format(ptId, pt)
+            print('\t\t{0} -> {1}'.format(ptId, pt), end="\n")
 
 
 def testNoCoarsening():

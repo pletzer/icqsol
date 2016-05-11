@@ -1,3 +1,4 @@
+from __future__ import print_function
 from icqsol.shapes.icqShapeManager import ShapeManager
 from csg.core import CSG
 from icqsol import util
