@@ -868,7 +868,7 @@ class ShapeManager(object):
 
             renderLarge = vtk.vtkRenderLargeImage()
         except:
-            print('WARNING: Cannot call show method -- likely missing VTK', end="\n")
+            print('WARNING: Cannot call show method -- likely missing VTK')
             return
         renWin.AddRenderer(ren)
         renWin.SetSize(windowSizeX, windowSizeY)

@@ -38,7 +38,7 @@ parser.add_argument('--output',
 args = parser.parse_args()
 
 if not args.input:
-    print('ERROR: must specify one input file with --input <file>', end="\n")
+    print('ERROR: must specify one input file with --input <file>')
     sys.exit(3)
 
 # Get the format of the input - either vtk or ply.

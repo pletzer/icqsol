@@ -386,15 +386,15 @@ def printVtkPolyData(pdata):
     polys = pdata.GetPolys()
     ptIds = vtk.vtkIdList()
     numPolys = polys.GetNumberOfCells()
-    print('Number of polygons: {0}'.format(numPolys), end="\n")
+    print('Number of polygons: {0}'.format(numPolys))
     polys.InitTraversal()
     for i in range(numPolys):
         numPts = ptIds.GetNumberOfIds()
-        print('\tCell {0} has {1} points: '.format(i, numPts), end="\n")
+        print('\tCell {0} has {1} points: '.format(i, numPts))
         for j in range(numPts):
             ptId = ptIds.GetId(j)
             pt = points.GetPoint(ptId)
-            print('\t\t{0} -> {1}'.format(ptId, pt), end="\n")
+            print('\t\t{0} -> {1}'.format(ptId, pt))
 
 
 def testNoRefinement():

@@ -47,11 +47,11 @@ parser.add_argument('--output', dest='output',
 args = parser.parse_args()
 
 if not args.expression:
-    print('ERROR: must specify --expression <expression>', end="\n")
+    print('ERROR: must specify --expression <expression>')
     sys.exit(2)
 
 if not args.input:
-    print('ERROR: must specify input file: --input <file>', end="\n")
+    print('ERROR: must specify input file: --input <file>')
     sys.exit(3)
 
 # make sure the field name contains no spaces

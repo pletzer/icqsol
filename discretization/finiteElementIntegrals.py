@@ -73,8 +73,8 @@ def test():
 	v3 = (0., 0., 1.)
 	verts = (v0, v1, v2, v3)
 	fei = FiniteElementIntegrals(verts)
-	print('basis basis = ', fei.integrateBasisBasis(), end="\n")
-	print('grad dot grad = ', fei.integrateGradientDotGradient(), end="\n")
+	print('basis basis = ', fei.integrateBasisBasis())
+	print('grad dot grad = ', fei.integrateGradientDotGradient())
 
 if __name__ == '__main__':
 	test()

@@ -34,11 +34,11 @@ parser.add_argument('--output', dest='output',
 args = parser.parse_args()
 
 if args.refine <= 0:
-    print('ERROR: refine must be a positive, integer number: --refine #', end="\n")
+    print('ERROR: refine must be a positive, integer number: --refine #')
     sys.exit(2)
 
 if not args.input:
-    print('ERROR: must specify input file: --input <file>', end="\n")
+    print('ERROR: must specify input file: --input <file>')
     sys.exit(3)
 
 file_format = util.getFileFormat(args.input)

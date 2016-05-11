@@ -34,11 +34,11 @@ parser.add_argument('--output', dest='output',
 args = parser.parse_args()
 
 if not args.expression:
-    print('ERROR: must specify --compose <expression>', end="\n")
+    print('ERROR: must specify --compose <expression>')
     sys.exit(2)
 
 if len(args.shapeTuples) == 0:
-    print('ERROR: must specify shape tuples: --shapeTuples <var, file>...', end="\n")
+    print('ERROR: must specify shape tuples: --shapeTuples <var, file>...')
     sys.exit(3)
 
 shape_tuples = []

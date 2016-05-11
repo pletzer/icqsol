@@ -41,11 +41,11 @@ parser.add_argument('--output', dest='output',
 args = parser.parse_args()
 
 if not args.texture:
-    print('ERROR: must specify --texture <file>', end="\n")
+    print('ERROR: must specify --texture <file>')
     sys.exit(2)
 
 if not args.input:
-    print('ERROR: must specify one input file with --input <file>', end="\n")
+    print('ERROR: must specify one input file with --input <file>')
     sys.exit(3)
 
 # Get the format of the input - either vtk or ply.

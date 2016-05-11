@@ -39,9 +39,9 @@ tests = [((0., 0., 0.), 1), # center
 for test in tests:
 	point = numpy.array(test[0])
 	result = test[1]
-	print('point = ', point, end="\n")
+	print('point = ', point)
 	inside = lib.icqInsideLocatorIsPointInside(byref(handle), point.ctypes.data_as(POINTER(c_double)))
-	print('inside = ', inside, end="\n")
+	print('inside = ', inside)
 	assert(inside - result == 0)
 
 # Destructor

@@ -36,7 +36,7 @@ lib.icqQuadratureEvaluate.restype = c_double
 for order in range(1, maxOrder + 1):
     integral = lib.icqQuadratureEvaluate(byref(handle), order, paPtr, pbPtr, pcPtr)
     integral2 = triangleQuadrature(order=order, pa=pa, pb=pb, pc=pc, func=func)
-    print('order = ', order, ' integral = ', integral, ' integral2 = ', integral2, end="\n")
+    print('order = ', order, ' integral = ', integral, ' integral2 = ', integral2)
     assert(abs(integral - integral2) < 1.e-10)
 
 # Destructor

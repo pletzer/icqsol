@@ -73,9 +73,9 @@ def test():
     tri = Triangulation()
     tri.setInputPoints(points)
     tri.triangulate()
-    print(tri.getVTKUnstructuredGrid(), end="\n")
+    print(tri.getVTKUnstructuredGrid())
     cells = tri.getCells()
-    print('cells = ', cells, end="\n")
+    print('cells = ', cells)
 
 if __name__ == '__main__':
     test()

@@ -295,8 +295,8 @@ def testSingleTriangle():
 
     for order in range(1, 6):
         lslm = LaplaceMatrices(pdata, max_edge_length=1000.)
-        print('order = ', order, end="\n")
-        print('g matrix: ', lslm.getGreenMatrix(), end="\n")
+        print('order = ', order)
+        print('g matrix: ', lslm.getGreenMatrix())
 
 
 def testTwoTrianglesCoplanar():
@@ -332,8 +332,8 @@ def testTwoTrianglesCoplanar():
         lslm = LaplaceMatrices(pdata,
                                max_edge_length=1000.,
                                order=order)
-        print('order = ', order, end="\n")
-        print('g matrix: ', lslm.getGreenMatrix(), end="\n")
+        print('order = ', order)
+        print('g matrix: ', lslm.getGreenMatrix())
 
 
 def testTwoTriangles():
@@ -369,8 +369,8 @@ def testTwoTriangles():
         lslm = LaplaceMatrices(pdata,
                                max_edge_length=1000.,
                                order=order)
-        print('order = ', order, end="\n")
-        print('g matrix: ', lslm.getGreenMatrix(), end="\n")
+        print('order = ', order)
+        print('g matrix: ', lslm.getGreenMatrix())
 
 if __name__ == '__main__':
     testSingleTriangle()

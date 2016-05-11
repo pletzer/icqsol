@@ -35,11 +35,11 @@ parser.add_argument('--output', dest='output',
 args = parser.parse_args()
 
 if not args.scale:
-    print('ERROR: must specify --scale <float, float, float>', end="\n")
+    print('ERROR: must specify --scale <float, float, float>')
     sys.exit(2)
 
 if not args.input:
-    print('ERROR: must specify one input file with --input <file>', end="\n")
+    print('ERROR: must specify one input file with --input <file>')
     sys.exit(3)
 
 # Get the format of the input - either vtk or ply.

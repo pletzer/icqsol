@@ -34,23 +34,23 @@ parser.add_argument('--ascii', dest='ascii', action='store_true',
 args = parser.parse_args()
 
 if not args.input:
-    print('ERROR: must specify input file: --input <file>', end="\n")
+    print('ERROR: must specify input file: --input <file>')
     sys.exit(3)
 
 if not os.path.exists(args.input):
-    print('ERROR: file {0} does not exist'.format(args.input), end="\n")
+    print('ERROR: file {0} does not exist'.format(args.input))
     sys.exit(2)
 
 file_format = util.getFileFormat(args.input)
 
 if file_format != util.VTK_FORMAT:
-    print('ERROR: file {0} must be VTK format'.format(args.input), end="\n")
+    print('ERROR: file {0} must be VTK format'.format(args.input))
     sys.exit(2)
 
 vtk_dataset_type = util.getVtkDatasetType(args.input)
 
 if vtk_dataset_type not in util.VTK_DATASET_TYPES:
-    print('ERROR: invalid VTK dataset type {0}'.format(vtk_dataset_type), end="\n")
+    print('ERROR: invalid VTK dataset type {0}'.format(vtk_dataset_type))
     sys.exit(2)
 
 shape_mgr = ShapeManager(file_format=util.VTK_FORMAT, vtk_dataset_type=vtk_dataset_type)

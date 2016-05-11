@@ -48,7 +48,7 @@ parser.add_argument('--verbose', dest='verbose', action='store_true',
 args = parser.parse_args()
 
 if not args.input:
-    print('ERROR: must specify input file: --input <file>', end="\n")
+    print('ERROR: must specify input file: --input <file>')
     sys.exit(3)
 
 # make sure the field names contain no spaces
@@ -103,7 +103,7 @@ if args.verbose:
         x, y, z = (pointArray[ia, :] + pointArray[ib, :] + pointArray[ic, :]) / 3.
         potential[i] = eval(args.dirichlet)
     error = gMat.dot(-normalEJump) - potential
-    print('total error: ', error.sum(), end="\n")
+    print('total error: ', error.sum())
 
 if args.output:
     # Always produce VTK POLYDATA.
