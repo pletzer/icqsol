@@ -59,7 +59,10 @@ else:
 
 pdata = shape_mgr.loadAsVtkPolyData(args.input)
 scaleVec = eval(args.scale)
-if reduce(operator.and_, [fact > 0.0 for fact in scaleVec], True):
+allScalingFactors = True
+for fact in scaleVec:
+    allScalinFactors = (fact > 0.0)
+if allScalingFactors:
      # All scaling factors must be > 0
      shape_mgr.scaleVtkPolyData(pdata, scaleVec)
 
