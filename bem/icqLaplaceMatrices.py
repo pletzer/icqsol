@@ -242,8 +242,9 @@ class LaplaceMatrices:
         # Has the potential been set?
         potIndex = self.getPotentialArrayIndexFromName(potName)
         if potIndex < 0:
-            raise RuntimeError, \
-                'ERROR: could not find any cell field named {0}!'.format(potName)
+            msg = 'ERROR: could not find any cell field named {0}!'.format(potName)
+            raise RuntimeError(msg)
+        
         potArray = self.pdata.GetCellData().GetArray(potIndex)
 
         # Set the potential.

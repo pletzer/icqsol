@@ -114,8 +114,9 @@ class ShapeManager(object):
                 reader = vtk.vtkPNGReader()
         if not reader:
             msg = 'Could not choose reader from file format {0} or file name {1}'
-            raise(NotImplementedError,
-                  msg.format(texture_file_format, texture_file))
+            raise NotImplementedError(
+                        msg.format(texture_file_format, texture_file)
+                                      )
 
         reader.SetFileName(texture_file)
         reader.Update()
@@ -264,8 +265,9 @@ class ShapeManager(object):
             isPoint = True
         # Bail out if field was not found
         if array is None:
-                raise NotImplementedError, \
+                raise NotImplementedError(
                     'Could not find field "{0}"!'.format(field_name)
+                                          )
         return isPoint
 
     def getFieldRange(self, vtk_poly_data, field_name,
@@ -606,7 +608,7 @@ class ShapeManager(object):
         @return a subclass of a VtkData object
         """
         if not os.path.exists(file_name):
-            raise IOError, 'File {0} not found'.format(file_name)
+            raise IOError('File {0} not found'.format(file_name))
         self.reader.SetFileName(file_name)
         self.reader.Update()
         return self.reader.GetOutput()

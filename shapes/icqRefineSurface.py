@@ -284,7 +284,8 @@ class RefineSurface:
             newSize = numTuples + len(nodes) - len(pts)
             success = pd.Resize(newSize)
             if success != 1:
-                raise MemoryError, 'Failed to resize vtkDoubleArray associated with field ', name
+                msg = 'Failed to resize vtkDoubleArray associated with field {0}'.format(name)
+                raise MemoryError(msg)
             pd.SetNumberOfTuples(newSize)
             pd.SetName(name)
 
