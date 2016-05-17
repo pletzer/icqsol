@@ -68,7 +68,7 @@ setup(name='icqsol',
       author_email='alexander@gokliya.net',
       url='https://github.com/pletzer/icqsol/wiki',
       install_requires=['pytriangle>=1.0.9', 'pycsg>=0.3.10'],
-      dependency_links=['http://github.com/pletzer/pytriangle/tarball/master#egg=pytriangle-1.0.8',
+      dependency_links=['http://github.com/pletzer/pytriangle/tarball/master#egg=pytriangle-1.0.9',
                         'http://github.com/pletzer/pycsg/tarball/master#egg=pycsg-0.3.10',
       ],
       package_dir = {'icqsol': ''}, # the present working directory maps to icqsol below
