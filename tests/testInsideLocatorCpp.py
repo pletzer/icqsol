@@ -4,12 +4,18 @@ import numpy
 import pkg_resources
 from icqsol.shapes.icqShapeManager import ShapeManager
 from icqsol import util
+import glob
+
+# On some distributions the fuly qualified shared library name
+# includes suffixes such as '.cpython-35m-darwin.so'
+def getFullyQualifiedSharedLibraryName(libName):
+    return glob.glob(libName + '*')[0]
 
 # Extract the shared library from the egg
-libName = pkg_resources.resource_filename('icqsol', 'icqInsideLocatorCpp.so')
+libName = pkg_resources.resource_filename('icqsol', 'icqInsideLocatorCpp')
 
 # Open the shared library 
-lib = cdll.LoadLibrary(libName)
+lib = cdll.LoadLibrary(getFullyQualifiedSharedLibraryName(libName))
 
 # Opaque handle
 handle = c_void_p(0)
