@@ -350,8 +350,8 @@ class RefineSurface:
         if len(pointData) == 0:
             return attrs, names, components
 
-        scalarNames = pointData.keys()
-        scalarData = pointData.values()
+        scalarNames = list(pointData.keys())
+        scalarData = list(pointData.values())
         
         # set the name and component lists, which is 
         # the same for each node

@@ -8,6 +8,7 @@
 from __future__ import print_function
 import numpy
 import math
+from functools import reduce
 
 
 class Inside:

@@ -490,6 +490,10 @@ add_test(NAME testPrimitiveSphereSolveLaplace2
          --input_name "v" --output_name "surf_charge" --verbose
          --output testPrimitiveSphereSolveLaplace2.vtk --ascii)
 
+add_test(NAME testTriangle
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${TESTS_DIR}/testTriangle.py")
+
 # this should be the last test
 add_test(NAME testOutputFiles
          COMMAND "sh" "${CMAKE_SOURCE_DIR}/checkOutput.sh")

@@ -5,12 +5,17 @@ import vtk
 import numpy
 from icqsol.shapes.icqRefineSurface import RefineSurface
 from icqsol.bem.icqPotentialIntegrals import PotentialIntegrals
-from icqQuadrature import gaussPtsAndWeights
+from icqsol.bem.icqQuadrature import gaussPtsAndWeights
 import pkg_resources
 from ctypes import cdll, POINTER, byref, c_void_p, c_double, c_long
+import glob
 
 FOUR_PI = 4. * numpy.pi
 
+# On some distributions the fuly qualified shared library name 
+# includes suffixes such as '.cpython-35m-darwin.so'
+def getFullyQualifiedSharedLibraryName(libName):
+    return glob.glob(libName + '*')[0]
 
 class LaplaceMatrices:
 
@@ -22,8 +27,8 @@ class LaplaceMatrices:
                                polygons into triangles
         """
 
-        libName = pkg_resources.resource_filename('icqsol', 'icqLaplaceMatricesCpp.so')
-        self.lib = cdll.LoadLibrary(libName)
+        libName = pkg_resources.resource_filename('icqsol', 'icqLaplaceMatricesCpp')
+        self.lib = cdll.LoadLibrary(getFullyQualifiedSharedLibraryName(libName))
 
         self.normalEJumpName = 'normal_electric_field_jump'
 

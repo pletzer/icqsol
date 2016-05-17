@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 import operator
+from functools import reduce
 
 # https://pomax.github.io/bezierinfo/legendre-gauss.html
 # u, weight
