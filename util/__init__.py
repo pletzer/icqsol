@@ -25,8 +25,8 @@ def getVtkDatasetType(file_name):
     """
     Return the VTK dataset type of a file or None if not found.
     """
-    with open( file_name ) as fh:
-        for i, line in enumerate( fh ):
+    with open(file_name) as fh:
+        for i, line in enumerate(fh):
             if i > 5:
                 # Valid VTK headers include the dataset type
                 # within the first 5 lines.
@@ -34,12 +34,12 @@ def getVtkDatasetType(file_name):
             line = line.strip()
             if not line:
                 continue
-            if 1 == 0:
-                # Line 1: vtk DataFile Version 3.0
-                if line.find( 'vtk' ) < 0:
+            if i == 0:
+                # Line 1:# vtk DataFile Version 3.0
+                if line.find('vtk') < 0:
                     return None
             elif line.startswith('DATASET'):
-                return line.split()[ 1 ]
+                return line.split()[1]
     return None
 
 def isVtkFile(file_name):
