@@ -9,13 +9,18 @@ from icqsol.bem.icqQuadrature import gaussPtsAndWeights
 import pkg_resources
 from ctypes import cdll, POINTER, byref, c_void_p, c_double, c_long
 import glob
+import sys
 
 FOUR_PI = 4. * numpy.pi
 
 # On some distributions the fuly qualified shared library name 
 # includes suffixes such as '.cpython-35m-darwin.so'
 def getFullyQualifiedSharedLibraryName(libName):
-    return glob.glob(libName + '*')[0]
+    paths = glob.glob(libName + '*')
+    # return the first path
+    return paths[0]
+
+PY_MAJOR_VERSION = sys.version_info[0]
 
 class LaplaceMatrices:
 
@@ -27,8 +32,12 @@ class LaplaceMatrices:
                                polygons into triangles
         """
 
-        libName = pkg_resources.resource_filename('icqsol', 'icqLaplaceMatricesCpp')
-        self.lib = cdll.LoadLibrary(getFullyQualifiedSharedLibraryName(libName))
+        if PY_MAJOR_VERSION < 3:
+            fullyQualifiedLibName = pkg_resources.resource_filename('icqsol', 'icqLaplaceMatricesCpp.so')
+        else:
+            libName = pkg_resources.resource_filename('icqsol', 'icqLaplaceMatricesCpp')
+            fullyQualifiedLibName = getFullyQualifiedSharedLibraryName(libName)
+        self.lib = cdll.LoadLibrary(fullyQualifiedLibName)
 
         self.normalEJumpName = 'normal_electric_field_jump'
 

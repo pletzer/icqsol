@@ -4,6 +4,9 @@ import numpy
 import pkg_resources
 from icqsol.bem.icqQuadrature import triangleQuadrature
 import glob
+import sys
+
+PY_MAJOR_VERSION = sys.version_info[0]
 
 # On some distributions the fuly qualified shared library name
 # includes suffixes such as '.cpython-35m-darwin.so'
@@ -11,10 +14,14 @@ def getFullyQualifiedSharedLibraryName(libName):
     return glob.glob(libName + '*')[0]
 
 # Extract the shared library from the egg
-libName = pkg_resources.resource_filename('icqsol', 'icqLaplaceMatricesCpp')
+if PY_MAJOR_VERSION < 3:
+	fullyQualifiedSharedLibraryName = pkg_resources.resource_filename('icqsol', 'icqLaplaceMatricesCpp.so')
+else:
+	libName = pkg_resources.resource_filename('icqsol', 'icqLaplaceMatricesCpp')
+	fullyQualifiedSharedLibraryName = getFullyQualifiedSharedLibraryName(libName)
 
 # Open the shared library 
-lib = cdll.LoadLibrary(getFullyQualifiedSharedLibraryName(libName))
+lib = cdll.LoadLibrary(fullyQualifiedSharedLibraryName)
 
 # Opaque handle
 handle = c_void_p(0)
