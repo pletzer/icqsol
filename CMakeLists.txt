@@ -494,6 +494,10 @@ add_test(NAME testTriangle
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${TESTS_DIR}/testTriangle.py")
 
+add_test(NAME testPotentialIntegrals
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${TESTS_DIR}/testPotentialIntegrals.py")
+
 # this should be the last test
 add_test(NAME testOutputFiles
          COMMAND "sh" "${CMAKE_SOURCE_DIR}/checkOutput.sh")
