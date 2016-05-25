@@ -191,7 +191,7 @@ class LaplaceMatrices:
             for ipt in range(npts):
                 # Observer point
                 xObs = paSrc + xsis[ipt]*dbSrc + etas[ipt]*dcSrc
-                # Three triangles having oberver point as one corner
+                # Three triangles having observer point as one corner
                 pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
                 pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
                 pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
