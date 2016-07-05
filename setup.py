@@ -6,6 +6,7 @@ alexander@gokliya.net
 """
 
 import os
+import glob
 from setuptools import setup, Extension
 import re
 import vtk # for version number
@@ -41,6 +42,21 @@ def anacondaLibraryNameFix(vtkLibraries, vtkLibraryDir):
 VTK_INCLUDE_DIRS = os.environ.get('VTK_INCLUDE_DIRS', '').split(';')
 VTK_LIBRARIES = os.environ.get('VTK_LIBRARIES', '').split(';')
 VTK_RUNTIME_LIBRARY_DIRS = os.environ.get('VTK_RUNTIME_LIBRARY_DIRS', '').split(';')
+# Override the libraries if one provides VTK_LIBRARY_DIR
+vtk_lib_dir = os.environ.get('VTK_LIBRARY_DIR', '')
+if vtk_lib_dir:
+    libfiles = glob.glob(vtk_lib_dir + '/libvtk*')
+    VTK_LIBRARIES = []
+    VTK_RUNTIME_LIBRARY_DIRS = [vtk_lib_dir]
+    for libfile in libfiles:
+        # Skip libraries ending with version number
+        if re.search(r'\.\d+$', libfile): continue
+        lib = os.path.basename(libfile)
+        lib = re.sub(r'^lib', '', lib)
+        lib = re.sub(r'\.\w+$', '', lib) 
+        # exclude python libraries
+        if re.search('Python', lib): continue
+        VTK_LIBRARIES.append(lib) 
 
 # Anaconda renamed the libraries
 anacondaLibraryNameFix(VTK_LIBRARIES, VTK_RUNTIME_LIBRARY_DIRS[0])
