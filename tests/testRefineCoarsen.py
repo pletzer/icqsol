@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 """
-    Test refinement and coarsening
-    @author alexander@gokliya.net
-    """
+Test refinement and coarsening
+@author alexander@gokliya.net
+"""
 
 from __future__ import print_function
 from icqsol.shapes.icqShapeManager import ShapeManager
