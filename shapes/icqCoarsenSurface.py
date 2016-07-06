@@ -206,13 +206,14 @@ class CoarsenSurface:
             vals = numpy.zeros((numComps,), numpy.float64)
             baryVals = numpy.zeros((numComps,), numpy.float64)
             # mid cell values
-            for ptId in ptIds:
+            numPts = ptIds.GetNumberOfIds()
+            for i in range(numPts):
+                ptId = ptIds.GetId(i)
                 vals[:] = arr.GetTuple(ptId)
                 baryVals += vals
-            n = len(ptIds)
-            baryVals /= float(n)
+            baryVals /= float(numPts)
             # set the field values to the mid cell values
-            for j in range(n):
+            for j in range(numPts):
                 arr.SetTuple(ptIds.GetId(j), baryVals)
 
 ##############################################################################
