@@ -73,9 +73,9 @@ class CoarsenSurface:
 
     def getTotalAngle(self, ptId):
         """
-        Compute the sum of the angles between edges
+        Compute the sum of the angles between this point and the surrounding edges
         @param ptId point Id
-        @return total angle in radiants
+        @return total angle in radiants, should be about 2*pi for an internal point
         """
         cellIds = vtk.vtkIdList()
 
@@ -142,13 +142,15 @@ class CoarsenSurface:
         # compute the polygon center
         for i in range(npts):
             ptId = ptIds.GetId(i)
-            # sum of the angle must be 2*pi for internal points
-            if abs(self.getTotalAngle(ptId) - self.TWOPI) < 0.01:
+            # sum of the angles must be 2*pi for internal points
+            totalAngle = self.getTotalAngle(ptId)
+            if abs(totalAngle - self.TWOPI) < 0.01:
                 # internal, ie non-boundary point
                 points.GetPoint(ptId, pt)
                 center += pt
                 # add point to the list of points to move
                 pointsToMove.append(ptId)
+            #else: print('*** not an internal node: cellId = {} self.getTotalAngle(ptId) = {}'.format(cellId, totalAngle))
         
         n = len(pointsToMove)
         if n > 0:
@@ -174,8 +176,8 @@ class CoarsenSurface:
         polys.InitTraversal()
         for cellId in range(numPolys):
             polys.GetNextCell(ptIds)
-            area = self.getPolygonArea(ptIds)
-            if abs(area) < min_cell_area and area > self.EPS:
+            area = abs(self.getPolygonArea(ptIds))
+            if area < min_cell_area and area > self.EPS:
                 self.collapsePolygon(cellId)
 
         self.deleteZeroPolys()
