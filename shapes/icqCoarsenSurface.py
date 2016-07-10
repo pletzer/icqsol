@@ -138,23 +138,39 @@ class CoarsenSurface:
 
         points = self.polydata.GetPoints()
         pointsToMove = []
-
-        # compute the polygon center
+        
+        # determine which points are internal/boundary
+        internalPointIds = []
+        boundaryPointIds = []
         for i in range(npts):
             ptId = ptIds.GetId(i)
-            # sum of the angles must be 2*pi for internal points
             totalAngle = self.getTotalAngle(ptId)
-            if abs(totalAngle - self.TWOPI) < 0.01:
-                # internal, ie non-boundary point
+            if abs(totalAngle - self.TWOPI) < 1.e-6: #0.01:
+                internalPointIds.append(ptId)
+            else:
+                boundaryPointIds.append(ptId)
+                    
+        # compute the (central) point where the cell collapses to
+        numBoundaryPoints = len(boundaryPointIds)
+        if numBoundaryPoints == 0:
+            # all points are internal, average the (internal) points
+            for ptId in internalPointIds:
                 points.GetPoint(ptId, pt)
                 center += pt
-                # add point to the list of points to move
-                pointsToMove.append(ptId)
-            #else: print('*** not an internal node: cellId = {} self.getTotalAngle(ptId) = {}'.format(cellId, totalAngle))
-        
-        n = len(pointsToMove)
-        if n > 0:
-            center /= float(len(pointsToMove))
+            center /= float(len(internalPointIds))
+            pointsToMove = internalPointIds
+        #elif numBoundaryPoints > 0 and numBoundaryPoints < npts:
+        elif numBoundaryPoints > npts and numBoundaryPoints < npts: # noe tworking well so turning off for the time being
+            # average the boundary points and move all points to this position
+            for ptId in boundaryPointIds:
+                points.GetPoint(ptId, pt)
+                center += pt
+            center /= float(numBoundaryPoints)
+            pointsToMove = internalPointIds + boundaryPointIds
+        else:
+            # likely all the points are boundary or there are more than two boundary
+            # edges, nothing to do
+            pass
 
         # move the selected points to the center
         for ptId in pointsToMove:

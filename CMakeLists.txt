@@ -279,6 +279,13 @@ add_test(NAME testRefineSurface
          --maxedge 0.05
          --output testBoltFine.vtk
          --ascii)
+add_test(NAME testCoarsenSurface
+         COMMAND "${PYTHON_EXECUTABLE}" 
+         "${CMAKE_SOURCE_DIR}/examples/coarsenSurface.py"
+         --input data/refined_surface_field.vtk
+         --minarea 0.5
+         --output testCoarsenSurface.vtk
+         --ascii)
 add_test(NAME testRefineSurface2
          COMMAND "${PYTHON_EXECUTABLE}" 
          "${CMAKE_SOURCE_DIR}/examples/refineSurface.py"

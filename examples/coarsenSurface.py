@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(description='Coarsen a shape.')
 parser.add_argument('--input', dest='input', default='',
                     help='Input file (PLY or VTK)')
 
-parser.add_argument('--min_cell_area', dest='min_cell_area', type=float, default=1.0,
+parser.add_argument('--minarea', dest='minarea', type=float, default=1.0,
                     help='Minimum cell area')
 
 parser.add_argument('--ascii', dest='ascii', action='store_true',
@@ -33,8 +33,8 @@ parser.add_argument('--output', dest='output',
 
 args = parser.parse_args()
 
-if args.min_cell_area <= 0:
-    print('ERROR: min_cell_area must be a positive, integer number: --min_cell_area #')
+if args.minarea <= 0:
+    print('ERROR: minarea must be a positive, integer number: --minarea #')
     sys.exit(2)
 
 if not args.input:
@@ -57,7 +57,7 @@ else:
 s = shape_mgr.loadAsVtkPolyData(args.input)
 
 # Coarsen.
-s = shape_mgr.coarsenVtkPolyData(s, min_cell_area=args.min_cell_area)
+s = shape_mgr.coarsenVtkPolyData(s, min_cell_area=args.minarea)
 
 # Save.
 if args.ascii:
