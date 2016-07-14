@@ -25,6 +25,9 @@ class CoarsenSurface:
         self.pointData = self.polydata.GetPointData()
         self.numPointData = self.pointData.GetNumberOfArrays()
 
+        # old point id -> new point id
+        self.degeneratePtIdMap = {}
+
         # required so we can get the connectivity between points and 
         # cells
         self.polydata.BuildLinks()
@@ -159,8 +162,8 @@ class CoarsenSurface:
                 center += pt
             center /= float(len(internalPointIds))
             pointsToMove = internalPointIds
-        #elif numBoundaryPoints > 0 and numBoundaryPoints < npts:
-        elif numBoundaryPoints > npts and numBoundaryPoints < npts: # noe tworking well so turning off for the time being
+        #elif numBoundaryPoints > 1 and numBoundaryPoints < npts:
+        elif numBoundaryPoints > npts and numBoundaryPoints < npts:  # not tworking well so turning off for the time being
             # average the boundary points and move all points to this position
             for ptId in boundaryPointIds:
                 points.GetPoint(ptId, pt)
@@ -175,6 +178,10 @@ class CoarsenSurface:
         # move the selected points to the center
         for ptId in pointsToMove:
             points.SetPoint(ptId, center)
+
+        # store in memory which point ids are degenerate
+        for ptId in pointsToMove[1:]:
+            self.degeneratePtIdMap[ptId] = pointsToMove[0]
 
         # average the nodal data at the new vertex location
         self.averagePointData(ptIds)
@@ -197,10 +204,32 @@ class CoarsenSurface:
                 self.collapsePolygon(cellId)
 
         self.deleteZeroPolys()
+        self.removeDegeneratePointsFromConnectivity()
+
+    def removeDegeneratePointsFromConnectivity(self):
+        """
+        Remove all the points that are degenerate from the connectivity 
+        """
+        ptIds = vtk.vtkIdList()
+        polys = self.polydata.GetPolys()
+        numPolys = polys.GetNumberOfCells()
+        polys.InitTraversal()
+        newPolys = vtk.vtkCellArray()
+        for polyId in range(numPolys):
+            polys.GetNextCell(ptIds)
+            numPts = ptIds.GetNumberOfIds()
+            for i in range(numPts):
+                ptId = ptIds.GetId(i)
+                # replace the point id with the value in the degeneratePtIdMap, if 
+                # not in the map then just return the ptId 
+                newPtId = self.degeneratePtIdMap.get(ptId, ptId)
+                ptIds.SetId(i, newPtId)
+            newPolys.InsertNextCell(ptIds)
+        self.polydata.SetPolys(newPolys)
 
     def deleteZeroPolys(self):
         """
-        Delete all the polygons whose area is zero
+        Delete all the polygons whose areas are (nearly) zero
         """
         ptIds = vtk.vtkIdList()
         numPolys = self.polydata.GetPolys().GetNumberOfCells()
