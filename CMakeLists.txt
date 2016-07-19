@@ -69,6 +69,9 @@ enable_testing()
 #
 
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests")
+add_test(NAME testCoarsenSimple
+         COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/coarsenSurface.py"
+         --minarea 1.0 --input "${CMAKE_SOURCE_DIR}/data/simpleCoarseningInput.vtk" --ascii --output simpleCoarseningOutput.vtk)
 add_test(NAME testRefineCoarsen
          COMMAND "${PYTHON_EXECUTABLE}" "${TESTS_DIR}/testRefineCoarsen.py")
 add_test(NAME testInsideLocatorCpp
