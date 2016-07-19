@@ -1,0 +1,19 @@
+# vtk DataFile Version 3.0
+vtk output
+ASCII
+DATASET POLYDATA
+POINTS 7 float
+0 0 0 
+1 0 0
+1 1 0
+0 1 0
+0.8 0.2 0
+0.5 0.7 0
+0.3 0.2 0
+POLYGONS 5 23
+4 0 1 4 6
+4 1 2 5 4
+3 2 3 5
+4 3 0 6 5
+3 6 4 5
+
