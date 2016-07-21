@@ -134,7 +134,7 @@ class CoarsenSurface:
 
         # typically the center of the cell, in some 
         # cases the center of an edge
-        center = numpy.zeros( (npts,), numpy.float64 )
+        center = numpy.zeros( (3,), numpy.float64 )
 
         # coordinates of the poinrt
         pt = numpy.zeros( (npts,), numpy.float64 )
