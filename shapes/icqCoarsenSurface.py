@@ -184,7 +184,7 @@ class CoarsenSurface:
             self.degeneratePtIdMap[ptId] = pointsToMove[0]
 
         # average the nodal data at the new vertex location
-        self.averagePointData(ptIds)
+        self.averagePointData(pointsToMove)
 
     def coarsen(self, min_cell_area = 1.e-10):
         """
