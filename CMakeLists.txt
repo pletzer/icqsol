@@ -47,7 +47,7 @@ set(ENV{VTK_RUNTIME_LIBRARY_DIRS} "${VTK_RUNTIME_LIBRARY_DIRS}")
 execute_process(COMMAND ${SETUPCMD} RESULT_VARIABLE RES)
 # error handling
 if (RES)
-   message("Failed to build icqsol!")
+   # error
    # convert list of commands into a single string with a space separator
    set(cmd "VTK_INCLUDE_DIRS=${VTK_INCLUDE_DIRS} VTK_RUNTIME_LIBRARY_DIRS=${VTK_RUNTIME_LIBRARY_DIRS} VTK_LIBRARIES=${VTK_LIBRARIES} ")
    foreach(elem ${SETUPCMD})
