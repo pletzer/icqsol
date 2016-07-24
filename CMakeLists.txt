@@ -68,6 +68,11 @@ enable_testing()
 # class tests
 #
 
+## set the LD_LIBRARY_PATH or equivalent, required on Darwin
+#if (${CMAKE_SYSTEM_NAME} STREQUAL "DARWIN") 
+#   set(ENV{DYLD_LIBRARY_PATH} "$ENV{DYLD_LIBRARY_PATH}:${VTK_RUNTIME_LIBRARY_DIRS}")
+#endif ()
+
 set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests")
 add_test(NAME testCoarsenSimple
          COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/examples/coarsenSurface.py"
