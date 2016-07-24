@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from icqsol.bem.icqPotentialIntegrals import PotentialIntegrals
+from icqsol.bem.icqLaplaceMatrices import getFullyQualifiedSharedLibraryName
 import numpy
 
 def testObserverOnA(order):
