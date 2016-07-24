@@ -58,6 +58,7 @@ s = shape_mgr.loadAsVtkPolyData(args.input)
 
 # Coarsen.
 s = shape_mgr.coarsenVtkPolyData(s, min_cell_area=args.minarea)
+print('=== in coarsenSurface')
 
 # Save.
 if args.ascii:
@@ -69,5 +70,28 @@ else:
 shape_mgr.setWriter(file_format=util.VTK_FORMAT, vtk_dataset_type=util.POLYDATA)
 
 # Save the output.
+print('=== in coarsenSurface: saveVTK')
+
+def printVtkPolyData(pdata):
+    import vtk
+
+    points = pdata.GetPoints()
+    polys = pdata.GetPolys()
+    ptIds = vtk.vtkIdList()
+    numPolys = polys.GetNumberOfCells()
+    print('Number of polygons: {0}'.format(numPolys))
+    polys.InitTraversal()
+    for i in range(numPolys):
+        numPts = ptIds.GetNumberOfIds()
+        print('\tCell {0} has {1} points: '.format(i, numPts))
+        for j in range(numPts):
+            ptId = ptIds.GetId(j)
+            pt = points.GetPoint(ptId)
+            print('\t\t{0} -> {1}'.format(ptId, pt))
+
+#printVtkPolyData(s)
+#print('=== number of points: {} number of polys = {}'.format(s.GetPoints().GetNumberOfPoints(),
+#                                                             s.GetPolys().GetNumberOfCells(),
+#                                                             ))
 shape_mgr.saveVtkPolyData(vtk_poly_data=s, file_name=args.output, file_type=file_type)
 

@@ -15,7 +15,8 @@ class LaplaceSolver(BaseSolver):
         @param max_edge_length maximum edge length, used to turn
                                polygons into triangles
         """
-        super(LaplaceSolver, self).__init__(pdata, max_edge_length, order)
+        #super(LaplaceSolver, self).__init__(pdata, max_edge_length, order)
+        BaseSolver.__init__(self, pdata, max_edge_length, order)
         self.normalEJumpName = 'normal_electric_field_jump'
 
     def setPotentialFromExpression(self, expression, potName='v'):
