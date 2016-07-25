@@ -114,13 +114,14 @@ class BaseSolver:
             src[i] = srcArray.GetComponent(i, 0)
         return src
 
-    def addRespnseField(self, rsp):
+    def addResponseField(self, rsp):
         """
         Add the response field to the polydata
         @param rsp response numpy array
         """
         rspData = vtk.vtkDoubleArray()
         rspData.SetNumberOfComponents(1)
+        n = len(rsp)
         rspData.SetNumberOfTuples(n)
         rspData.SetName(self.responseName)
         for i in range(n):
@@ -138,7 +139,7 @@ class BaseSolver:
         sourceData = vtk.vtkDoubleArray()
         sourceData.SetNumberOfComponents(1)
         sourceData.SetNumberOfTuples(n)
-        sourceData.SetName(potName)
+        sourceData.SetName(self.sourceName)
         midPoint = numpy.zeros((3,), numpy.float64)
         ptIds = vtk.vtkIdList()
         cells = self.pdata.GetPolys()

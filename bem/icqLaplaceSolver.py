@@ -33,7 +33,7 @@ class LaplaceSolver(BaseLaplaceSolver):
         gMat = self.getGreenMatrix()
 
         # Compute the response.
-        rsp = numpy.linalg.solve(gMat, src)
+        rsp = - numpy.linalg.solve(gMat, src)
 
         self.addResponseField(rsp)
 

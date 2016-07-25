@@ -74,12 +74,13 @@ if args.refine > 0:
 
 solver = LaplaceSolver(pdata, maxEdgeLength)
 
-# Set the output field names.
-solver.setPotentialFromExpression(args.dirichlet, args.input_name)
-solver.setNormalElectricFieldJumpName(args.output_name)
+# Set the input field.
+solver.setSourceFieldName(args.input_name)
+solver.setSourceFromExpression(args.dirichlet)
+solver.setResponseFieldName(args.output_name)
 
 # In place operation, pdata will be modified.
-normalEJump = solver.computeNormalElectricFieldJump()
+normalEJump = solver.computeResponseField()
 
 if args.verbose:
     minJump = min(normalEJump)
