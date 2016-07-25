@@ -4,12 +4,7 @@ from __future__ import print_function
 import vtk
 import numpy
 from icqsol.shapes.icqRefineSurface import RefineSurface
-from icqsol.bem.icqPotentialIntegrals import PotentialIntegrals
-from icqsol.bem.icqQuadrature import gaussPtsAndWeights
-from icqsol.util.icqSharedLibraryUtils import getSharedLibraryName
-from ctypes import cdll, POINTER, byref, c_void_p, c_double, c_long
-
-FOUR_PI = 4. * numpy.pi
+from icqsol.util.icqDataFetcher import getArrayIndexFromNameAndProjectOntoCells
 
 class BaseSolver:
 
@@ -20,8 +15,6 @@ class BaseSolver:
         @param max_edge_length maximum edge length, used to turn
                                polygons into triangles
         """
-        libName = getSharedLibraryName('icqLaplaceMatricesCpp')
-        self.lib = cdll.LoadLibrary(libName)
 
         # triangulate
         rs = RefineSurface(pdata)
@@ -44,13 +37,12 @@ class BaseSolver:
         self.polys = self.pdata.GetPolys()
         self.numTriangles = self.polys.GetNumberOfCells()
 
-        shp = (self.numTriangles, self.numTriangles)
-        self.gMat = numpy.zeros(shp, numpy.float64)
-
+        # order of the integration, method dependent
         self.order = order
-        self.__computeMatrices()
 
-        self.normalEJumpName = 'normal_electric_field_jump'
+        # set in the derived classes
+        self.responseName = 'NO-SET'
+        self.sourceName = 'NOT-SET'
 
     def getVtkPolyData(self):
         """
@@ -58,58 +50,6 @@ class BaseSolver:
         @return object
         """
         return self.pdata
-
-    def __computeDiagonalTerms(self):
-
-        # Gauss points and weights
-        gpws = gaussPtsAndWeights[self.order]
-        npts = gpws.shape[1]
-        xsis, etas, weights = gpws[0, :], gpws[1, :], gpws[2, :]
-
-        # iterate over the source triangles
-        for jSrc in range(self.numTriangles):
-
-            ia, ib, ic = self.ptIdList[jSrc]
-
-            # The triangle vertex positions
-            paSrc = numpy.array(self.points.GetPoint(ia))
-            pbSrc = numpy.array(self.points.GetPoint(ib))
-            pcSrc = numpy.array(self.points.GetPoint(ic))
-            dbSrc = pbSrc - paSrc
-            dcSrc = pcSrc - paSrc
-
-            # Iterate over the observer points
-            g = 0
-            for ipt in range(npts):
-                # Observer point
-                xObs = paSrc + xsis[ipt]*dbSrc + etas[ipt]*dcSrc
-                # Three triangles having observer point as one corner
-                pot0ab = PotentialIntegrals(xObs, paSrc, pbSrc, self.order)
-                pot0bc = PotentialIntegrals(xObs, pbSrc, pcSrc, self.order)
-                pot0ca = PotentialIntegrals(xObs, pcSrc, paSrc, self.order)
-                g += weights[ipt] * (pot0ab.getIntegralOneOverR() + \
-                                     pot0bc.getIntegralOneOverR() + \
-                                     pot0ca.getIntegralOneOverR())
-
-            self.gMat[jSrc, jSrc] = g / (-FOUR_PI)
-
-    def __computeOffDiagonalTerms(self):
-
-        addr = int(self.pdata.GetAddressAsString('vtkPolyData')[5:], 0)
-        self.lib.computeOffDiagonalTerms(c_long(addr),
-                                         self.gMat.ctypes.data_as(POINTER(c_double)))
-
-    def __computeMatrices(self):
-
-        self.__computeDiagonalTerms()
-        self.__computeOffDiagonalTerms()
-
-    def getGreenMatrix(self):
-        """
-        Return the Green function matrix
-        @return matrix
-        """
-        return self.gMat
 
     def getPoints(self):
         """
@@ -137,3 +77,81 @@ class BaseSolver:
             polys.GetNextCell(ptIds)
             res[i, :] = ptIds.GetId(0), ptIds.GetId(1), ptIds.GetId(2)
         return res
+    
+    def setResponseFieldName(self, name):
+        """
+        Set the name of the response field
+        @param name name
+        """
+        self.responseName = name
+
+    def setSourceFieldName(self, name):
+        """
+        Set the name of the source field
+        @param name name
+        """
+        self.sourceName = name
+
+    def getSourceArrayIndex(self):
+        """
+        Get the source field index, projecting onto triangles is need be
+        """
+        srcIndex = getArrayIndexFromNameAndProjectOntoCells(self.pdata, self.sourceName)
+        if srcIndex < 0:
+            msg = 'ERROR: could not find any cell field named {0}!'.format(self.sourceName)
+            raise RuntimeError(msg)
+        return srcIndex
+
+    def getSourceArray(self, srcIndex):
+        """
+        Set the source array 
+        @param srcIndex source array index
+        """
+        srcArray = self.pdata.GetCellData().GetArray(srcIndex)
+        n = self.pdata.GetNumberOfPolys()
+        src = numpy.zeros((n,), numpy.float64)
+        for i in range(n):
+            src[i] = srcArray.GetComponent(i, 0)
+        return src
+
+    def addRespnseField(self, rsp):
+        """
+        Add the response field to the polydata
+        @param rsp response numpy array
+        """
+        rspData = vtk.vtkDoubleArray()
+        rspData.SetNumberOfComponents(1)
+        rspData.SetNumberOfTuples(n)
+        rspData.SetName(self.responseName)
+        for i in range(n):
+            rspData.SetTuple(i, [rsp[i]])
+        self.pdata.GetCellData().AddArray(rspData)
+
+    def setSourceFromExpression(self, expression):
+        """
+        Set the source from expression
+        @param expression expression of x, y, and z
+        """
+        from math import sqrt, pi, sin, cos, tan, log, exp
+        
+        n = self.pdata.GetNumberOfPolys()
+        sourceData = vtk.vtkDoubleArray()
+        sourceData.SetNumberOfComponents(1)
+        sourceData.SetNumberOfTuples(n)
+        sourceData.SetName(potName)
+        midPoint = numpy.zeros((3,), numpy.float64)
+        ptIds = vtk.vtkIdList()
+        cells = self.pdata.GetPolys()
+        cells.InitTraversal()
+        for i in range(n):
+            cell = cells.GetNextCell(ptIds)
+            npts = ptIds.GetNumberOfIds()
+            midPoint *= 0 # reset
+            for j in range(npts):
+                midPoint += self.points.GetPoint(ptIds.GetId(j))
+            midPoint /= float(npts)
+            x, y, z = midPoint
+            v = eval(expression)
+            sourceData.SetTuple(i, [v])
+        self.pdata.GetCellData().AddArray(sourceData)
+

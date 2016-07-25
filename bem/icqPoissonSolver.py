@@ -3,9 +3,10 @@
 from __future__ import print_function
 import vtk
 import numpy
-from icqsol.bem.icqBaseSolver import BaseSolver
+from icqsol.bem.icqBaseLaplaceSolver import BaseLaplaceSolver
 
-class LaplaceSolver(BaseSolver):
+
+class PoissonSolver(BaseLaplaceSolver):
 
     def __init__(self, pdata, max_edge_length, order=5):
         """
@@ -14,81 +15,29 @@ class LaplaceSolver(BaseSolver):
         @param max_edge_length maximum edge length, used to turn
                                polygons into triangles
         """
-        super(LaplaceSolver).__init__(pdata, max_edge_length, order)
-        self.normalEJumpName = 'normal_electric_field_jump'
+        #super(BaseLaplaceSolver, self).__init__(pdata, max_edge_length, order)
+        BaseLaplaceSolver.__init__(self, pdata, max_edge_length, order)
+        self.responseName = 'v'
+        self.sourceName = 'charge'
 
-    def setPotentialFromExpression(self, expression, potName='v'):
+    def computeResponseField(self):
         """
-        Set the potential from expression
-        @param potName name of the potential field saved in vtkPolyData 
-        @param expression expression of x, y, and z
-        """
-        from math import sqrt, pi, sin, cos, tan, log, exp
-        
-        n = self.pdata.GetNumberOfPolys()
-        potentialData = vtk.vtkDoubleArray()
-        potentialData.SetNumberOfComponents(1)
-        potentialData.SetNumberOfTuples(n)
-        potentialData.SetName(potName)
-        midPoint = numpy.zeros((3,), numpy.float64)
-        ptIds = vtk.vtkIdList()
-        cells = self.pdata.GetPolys()
-        cells.InitTraversal()
-        for i in range(n):
-            cell = cells.GetNextCell(ptIds)
-            npts = ptIds.GetNumberOfIds()
-            midPoint *= 0 # reset
-            for j in range(npts):
-                midPoint += self.points.GetPoint(ptIds.GetId(j))
-            midPoint /= float(npts)
-            x, y, z = midPoint
-            v = eval(expression)
-            potentialData.SetTuple(i, [v])
-        self.pdata.GetCellData().AddArray(potentialData)
-
-    def setNormalElectricFieldJumpName(self, name):
-        """
-        Set the name of the normal electric field jump
-        @param name name
-        """
-        self.normalEJumpName = name
-
-
-    def computeNormalElectricFieldJump(self, potName='v'):
-        """
-        Get the jump of the normal electric field - dv/dn
-        from potential v
-        @param potName name of the potential field in the vtkPolyData object
+        Compute the response field, in this case the potential due to a charge source
         @return response
         """
-        # Has the potential been set?
-        potIndex = getArrayIndexFromNameAndProjectOntoCells(self.pdata, potName)
-        if potIndex < 0:
-            msg = 'ERROR: could not find any cell field named {0}!'.format(potName)
-            raise RuntimeError(msg)
         
-        potArray = self.pdata.GetCellData().GetArray(potIndex)
+        srcIndex = self.getSourceArrayIndex()
+        src = self.getSourceArray(srcIndex)
 
-        # Set the potential.
-        n = self.pdata.GetNumberOfPolys()
-        v = numpy.zeros((n,), numpy.float64)
-        for i in range(n):
-            v[i] = potArray.GetComponent(i, 0)
-
+        # Get the response matrix.
         gMat = self.getGreenMatrix()
 
-        normalEJump = -numpy.linalg.solve(gMat, v)
+        # Compute the response.
+        rsp = numpy.dot(gMat, src)
 
-        # Add normal electric field jump
-        normalEJumpData = vtk.vtkDoubleArray()
-        normalEJumpData.SetNumberOfComponents(1)
-        normalEJumpData.SetNumberOfTuples(n)
-        normalEJumpData.SetName(self.normalEJumpName)
-        for i in range(n):
-            normalEJumpData.SetTuple(i, [normalEJump[i]])
-        self.pdata.GetCellData().AddArray(normalEJumpData)
+        self.addResponseField(rsp)
 
-        return normalEJump
+        return rsp
 
 ###############################################################################
 
@@ -117,7 +66,7 @@ def testSingleTriangle():
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
     for order in range(1, 6):
-        lslm = LaplaceMatrices(pdata, max_edge_length=1000.)
+        lslm = PoissonSolver(pdata, max_edge_length=1000.)
         print('order = ', order)
         print('g matrix: ', lslm.getGreenMatrix())
 
@@ -152,9 +101,9 @@ def testTwoTrianglesCoplanar():
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
     for order in range(1, 6):
-        lslm = LaplaceMatrices(pdata,
-                               max_edge_length=1000.,
-                               order=order)
+        lslm = PoissonSolver(pdata,
+                             max_edge_length=1000.,
+                             order=order)
         print('order = ', order)
         print('g matrix: ', lslm.getGreenMatrix())
 
@@ -189,9 +138,9 @@ def testTwoTriangles():
     pdata.InsertNextCell(vtk.VTK_POLYGON, ptIds)
 
     for order in range(1, 6):
-        lslm = LaplaceMatrices(pdata,
-                               max_edge_length=1000.,
-                               order=order)
+        lslm = PoissonSolver(pdata,
+                             max_edge_length=1000.,
+                             order=order)
         print('order = ', order)
         print('g matrix: ', lslm.getGreenMatrix())
 
