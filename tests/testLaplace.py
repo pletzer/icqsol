@@ -8,7 +8,7 @@ Solve Laplace equation on sphere
 from __future__ import print_function
 import argparse
 from icqsol.shapes.icqShapeManager import ShapeManager
-from icqsol.bem.icqLaplaceMatrices import LaplaceMatrices
+from icqsol.bem.icqLaplaceSolver import LaplaceSolver
 from icqsol import util
 
 description = 'Solve Laplace equation on sphere'
@@ -38,13 +38,13 @@ s = shape_mgr.createShape('sphere',
                           n_phi=args.n_phi)
 
 pdata = shape_mgr.shapeToVTKPolyData(s)
-response = LaplaceMatrices(pdata,
-                           max_edge_length=float('inf'),
-                           order=args.order)
+slv = LaplaceSolver(pdata,
+                    max_edge_length=float('inf'),
+                    order=args.order)
 
 # compute the normal electric field from the potential
-response.setPotentialFromExpression('1.0/sqrt(x**2 + y**2 + z**2)')
-en = response.computeNormalElectricFieldJump()
+slv.setSourceFromExpression('1.0/sqrt(x**2 + y**2 + z**2)')
+en = slv.computeResponseField()
 minEn = min(en)
 maxEn = max(en)
 avgEn = en.sum()/len(en)
