@@ -127,6 +127,7 @@ class CoarsenSurface:
         """
         Collapse the vertices of a cell
         @param cellId Id of the polygon
+        @param return list of points that have been moved
         """
         # points of the cell
         ptIds = vtk.vtkIdList()
@@ -187,6 +188,8 @@ class CoarsenSurface:
         # average the nodal data at the new vertex location
         self.averagePointData(pointsToMove)
 
+        return pointsToMove
+
     def coarsen(self, min_cell_area = 1.e-10):
         """
         Coarsen surface by collapsing small polygons
@@ -202,32 +205,39 @@ class CoarsenSurface:
             polys.GetNextCell(ptIds)
             area = abs(self.getPolygonArea(ptIds))
             if area < min_cell_area and area > self.EPS:
-                self.collapsePolygon(cellId)
+
+                # collapse the cell and get the point Ids that have moved
+                movedPointIds = self.collapsePolygon(cellId)
+
+                # clean up the connectivity by removing degenerate point Ids
+                self.removeDegeneratePointsInConnectivity(movedPointIds)
 
         self.deleteZeroPolys()
-        self.removeDegeneratePointsFromConnectivity()
 
-    def removeDegeneratePointsFromConnectivity(self):
+    def removeDegeneratePointsInConnectivity(self, movedPointIds):
         """
-        Remove all the points that are degenerate from the connectivity 
+        Remove the degenerate point Ids from the connectivity 
+        @param movedPointIds list of point Ids that have moved
         """
-        cellIds = vtk.vtkIdList()
-        cellPointIds = vtk.vtkIdList()
-        points = self.polydata.GetPoints()
-        for ptId, newPtId in self.degeneratePtIdMap.items():
-            # replace ptId with newPtId in all the polygons that 
-            # contain ptId
-            self.polydata.GetPointCells(ptId, cellIds)
-            numCells = cellIds.GetNumberOfIds()
-            for cellId in range(numCells):
-                # extract all the ptIds of that cell, requires BuildCells 
-                # to be called
-                self.polydata.GetCellPoints(cellId, cellPointIds)
-                npts = cellPointIds.GetNumberOfIds()
-                for i in range(npts):
-                    # replace the ptId with newPtId
-                    if cellPointIds.GetId(i) == ptId:
-                        self.polydata.ReplaceCellPoint(cellId, ptId, newPtId)
+        neighCellIds = vtk.vtkIdList()
+        neighCellPointIds = vtk.vtkIdList()
+        if len(movedPointIds) > 1:
+            # all other point Ids will be replaced by newPointId
+            newPointId = movedPointIds[0]
+            for oldPointId in movedPointIds[1:]:
+                # get all the cells that contain oldPointId
+                self.polydata.GetPointCells(oldPointId, neighCellIds)
+                numNeighCells = neighCellIds.GetNumberOfIds()
+                for neighCellId in range(numNeighCells):
+                    # extract the ptIds of that cell, requires BuildCells 
+                    # to be called
+                    self.polydata.GetCellPoints(neighCellId, neighCellPointIds)
+                    npts = neighCellPointIds.GetNumberOfIds()
+                    for i in range(npts):
+                        pi = neighCellPointIds.GetId(i)
+                        if pi == oldPointId:
+                            # replace point Id
+                            self.polydata.ReplaceCellPoint(neighCellId, oldPointId, newPointId)
 
     def deleteZeroPolys(self):
         """
