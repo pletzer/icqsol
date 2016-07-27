@@ -31,6 +31,7 @@ class CoarsenSurface:
         # required so we can get the connectivity between points and 
         # cells
         self.polydata.BuildLinks()
+        self.polydata.BuildCells()
 
     def getVtkPolyData(self):
         """
@@ -210,22 +211,23 @@ class CoarsenSurface:
         """
         Remove all the points that are degenerate from the connectivity 
         """
-        ptIds = vtk.vtkIdList()
-        polys = self.polydata.GetPolys()
-        numPolys = polys.GetNumberOfCells()
-        polys.InitTraversal()
-        newPolys = vtk.vtkCellArray()
-        for polyId in range(numPolys):
-            polys.GetNextCell(ptIds)
-            numPts = ptIds.GetNumberOfIds()
-            for i in range(numPts):
-                ptId = ptIds.GetId(i)
-                # replace the point id with the value in the degeneratePtIdMap, if 
-                # not in the map then just return the ptId 
-                newPtId = self.degeneratePtIdMap.get(ptId, ptId)
-                ptIds.SetId(i, newPtId)
-            newPolys.InsertNextCell(ptIds)
-        self.polydata.SetPolys(newPolys)
+        cellIds = vtk.vtkIdList()
+        cellPointIds = vtk.vtkIdList()
+        points = self.polydata.GetPoints()
+        for ptId, newPtId in self.degeneratePtIdMap.items():
+            # replace ptId with newPtId in all the polygons that 
+            # contain ptId
+            self.polydata.GetPointCells(ptId, cellIds)
+            numCells = cellIds.GetNumberOfIds()
+            for cellId in range(numCells):
+                # extract all the ptIds of that cell, requires BuildCells 
+                # to be called
+                self.polydata.GetCellPoints(cellId, cellPointIds)
+                npts = cellPointIds.GetNumberOfIds()
+                for i in range(npts):
+                    # replace the ptId with newPtId
+                    if cellPointIds.GetId(i) == ptId:
+                        self.polydata.ReplaceCellPoint(cellId, ptId, newPtId)
 
     def deleteZeroPolys(self):
         """
@@ -240,28 +242,31 @@ class CoarsenSurface:
             
         self.polydata.RemoveDeletedCells()
         self.polydata.BuildLinks() # not sure if this is required
+        self.polydata.BuildCells()
  
-    def averagePointData(self, ptIds):
+    def averagePointData(self, pids):
         """
         Average the field at the point locations and set the nodal field values 
         to the average value
-        @param ptIds set of point Ids
+        @param pids list of point Ids
         """
+        numPts = len(pids)
+        if numPts == 0: return
+
         for el in range(self.numPointData):
             arr = self.pointData.GetArray(el)
             numComps = arr.GetNumberOfComponents()
             vals = numpy.zeros((numComps,), numpy.float64)
             baryVals = numpy.zeros((numComps,), numpy.float64)
             # mid cell values
-            numPts = ptIds.GetNumberOfIds()
             for i in range(numPts):
-                ptId = ptIds.GetId(i)
+                ptId = pids[i]
                 vals[:] = arr.GetTuple(ptId)
                 baryVals += vals
             baryVals /= float(numPts)
             # set the field values to the mid cell values
             for j in range(numPts):
-                arr.SetTuple(ptIds.GetId(j), baryVals)
+                arr.SetTuple(pids[j], baryVals)
 
 ##############################################################################
 
