@@ -165,7 +165,7 @@ class CoarsenSurface:
             center /= float(len(internalPointIds))
             pointsToMove = internalPointIds
         #elif numBoundaryPoints > 1 and numBoundaryPoints < npts:
-        elif numBoundaryPoints > npts and numBoundaryPoints < npts:  # not tworking well so turning off for the time being
+        elif numBoundaryPoints > npts and numBoundaryPoints < npts:  # not working well so turning off for the time being
             # average the boundary points and move all points to this position
             for ptId in boundaryPointIds:
                 points.GetPoint(ptId, pt)
