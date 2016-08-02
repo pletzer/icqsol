@@ -2,23 +2,26 @@ icqsol
 ======
 
 icqsol is a collection of tools for constructing complex geometries from 
-primitve shapes on the web with the goal of solving various engineering
-problems including thermal and electrostatic. 
+primitive shapes. 
+
+![alt tag](https://raw.githubusercontent.com/pletzer/icqsol/master/icqsol.png)
 
 How to build icqsol 
 -------------------
 
 ### Prerequisites
 
-
-* python. Version 2.7 or 3.5 will work
-* numpy. Version 1.9.2 will work
-* VTK with python wrapping enabled. Version 6.3.0 or 7.0 will work
+* python 2.7 and 3.5 will work
+* numpy 1.9.2 will work
+* VTK with python wrapping enabled. Versions 6.3.0 and 7.0 will work
 * CMake
+* C++ compiler (gcc or clang)
+
+icqsol runs on Linux and Mac OS X. 
 
 ### Installing icqsol
 
-Icqsol uses a CMake build system, which will call "python setyp.py"
+icqsol uses a CMake build system, which will call "python setup.py"
 to install the package. You have three choices:
 
 a) Let python choose the installation directory, typically 
