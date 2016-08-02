@@ -61,6 +61,6 @@ More extensive tests can be run by typing
 
 ```bash
 ctest
-'''
+```
 
 
