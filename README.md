@@ -8,16 +8,15 @@ problems including thermal and electrostatic.
 How to build icqsol 
 -------------------
 
-Prerequisites
-.............
+### Prerequisites
+
 
 * python. Version 2.7 or 3.5 will work
 * numpy. Version 1.9.2 will work
 * VTK with python wrapping enabled. Version 6.3.0 or 7.0 will work
 * CMake
 
-Installing icqsol
-.................
+### Installing icqsol
 
 Icqsol uses a CMake build system, which will call "python setyp.py"
 to install the package. You have three choices:
@@ -60,6 +59,8 @@ Type "help", "copyright", "credits" or "license" for more information.
 
 More extensive tests can be run by typing
 
-$ ctest
+```bash
+ctest
+'''
 
 
