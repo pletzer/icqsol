@@ -25,23 +25,31 @@ a) Let python choose the installation directory, typically
    under /usr/lib/python<version>/site-packages. May require
    sudo privilege
 
-$ cmake .
+```bash
+cmake .
+```
 
 (The period at the end is critical.)
 
 b) Install under ~/.local/lib/python<version>/site-packages/
 
-$ cmake -DINSTALL_USER=ON .
+```bash
+cmake -DINSTALL_USER=ON .
+```
 
 c) Install in a user specified directory. Note that when using this 
 option, the user will need to set the PYTHONPATH environment variable 
 to point to <myDirectory>/lib/site-packages.
 
-$ cmake -DINSTALL_PREFIX=ON -DCMAKE_INSTALL_PREFIX=<myDirectory> .
+```bash
+cmake -DINSTALL_PREFIX=ON -DCMAKE_INSTALL_PREFIX=<myDirectory> .
+```
 
 You may need to help icqsol find the VTK package by setting VTK_DIR
 
-$ cmake -DVTK_DIR=<vtk_install_dir>/lib/cmake/vtk [other options] .
+```bash
+cmake -DVTK_DIR=<vtk_install_dir>/lib/cmake/vtk [other options] .
+```
 
 to point to the directory where VTKCOnfig.cmake is located.
 
@@ -50,12 +58,14 @@ How to test icqsol
 
 You should be able to import icqsol in the python interpreter
 
-$ python
+```bash
+python
 Python 2.7.5 (default, Feb 11 2014, 07:46:25) 
 [GCC 4.8.2 20140120 (Red Hat 4.8.2-13)] on linux2
 Type "help", "copyright", "credits" or "license" for more information.
 >>> import icqsol
 >>> 
+```
 
 More extensive tests can be run by typing
 
