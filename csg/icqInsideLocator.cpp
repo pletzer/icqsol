@@ -1,6 +1,6 @@
 #include <limits>
 #include <cmath>
-#include <icqInsideLocator.hpp>
+#include <icqInsideLocator.h>
 #include <vtkCellArray.h>
 #include <vtkIdList.h>
 #include <vtkPoints.h>

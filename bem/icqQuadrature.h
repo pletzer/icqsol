@@ -5,7 +5,7 @@
 #ifndef ICQ_QUADRATURE
 #define ICQ_QUADRATURE
 
-#include <icqFunctor.hpp>
+#include <icqFunctor.h>
  
 #include <map>
 #include <vector>

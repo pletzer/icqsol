@@ -2,8 +2,8 @@
  * Quadrature on triangle 
  */
 
-#include <icqQuadrature.hpp>
-#include <icqLaplaceFunctor.hpp>
+#include <icqQuadrature.h>
+#include <icqLaplaceFunctor.h>
 #include <iostream>
 
 extern "C" 

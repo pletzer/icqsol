@@ -1,7 +1,7 @@
 #include <vector>
 #include <cmath>
-#include <icqQuadrature.hpp>
-#include <icqLaplaceMatrices.hpp>
+#include <icqQuadrature.h>
+#include <icqLaplaceMatrices.h>
 #include <vtkCellArray.h>
 #include <vtkPoints.h>
 #include <vtkIdList.h>

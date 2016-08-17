@@ -1,4 +1,4 @@
-#include <icqLaplaceFunctor.hpp>
+#include <icqLaplaceFunctor.h>
 #include <cmath>
 
 double

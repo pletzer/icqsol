@@ -1,4 +1,4 @@
-#include <icqFunctor.hpp>
+#include <icqFunctor.h>
 #include <string> // for size_t
 
 icqFunctor::icqFunctor() {
