@@ -57,7 +57,7 @@ def getArrayIndexFromNameAndProjectOntoCells(pdata, name):
                 cellArr.SetComponent(i, 0, (va + vb + vc)/3.)
             # Add the cell array
             cellData.AddArray(cellArr)
-            return getPotentialArrayIndexFromName(name)
+            return getArrayIndexFromName(name)
 
     return index
 
