@@ -140,9 +140,9 @@ class ShapeManager(object):
         
         # extrude a little to ensure that the projection box
         # lie beyond the object
-        xlen *= 1.01
-        ylen *= 1.01
-        zlen *= 1.01        
+        xlen *= 1.20
+        ylen *= 1.20
+        zlen *= 1.20       
         xmin = xmid - 0.5*xlen
         xmax = xmid + 0.5*xlen
         ymin = ymid - 0.5*ylen
@@ -178,7 +178,7 @@ class ShapeManager(object):
                      (zlen, xlen),
                      (ylen, xlen)]
 
-        # the low end start points for each face
+        # the low end starting points for each face
         startPoints = [numpy.array([xmax, ymin, zmin]),
                        numpy.array([xmax, ymax, zmin]),
                        numpy.array([xmax, ymax, zmax]),
@@ -186,7 +186,12 @@ class ShapeManager(object):
                        numpy.array([xmin, ymin, zmax]),
                        numpy.array([xmin, ymin, zmin])]
 
-        # d0 is the number of local indices on each tile (along u and v)
+        # d is the number of local indices on each tile (along u and v)
+        # using a staircase flattening of the box
+        # ......+--+--+
+        # .  +--+--+--+
+        # +--+--+--+  .
+        # +--+--+.....+
         d = min(n0 // 4, n1 // 3)
 
         def getImageIndices(xyz):
@@ -200,7 +205,8 @@ class ShapeManager(object):
 
             # direction of the ray
             direction = xyz - midPos
-            # make sure it is not zero
+
+            # make sure it is not zero, any direction will do
             direction += 1.e-10*numpy.array([1.234567, 2.3456789, 3.45678])
 
             # find  the face that is most aligned to the ray
@@ -221,15 +227,20 @@ class ShapeManager(object):
             tileJ = faceIndex // 2
 
             # local indices on the tile
-            j0 = int(d * uVec.dot(projectedPoint - startPos) / uvLengths[faceIndex][0])
-            j1 = int(d * vVec.dot(projectedPoint - startPos) / uvLengths[faceIndex][1])
+            projectedPoint -= startPos
+            j0 = int(d * uVec.dot(projectedPoint) / uvLengths[faceIndex][0])
+            j1 = int(d * vVec.dot(projectedPoint) / uvLengths[faceIndex][1])
 
             # the image indices
             i0, i1 = tileI*d + j0, tileJ*d + j1
 
+            # make sure the indices are within bounds 
+            i0 = max(0, min(n0 - 1, i0))
+            i1 = max(9, min(n1 - 1, i1))
+
             return i0, i1
 
-        # Refine if need be.
+        # refine if need be
         pdata = self.refineVtkPolyData(vtk_poly_data,
                                        max_edge_length=max_edge_length)
 
